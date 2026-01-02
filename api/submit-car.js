@@ -1,49 +1,55 @@
-const nodemailer = require('nodemailer');
+import nodemailer from "nodemailer";
 
 export default async function handler(req, res) {
-  // Only allow POST requests
-  if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method Not Allowed' });
+  if (req.method !== "POST") {
+    return res.status(405).json({ message: "Method Not Allowed" });
   }
 
-  // Get car data from the request body
-  const { carData } = req.body;
-
-  // Create a transporter object using SMTP transport
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: 'gocrazyraces@gmail.com', // Your email here
-      pass: 'Welovelego2011!',  // Your email password (or use App Passwords if 2FA is enabled)
-    },
-  });
-
-  // Define the mail options
-  const mailOptions = {
-    from: 'gocrazyraces@gmail.com',
-    to: 'gocrazyraces@gmail.com', // Your email for submissions
-    subject: 'New Car Design Submitted',
-    text: `Car Name: ${carData.carName}\nTeam Name: ${carData.teamName}\nAcceleration: ${carData.acceleration}\nTop Speed: ${carData.topSpeed}\nEmail: ${carData.email}`,
-    attachments: [
-      {
-        filename: 'car.png',
-        content: carData.carImageData.split('base64,')[1], // Extract base64 image content
-        encoding: 'base64',
-      },
-      {
-        filename: 'wheel.png',
-        content: carData.wheelImageData.split('base64,')[1], // Extract wheel image content
-        encoding: 'base64',
-      },
-    ],
-  };
-
   try {
-    // Send email
+    const { carData } = req.body;
+
+    if (!carData) {
+      return res.status(400).json({ message: "Missing car data" });
+    }
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD,
+      },
+    });
+
+    const mailOptions = {
+      from: `"CrazyRaces" <${process.env.GMAIL_USER}>`,
+      to: process.env.SUBMISSION_EMAIL,
+      subject: `New CrazyRaces Car: ${carData.carName}`,
+      text: `
+Car Name: ${carData.carName}
+Team Name: ${carData.teamName}
+Acceleration: ${carData.acceleration}
+Top Speed: ${carData.topSpeed}
+User Email: ${carData.email}
+      `,
+      attachments: [
+        {
+          filename: "car.png",
+          content: carData.carImageData.split("base64,")[1],
+          encoding: "base64",
+        },
+        {
+          filename: "wheel.png",
+          content: carData.wheelImageData.split("base64,")[1],
+          encoding: "base64",
+        },
+      ],
+    };
+
     await transporter.sendMail(mailOptions);
-    return res.status(200).json({ message: 'Email sent successfully' });
+
+    return res.status(200).json({ message: "Submission successful" });
   } catch (error) {
-    console.error('Error sending email:', error);
-    return res.status(500).json({ message: 'Failed to send email, sorry' });
+    console.error("Email error:", error);
+    return res.status(500).json({ message: "Email failed" });
   }
 }

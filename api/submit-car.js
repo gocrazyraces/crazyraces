@@ -14,7 +14,7 @@ export default async function handler(req, res) {
     service: 'gmail',
     auth: {
       user: 'gocrazyraces@gmail.com', // Your email here
-      pass: 'Oliver2011!',  // Your email password (or use App Passwords if 2FA is enabled)
+      pass: 'Welovelego2011!',  // Your email password (or use App Passwords if 2FA is enabled)
     },
   });
 
@@ -44,6 +44,6 @@ export default async function handler(req, res) {
     return res.status(200).json({ message: 'Email sent successfully' });
   } catch (error) {
     console.error('Error sending email:', error);
-    return res.status(500).json({ message: 'Failed to send email' });
+    return res.status(500).json({ message: 'Failed to send email, sorry' });
   }
 }

@@ -1,55 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CrazyRaces - Design Your Car</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>CrazyRaces Car Designer</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/konva@8.4.3/konva.min.js"></script>
 </head>
 <body>
-    <header>
-        <h1>CrazyRaces Car Design 3</h1>
-    </header>
+  <div id="crazy-races-container">
+    <div id="drawing-pane"></div>
+    <div id="controls-pane">
+      <input type="text" id="carName" placeholder="Car Name">
+      <input type="text" id="teamName" placeholder="Team Name">
+      <input type="email" id="email" placeholder="Your Email">
+      <label>Acceleration: <input type="range" id="acceleration" min="1" max="50" value="25"></label>
+      <label>Top Speed: <input type="range" id="topSpeed" min="10" max="80" value="50"></label>
+      <button id="add-wheel">Add Wheel</button>
+      <button id="preview-car">Preview Car</button>
+      <button id="submit-car">Submit</button>
+    </div>
+  </div>
 
-    <section class="car-design">
-        <canvas id="carCanvas" width="1024" height="1024"></canvas>
-        <div>
-            <button onclick="clearCanvas()">Clear</button>
-            <input type="file" id="uploadImage" onchange="uploadCarImage(event)">
-        </div>
-    </section>
-
-    <section class="wheel-design">
-        <h2>Design Your Wheels</h2>
-        <canvas id="wheelCanvas" width="512" height="512"></canvas>
-        <div>
-            <button onclick="clearWheelCanvas()">Clear</button>
-            <input type="file" id="uploadWheel" onchange="uploadWheelImage(event)">
-        </div>
-    </section>
-
-    <section class="car-properties">
-        <h2>Set Car Properties</h2>
-        <label for="acceleration">Acceleration (1-50):</label>
-        <input type="range" id="acceleration" min="1" max="50" value="25">
-        
-        <label for="topSpeed">Top Speed (10-80):</label>
-        <input type="range" id="topSpeed" min="10" max="80" value="40">
-        
-        <p>Credits Remaining: <span id="creditsRemaining">100</span></p>
-
-        <label for="carName">Car Name:</label>
-        <input type="text" id="carName" placeholder="Enter car name">
-        
-        <label for="teamName">Team Name:</label>
-        <input type="text" id="teamName" placeholder="Enter team name">
-        
-        <label for="email">Email:</label>
-        <input type="email" id="email" placeholder="Enter your email">
-
-        <button onclick="submitCarDesign()">Submit</button>
-    </section>
-
-    <script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>

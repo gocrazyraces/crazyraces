@@ -1,91 +1,95 @@
-const carCanvas = document.getElementById('carCanvas');
-const wheelCanvas = document.getElementById('wheelCanvas');
-const carContext = carCanvas.getContext('2d');
-const wheelContext = wheelCanvas.getContext('2d');
+// Konva setup
+const stage = new Konva.Stage({
+  container: "drawing-pane",
+  width: 1024,
+  height: 512
+});
+const layer = new Konva.Layer();
+stage.add(layer);
 
-// Variables for car and wheel drawings
-let drawingCar = false;
-let drawingWheel = false;
-let carImage = null;
-let wheelImage = null;
+// Car body (freehand)
+const carBody = new Konva.Line({
+  points: [],
+  stroke: "black",
+  strokeWidth: 3,
+  lineJoin: "round",
+  draggable: true
+});
+layer.add(carBody);
 
-// Clear the car drawing canvas
-function clearCanvas() {
-    carContext.clearRect(0, 0, carCanvas.width, carCanvas.height);
+// Wheel array
+let wheels = [];
+
+// Add wheel
+document.getElementById("add-wheel").addEventListener("click", () => {
+  const wheel = new Konva.Circle({
+    x: stage.width() / 2,
+    y: stage.height() / 2,
+    radius: 50,
+    stroke: "red",
+    strokeWidth: 2,
+    draggable: true
+  });
+  wheels.push(wheel);
+  layer.add(wheel);
+  layer.draw();
+});
+
+// Preview car animation
+document.getElementById("preview-car").addEventListener("click", () => {
+  wheels.forEach(wheel => {
+    new Konva.Tween({
+      node: wheel,
+      rotation: 360,
+      duration: 2,
+      repeat: Infinity
+    }).play();
+  });
+});
+
+// Email validation
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-// Clear the wheel drawing canvas
-function clearWheelCanvas() {
-    wheelContext.clearRect(0, 0, wheelCanvas.width, wheelCanvas.height);
+// Slider zero-sum
+const accelSlider = document.getElementById("acceleration");
+const speedSlider = document.getElementById("topSpeed");
+
+function updateSliders() {
+  const total = parseInt(accelSlider.value) + parseInt(speedSlider.value);
+  if (total > 100) speedSlider.value = 100 - parseInt(accelSlider.value);
 }
 
-// Handle image upload for car body
-function uploadCarImage(event) {
-    const file = event.target.files[0];
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        carImage = new Image();
-        carImage.src = e.target.result;
-        carImage.onload = function() {
-            clearCanvas();
-            carContext.drawImage(carImage, 0, 0, carCanvas.width, carCanvas.height);
-        };
-    };
-    reader.readAsDataURL(file);
-}
+accelSlider.addEventListener("input", updateSliders);
+speedSlider.addEventListener("input", updateSliders);
 
-// Handle image upload for wheel
-function uploadWheelImage(event) {
-    const file = event.target.files[0];
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        wheelImage = new Image();
-        wheelImage.src = e.target.result;
-        wheelImage.onload = function() {
-            clearWheelCanvas();
-            wheelContext.drawImage(wheelImage, 0, 0, wheelCanvas.width, wheelCanvas.height);
-        };
-    };
-    reader.readAsDataURL(file);
-}
+// Submit car
+document.getElementById("submit-car").addEventListener("click", async () => {
+  const email = document.getElementById("email").value;
+  if (!isValidEmail(email)) return alert("Enter a valid email.");
 
-// Submit car design and data
-async function submitCarDesign() {
-    const acceleration = document.getElementById('acceleration').value;
-    const topSpeed = document.getElementById('topSpeed').value;
-    const carName = document.getElementById('carName').value;
-    const teamName = document.getElementById('teamName').value;
-    const email = document.getElementById('email').value;
+  const carData = {
+    carName: document.getElementById("carName").value,
+    teamName: document.getElementById("teamName").value,
+    acceleration: accelSlider.value,
+    topSpeed: speedSlider.value,
+    email,
+    carImageData: stage.toDataURL({ pixelRatio: 2 }),
+    wheelImageData: stage.toDataURL({ pixelRatio: 2 }),
+    wheelPositions: wheels.map(w => ({ x: w.x(), y: w.y(), radius: w.radius() }))
+  };
 
-    // Prepare the data to send
-    const carData = {
-        carName,
-        teamName,
-        acceleration,
-        topSpeed,
-        email,
-        carImageData: carCanvas.toDataURL(), // Base64 image data for the car
-        wheelImageData: wheelCanvas.toDataURL() // Base64 image data for the wheels
-    };
-
-    try {
-        // Send the data to the backend API
-        const response = await fetch('/api/submit-car', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ carData }),
-        });
-
-        const result = await response.json();
-        if (response.ok) {
-            alert('Car submitted successfully 3!');
-        } else {
-            alert('Error: ' + result.message);
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('An error occurred while submitting the car.');
-    }
-}
+  try {
+    const res = await fetch("/api/submit-car", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ carData })
+    });
+    const result = await res.json();
+    alert(result.message);
+  } catch (err) {
+    console.error(err);
+    alert("Submission failed");
+  }
+});

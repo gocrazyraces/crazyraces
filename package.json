@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/gocrazyraces/crazyraces#readme",
   "dependencies": {
-    "nodemailer": "^7.0.12"
+    "nodemailer": "^7.0.12",
+    "konva": "^8.4.3"
   }
 }

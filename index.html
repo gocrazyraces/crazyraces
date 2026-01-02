@@ -1,37 +1,74 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>CrazyRaces Editor</title>
+  <meta charset="UTF-8" />
+  <title>CrazyRaces Designer</title>
 
-  <!-- ✅ STABLE Fabric -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Stable Fabric -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<div id="layout">
-  <canvas id="canvas" width="1024" height="512"></canvas>
+<header>
+  <h1>CrazyRaces Car Designer</h1>
+</header>
 
-  <div id="panel">
-    <button id="draw">Draw</button>
-    <button id="select">Select</button>
-    <button id="crosshair">Add Wheel Crosshair</button>
+<div id="app">
+  <aside id="toolbar">
+    <h3>Tools</h3>
+    <div class="tool-row">
+      <button data-tool="select">Select</button>
+      <button data-tool="draw">Draw</button>
+      <button data-tool="erase">Erase</button>
+      <button data-tool="crosshair">Wheel</button>
+    </div>
 
-    <input type="file" id="uploadCar" accept="image/*">
-    <input type="file" id="uploadWheel" accept="image/*">
+    <label>Brush size</label>
+    <input type="range" id="brushSize" min="1" max="20" value="4" />
 
-    <input id="carName" placeholder="Car name">
-    <input id="teamName" placeholder="Team name">
-    <input id="email" placeholder="Email">
+    <label>Color</label>
+    <input type="color" id="color" value="#000000" />
 
-    <label>Acceleration <input type="range" id="accel" min="1" max="50" value="25"></label>
-    <label>Top speed <input type="range" id="speed" min="10" max="80" value="50"></label>
+    <div class="tool-row">
+      <button id="undo">Undo</button>
+      <button id="redo">Redo</button>
+    </div>
 
-    <button id="export">Export PNG</button>
-  </div>
+    <hr />
+
+    <label class="file">
+      Upload Car Body
+      <input type="file" id="uploadBody" accept="image/*" />
+    </label>
+
+    <label class="file">
+      Upload Wheel
+      <input type="file" id="uploadWheel" accept="image/*" />
+    </label>
+
+    <hr />
+
+    <label>Acceleration <input type="range" id="accel" min="1" max="50" value="50" /></label>
+    <label>Top Speed <input type="range" id="speed" min="10" max="80" value="50" /></label>
+
+    <hr />
+
+    <input id="carName" placeholder="Car Name" />
+    <input id="teamName" placeholder="Team Name" />
+    <input id="email" placeholder="Email" />
+
+    <button id="preview">Preview</button>
+    <button id="submit">Submit</button>
+  </aside>
+
+  <main>
+    <canvas id="canvas" width="1024" height="512"></canvas>
+  </main>
 </div>
 
-<script src="script.js"></script>
+<script src="editor.js"></script>
 </body>
 </html>

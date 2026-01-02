@@ -1,21 +1,95 @@
-body {
-  margin: 0;
-  font-family: sans-serif;
+* {
+  box-sizing: border-box;
+  font-family: system-ui, sans-serif;
 }
 
-#layout {
+body {
+  margin: 0;
+  background: #f4f6f8;
+}
+
+header {
+  background: #1e1e2f;
+  color: white;
+  padding: 12px;
+  text-align: center;
+}
+
+#app {
   display: flex;
-  gap: 16px;
-  padding: 16px;
+  height: calc(100vh - 60px);
+}
+
+#toolbar {
+  width: 260px;
+  padding: 12px;
+  background: white;
+  border-right: 1px solid #ddd;
+  overflow-y: auto;
+}
+
+.tool-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+#toolbar button {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  background: #2d72d9;
+  color: white;
+  border-radius: 4px;
+}
+
+#toolbar button:hover {
+  background: #245bb2;
+}
+
+.file {
+  display: block;
+  background: #eee;
+  padding: 8px;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.file input {
+  display: none;
+}
+
+main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 canvas {
   border: 2px solid #333;
+  max-width: 100%;
+  height: auto;
 }
 
-#panel {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 220px;
+/* Mobile */
+@media (max-width: 768px) {
+  #app {
+    flex-direction: column;
+  }
+
+  #toolbar {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  #toolbar hr {
+    grid-column: span 2;
+  }
+
+  main {
+    padding: 8px;
+  }
 }

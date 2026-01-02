@@ -1,37 +1,21 @@
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  font-family: sans-serif;
 }
 
-#editor-container {
+#layout {
   display: flex;
-  gap: 20px;
-  padding: 20px;
+  gap: 16px;
+  padding: 16px;
 }
 
-#fabric-canvas {
-  border: 2px solid #444;
-  display: block;
+canvas {
+  border: 2px solid #333;
 }
 
-#controls {
+#panel {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  width: 250px;
-}
-
-#controls input[type="text"],
-#controls input[type="email"] {
-  padding: 5px;
-  width: 100%;
-}
-
-#controls input[type="file"] {
-  padding: 3px;
-}
-
-#controls button {
-  padding: 5px;
-  cursor: pointer;
+  gap: 8px;
+  width: 220px;
 }

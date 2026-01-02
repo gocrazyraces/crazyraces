@@ -1,97 +1,172 @@
-// --- Konva Stage Setup ---
+// --- Konva Stage ---
 const stage = new Konva.Stage({
   container: "drawing-pane",
   width: 1024,
-  height: 512,
+  height: 512
 });
 
-const layer = new Konva.Layer();
-stage.add(layer);
+const carLayer = new Konva.Layer();
+const wheelLayer = new Konva.Layer();
+const crosshairLayer = new Konva.Layer();
 
-// --- Freehand car body drawing ---
+stage.add(carLayer, wheelLayer, crosshairLayer);
+
+// --- Drawing State ---
+let mode = null; // 'car', 'wheel', 'crosshair'
 let isDrawing = false;
-let currentLine;
+let currentLine = null;
+let carHistory = [];
+let wheelHistory = [];
+let wheels = [];
+let crosshairs = [];
 
-stage.on("mousedown touchstart", function () {
-  isDrawing = true;
-  currentLine = new Konva.Line({
-    stroke: "black",
-    strokeWidth: 3,
-    points: [],
-    lineJoin: "round",
-    lineCap: "round",
-    draggable: false,
-  });
-  layer.add(currentLine);
+// --- Brush Settings ---
+const brushColorInput = document.getElementById("brush-color");
+const brushSizeInput = document.getElementById("brush-size");
+
+function setMode(newMode) {
+  mode = newMode;
+  isDrawing = false;
+  currentLine = null;
+}
+
+// --- Freehand Drawing ---
+stage.on("mousedown touchstart", (e) => {
+  if (mode === "car" || mode === "wheel") {
+    isDrawing = true;
+    currentLine = new Konva.Line({
+      stroke: mode === "car" ? brushColorInput.value : "blue",
+      strokeWidth: mode === "car" ? parseInt(brushSizeInput.value) : 2,
+      lineJoin: "round",
+      lineCap: "round",
+      points: [],
+      draggable: false
+    });
+    if (mode === "car") carLayer.add(currentLine);
+    else wheelLayer.add(currentLine);
+  } else if (mode === "crosshair") {
+    const pos = stage.getPointerPosition();
+    const cross = new Konva.Group({ x: pos.x, y: pos.y });
+    cross.add(new Konva.Line({ points: [-10,0,10,0], stroke:'red', strokeWidth:2 }));
+    cross.add(new Konva.Line({ points: [0,-10,0,10], stroke:'red', strokeWidth:2 }));
+    crosshairs.push(cross);
+    crosshairLayer.add(cross);
+    crosshairLayer.draw();
+  }
 });
 
-stage.on("mousemove touchmove", function (e) {
-  if (!isDrawing) return;
+stage.on("mousemove touchmove", (e) => {
+  if (!isDrawing || !currentLine) return;
   const pos = stage.getPointerPosition();
   const newPoints = currentLine.points().concat([pos.x, pos.y]);
   currentLine.points(newPoints);
-  layer.batchDraw();
+  if (mode === "car") carLayer.batchDraw();
+  else wheelLayer.batchDraw();
 });
 
-stage.on("mouseup touchend", function () {
+stage.on("mouseup touchend", () => {
+  if (isDrawing && currentLine) {
+    if (mode === "car") carHistory.push(currentLine);
+    else if (mode === "wheel") wheelHistory.push(currentLine);
+  }
   isDrawing = false;
+  currentLine = null;
 });
 
-// --- Wheels ---
-let wheels = [];
+// --- Buttons ---
+document.getElementById("start-car-draw").addEventListener("click", () => setMode("car"));
+document.getElementById("start-wheel-draw").addEventListener("click", () => setMode("wheel"));
+document.getElementById("place-wheel-crosshair").addEventListener("click", () => setMode("crosshair"));
 
-// Add wheel button
-document.getElementById("add-wheel").addEventListener("click", () => {
-  const wheel = new Konva.Circle({
-    x: stage.width() / 2,
-    y: stage.height() / 2,
-    radius: 50,
-    stroke: "red",
-    strokeWidth: 2,
-    draggable: true,
-  });
-  wheels.push(wheel);
-  layer.add(wheel);
-  layer.draw();
+// --- Undo ---
+document.getElementById("undo-car").addEventListener("click", () => {
+  if (carHistory.length === 0) return;
+  const last = carHistory.pop();
+  last.destroy();
+  carLayer.draw();
+});
+document.getElementById("undo-wheel").addEventListener("click", () => {
+  if (wheelHistory.length === 0) return;
+  const last = wheelHistory.pop();
+  last.destroy();
+  wheelLayer.draw();
 });
 
-// --- Car preview animation ---
-document.getElementById("preview-car").addEventListener("click", () => {
-  wheels.forEach((wheel) => {
-    new Konva.Tween({
-      node: wheel,
-      rotation: 360,
-      duration: 2,
-      repeat: Infinity,
-    }).play();
-  });
-
-  layer.find("Line").forEach((line) => {
-    new Konva.Tween({
-      node: line,
-      x: stage.width() - 200,
-      duration: 3,
-      easing: Konva.Easings.Linear,
-    }).play();
-  });
+// --- Upload Car Image ---
+document.getElementById("upload-car").addEventListener("click", () => {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*";
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      const img = new Image();
+      img.src = evt.target.result;
+      img.onload = () => {
+        const kImg = new Konva.Image({
+          image: img,
+          x: stage.width()/2 - img.width/2,
+          y: stage.height()/2 - img.height/2,
+          draggable: true
+        });
+        carLayer.add(kImg);
+        carLayer.draw();
+        carHistory.push(kImg);
+      };
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
 });
+
+// --- Upload Wheel Image ---
+document.getElementById("upload-wheel").addEventListener("click", () => {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*";
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      const img = new Image();
+      img.src = evt.target.result;
+      img.onload = () => {
+        const kImg = new Konva.Image({
+          image: img,
+          x: stage.width()/2 - img.width/2,
+          y: stage.height()/2 - img.height/2,
+          draggable: true
+        });
+        wheelLayer.add(kImg);
+        wheels.push(kImg);
+        wheelLayer.draw();
+      };
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+});
+
+// --- Slider max 100 ---
+const accelSlider = document.getElementById("acceleration");
+const speedSlider = document.getElementById("topSpeed");
+function updateSliders() {
+  const total = parseInt(accelSlider.value) + parseInt(speedSlider.value);
+  if (total > 100) speedSlider.value = 100 - parseInt(accelSlider.value);
+}
+accelSlider.addEventListener("input", updateSliders);
+speedSlider.addEventListener("input", updateSliders);
 
 // --- Email Validation ---
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-// --- Sliders max 100 ---
-const accelSlider = document.getElementById("acceleration");
-const speedSlider = document.getElementById("topSpeed");
-
-function updateSliders() {
-  const total = parseInt(accelSlider.value) + parseInt(speedSlider.value);
-  if (total > 100) speedSlider.value = 100 - parseInt(accelSlider.value);
-}
-
-accelSlider.addEventListener("input", updateSliders);
-speedSlider.addEventListener("input", updateSliders);
+// --- Preview ---
+document.getElementById("preview-car").addEventListener("click", () => {
+  wheels.forEach(wheel => new Konva.Tween({ node: wheel, rotation: 360, duration: 2, repeat: Infinity }).play());
+});
 
 // --- Submit Car ---
 document.getElementById("submit-car").addEventListener("click", async () => {
@@ -104,14 +179,9 @@ document.getElementById("submit-car").addEventListener("click", async () => {
     acceleration: accelSlider.value,
     topSpeed: speedSlider.value,
     email,
-    // Capture car body as image
-    carImageData: stage.toDataURL({ pixelRatio: 2 }),
-    wheelImageData: stage.toDataURL({ pixelRatio: 2 }),
-    wheelPositions: wheels.map((w) => ({
-      x: w.x(),
-      y: w.y(),
-      radius: w.radius(),
-    })),
+    carImageData: carLayer.toDataURL({ pixelRatio: 2 }),
+    wheelImageData: wheelLayer.toDataURL({ pixelRatio: 2 }),
+    wheelPositions: crosshairs.map(c => ({ x: c.x(), y: c.y() }))
   };
 
   try {

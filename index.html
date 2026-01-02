@@ -8,19 +8,39 @@
 </head>
 <body>
   <div id="crazy-races-container">
+    <!-- Drawing Canvas -->
     <div id="drawing-pane"></div>
+
+    <!-- Controls -->
     <div id="controls-pane">
+      <h2>Car Designer</h2>
       <input type="text" id="carName" placeholder="Car Name">
       <input type="text" id="teamName" placeholder="Team Name">
       <input type="email" id="email" placeholder="Your Email">
+
       <label>Acceleration: <input type="range" id="acceleration" min="1" max="50" value="25"></label>
       <label>Top Speed: <input type="range" id="topSpeed" min="10" max="80" value="50"></label>
-      <button id="add-wheel">Add Wheel</button>
+
+      <hr>
+      <h3>Car Body</h3>
+      <button id="start-car-draw">Draw Car Body</button>
+      <button id="upload-car">Upload Car Image</button>
+      <label>Brush Color: <input type="color" id="brush-color" value="#000000"></label>
+      <label>Brush Size: <input type="number" id="brush-size" value="3" min="1" max="20"></label>
+      <button id="undo-car">Undo</button>
+
+      <hr>
+      <h3>Wheels</h3>
+      <button id="start-wheel-draw">Draw Wheel</button>
+      <button id="upload-wheel">Upload Wheel Image</button>
+      <button id="place-wheel-crosshair">Place Wheel Crosshair</button>
+      <button id="undo-wheel">Undo</button>
+
+      <hr>
       <button id="preview-car">Preview Car</button>
       <button id="submit-car">Submit</button>
     </div>
   </div>
-
   <script src="script.js"></script>
 </body>
 </html>

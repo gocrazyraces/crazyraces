@@ -25,7 +25,8 @@ body {
 }
 
 #controls-pane input[type="text"],
-#controls-pane input[type="email"] {
+#controls-pane input[type="email"],
+#controls-pane input[type="number"] {
   padding: 5px;
   font-size: 14px;
 }

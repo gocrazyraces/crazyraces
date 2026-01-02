@@ -1,154 +1,94 @@
-const canvas = new fabric.Canvas('fabric-canvas', { backgroundColor: '#eee' });
+const canvas = new fabric.Canvas('fabric-canvas', { backgroundColor:'#eee' });
 
 // --- History ---
-let history = [];
-let redoStack = [];
-function saveState() { history.push(JSON.stringify(canvas)); redoStack=[]; }
-canvas.on('object:added', saveState);
-canvas.on('object:modified', saveState);
-canvas.on('object:removed', saveState);
+let history=[], redoStack=[];
+function saveState(){ history.push(JSON.stringify(canvas)); redoStack=[]; }
+canvas.on('object:added',saveState); canvas.on('object:modified',saveState); canvas.on('object:removed',saveState);
 
 // --- Tools ---
-let currentTool = null;
+let currentTool='select', tempObj=null, startX=0, startY=0;
 
-// Select
-document.getElementById('select-tool').onclick = () => { canvas.isDrawingMode=false; currentTool='select'; };
-
-// Brush
-document.getElementById('brush-tool').onclick = () => {
-  canvas.isDrawingMode = true; currentTool='brush';
-  const brush = new fabric.PencilBrush(canvas);
-  brush.width = parseInt(document.getElementById('brush-size').value);
-  brush.color = document.getElementById('brush-color').value;
-  canvas.freeDrawingBrush = brush;
+// Toolbar buttons
+document.getElementById('select-tool').onclick=()=>{ canvas.isDrawingMode=false; currentTool='select'; };
+document.getElementById('brush-tool').onclick=()=>{
+  canvas.isDrawingMode=true; currentTool='brush';
+  const brush=new fabric.PencilBrush(canvas);
+  brush.width=parseInt(document.getElementById('brush-size').value);
+  brush.color=document.getElementById('brush-color').value;
+  canvas.freeDrawingBrush=brush;
 };
+document.getElementById('eraser-tool').onclick=()=>{ canvas.isDrawingMode=true; currentTool='eraser'; const eraser=new fabric.EraserBrush(canvas); eraser.width=parseInt(document.getElementById('brush-size').value); canvas.freeDrawingBrush=eraser; };
+['rect','ellipse','line','polygon'].forEach(t=>{ document.getElementById(`${t}-tool`)?.addEventListener('click',()=>{ canvas.isDrawingMode=false; currentTool=t; }); });
 
-// Eraser
-document.getElementById('eraser-tool').onclick = () => {
-  canvas.isDrawingMode=true; currentTool='eraser';
-  const eraser = new fabric.EraserBrush(canvas);
-  eraser.width = parseInt(document.getElementById('brush-size').value);
-  canvas.freeDrawingBrush = eraser;
-};
-
-// Shapes
-document.getElementById('rect-tool').onclick = ()=>{ currentTool='rect'; canvas.isDrawingMode=false; };
-document.getElementById('circle-tool').onclick = ()=>{ currentTool='circle'; canvas.isDrawingMode=false; };
-document.getElementById('line-tool').onclick = ()=>{ currentTool='line'; canvas.isDrawingMode=false; };
-
-// Draw shapes on click
-canvas.on('mouse:down', function(o){
-  if(!['rect','circle','line'].includes(currentTool)) return;
-  const pointer = canvas.getPointer(o.e);
-  if(currentTool==='rect'){
-    const rect = new fabric.Rect({ left:pointer.x, top:pointer.y, width:50, height:30, fill:'#00f', selectable:true });
-    canvas.add(rect); saveState();
-  }
-  if(currentTool==='circle'){
-    const circ = new fabric.Circle({ left:pointer.x, top:pointer.y, radius:25, fill:'#0f0', selectable:true });
-    canvas.add(circ); saveState();
-  }
-  if(currentTool==='line'){
-    const line = new fabric.Line([pointer.x,pointer.y,pointer.x+50,pointer.y], { stroke:'black', strokeWidth:3, selectable:true });
-    canvas.add(line); saveState();
-  }
+// Mouse for shapes
+canvas.on('mouse:down', e=>{
+  if(!['rect','ellipse','line','polygon'].includes(currentTool)) return;
+  const pointer=canvas.getPointer(e.e); startX=pointer.x; startY=pointer.y;
+  if(currentTool==='rect') tempObj=new fabric.Rect({ left:startX, top:startY, width:0, height:0, fill:'#00f' });
+  if(currentTool==='ellipse') tempObj=new fabric.Ellipse({ left:startX, top:startY, rx:0, ry:0, fill:'#0f0' });
+  if(currentTool==='line') tempObj=new fabric.Line([startX,startY,startX,startY], { stroke:'black', strokeWidth:3 });
+  canvas.add(tempObj);
 });
+canvas.on('mouse:move', e=>{ if(!tempObj) return; const p=canvas.getPointer(e.e); if(tempObj.type==='rect'){ tempObj.set({ width:Math.abs(p.x-startX), height:Math.abs(p.y-startY) }); } if(tempObj.type==='ellipse'){ tempObj.set({ rx:Math.abs(p.x-startX)/2, ry:Math.abs(p.y-startY)/2 }); } if(tempObj.type==='line'){ tempObj.set({ x2:p.x, y2:p.y }); } canvas.renderAll(); });
+canvas.on('mouse:up', e=>{ tempObj=null; });
 
-// Brush controls
-document.getElementById('brush-color').onchange = () => { if(canvas.isDrawingMode) canvas.freeDrawingBrush.color=document.getElementById('brush-color').value; };
-document.getElementById('brush-size').onchange = () => { if(canvas.isDrawingMode) canvas.freeDrawingBrush.width=parseInt(document.getElementById('brush-size').value); };
+// Brush settings
+document.getElementById('brush-color').onchange=()=>{ if(canvas.isDrawingMode) canvas.freeDrawingBrush.color=document.getElementById('brush-color').value; };
+document.getElementById('brush-size').onchange=()=>{ if(canvas.isDrawingMode) canvas.freeDrawingBrush.width=parseInt(document.getElementById('brush-size').value); };
 
 // Undo / Redo
-document.getElementById('undo').onclick = () => { if(history.length>0){ redoStack.push(JSON.stringify(canvas)); canvas.loadFromJSON(history.pop(),()=>canvas.renderAll()); } };
-document.getElementById('redo').onclick = () => { if(redoStack.length>0){ history.push(JSON.stringify(canvas)); canvas.loadFromJSON(redoStack.pop(),()=>canvas.renderAll()); } };
+document.getElementById('undo').onclick=()=>{ if(history.length>0){ redoStack.push(JSON.stringify(canvas)); canvas.loadFromJSON(history.pop(),()=>canvas.renderAll()); } };
+document.getElementById('redo').onclick=()=>{ if(redoStack.length>0){ history.push(JSON.stringify(canvas)); canvas.loadFromJSON(redoStack.pop(),()=>canvas.renderAll()); } };
 
-// Upload car
-document.getElementById('upload-car').onclick = ()=>{ uploadImage('car'); };
-// Upload wheel
-document.getElementById('upload-wheel').onclick = ()=>{ uploadImage('wheel'); };
+// Layer list
+function updateLayerList(){
+  const list=document.getElementById('object-list'); list.innerHTML='';
+  canvas.getObjects().forEach((obj,i)=>{ const li=document.createElement('li'); li.textContent=`${obj.type} (${obj.name||''})`; li.onclick=()=>canvas.setActiveObject(obj); list.appendChild(li); });
+}
+canvas.on('object:added',updateLayerList); canvas.on('object:removed',updateLayerList); canvas.on('object:modified',updateLayerList);
+
+// Upload car / wheel
 function uploadImage(type){
-  const input = document.createElement('input'); input.type='file'; input.accept='image/*';
-  input.onchange = e=>{
-    const reader = new FileReader();
-    reader.onload = evt => { fabric.Image.fromURL(evt.target.result, img => {
-      img.left=512-img.width/2; img.top=256-img.height/2; img.set({name:type, selectable:true});
-      if(type==='wheel') img.crosshairSnapped=false;
-      canvas.add(img); saveState();
-    }); };
-    reader.readAsDataURL(e.target.files[0]);
+  const input=document.createElement('input'); input.type='file'; input.accept='image/*';
+  input.onchange=e=>{
+    const reader=new FileReader(); reader.onload=evt=>{
+      fabric.Image.fromURL(evt.target.result,img=>{
+        img.left=512-img.width/2; img.top=256-img.height/2;
+        img.set({name:type, selectable:true});
+        canvas.add(img); saveState(); updateLayerList();
+      });
+    }; reader.readAsDataURL(e.target.files[0]);
   }; input.click();
 }
+document.getElementById('upload-car').onclick=()=>uploadImage('car');
+document.getElementById('upload-wheel').onclick=()=>uploadImage('wheel');
 
 // Crosshairs
 const crosshairs=[];
-document.getElementById('add-crosshair').onclick=(e)=>{
-  const pointer = canvas.getPointer(e.e);
-  const ch = new fabric.Circle({ left:pointer.x, top:pointer.y, radius:5, fill:'red', selectable:false });
-  crosshairs.push(ch); canvas.add(ch);
+document.getElementById('add-crosshair').onclick=e=>{
+  const p=canvas.getPointer(e.e); const ch=new fabric.Circle({ left:p.x, top:p.y, radius:5, fill:'red', selectable:false }); crosshairs.push(ch); canvas.add(ch); updateLayerList();
 };
 
 // Wheel snapping
 canvas.on('object:moving', e=>{
-  const obj=e.target;
-  if(obj.name!=='wheel') return;
-  crosshairs.forEach(ch=>{
-    const dist=Math.hypot(obj.left-ch.left,obj.top-ch.top);
-    if(dist<20){ obj.left=ch.left; obj.top=ch.top; obj.crosshairSnapped=true; }
-  });
+  const obj=e.target; if(obj.name!=='wheel') return;
+  crosshairs.forEach(ch=>{ const dist=Math.hypot(obj.left-ch.left,obj.top-ch.top); if(dist<20){ obj.left=ch.left; obj.top=ch.top; } });
 });
 
 // Sliders capped at 100
-const accelSlider=document.getElementById("acceleration");
-const speedSlider=document.getElementById("topSpeed");
-function updateSliders(){
-  const total=parseInt(accelSlider.value)+parseInt(speedSlider.value);
-  if(total>100) speedSlider.value=100-parseInt(accelSlider.value);
-}
-accelSlider.addEventListener("input", updateSliders);
-speedSlider.addEventListener("input", updateSliders);
+const accelSlider=document.getElementById("acceleration"); const speedSlider=document.getElementById("topSpeed");
+function updateSliders(){ const total=parseInt(accelSlider.value)+parseInt(speedSlider.value); if(total>100) speedSlider.value=100-parseInt(accelSlider.value); }
+accelSlider.addEventListener("input",updateSliders); speedSlider.addEventListener("input",updateSliders);
 
 // Email validation
 function isValidEmail(email){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
 
-// Preview
-document.getElementById('preview-car').onclick=()=>{
-  const car=canvas.getObjects().find(o=>o.name==='car'); if(!car) return alert('Add a car');
-  const wheels=canvas.getObjects().filter(o=>o.name==='wheel');
-  let startX=car.left; const endX=900;
-  function animate(){
-    if(car.left>=endX){ car.left=startX; wheels.forEach(w=>w.left=w.left); }
-    car.left+=5; wheels.forEach(w=>{ w.left+=5; w.rotate(15); });
-    canvas.renderAll(); requestAnimationFrame(animate);
-  }
-  animate();
+// Export
+document.getElementById('export-car').onclick=()=>{ const car=canvas.getObjects().find(o=>o.name==='car'); if(!car) return alert('No car'); const c=new fabric.StaticCanvas(null,{width:car.width*2,height:car.height*2}); c.add(car.clone()); const url=c.toDataURL({format:'png'}); downloadURL(url,'car.png'); };
+document.getElementById('export-wheels').onclick=()=>{ const wheels=canvas.getObjects().filter(o=>o.name==='wheel'); const c=new fabric.StaticCanvas(null,{width:1024,height:512}); wheels.forEach(w=>c.add(w.clone())); downloadURL(c.toDataURL({format:'png'}),'wheels.png'); };
+document.getElementById('export-json').onclick=()=>{
+  const carName=document.getElementById('carName').value; const teamName=document.getElementById('teamName').value; const email=document.getElementById('email').value;
+  const wheels=canvas.getObjects().filter(o=>o.name==='wheel'); const data={carName,teamName,email,acceleration:accelSlider.value,topSpeed:speedSlider.value,wheels:wheels.map(w=>({x:w.left,y:w.top}))};
+  downloadURL("data:application/json,"+encodeURIComponent(JSON.stringify(data)),'car.json');
 };
-
-// Submit
-document.getElementById('submit-car').onclick=async()=>{
-  const email=document.getElementById('email').value; if(!isValidEmail(email)) return alert('Enter valid email.');
-  const carName=document.getElementById('carName').value;
-  const teamName=document.getElementById('teamName').value;
-
-  // Export car
-  const carObj=canvas.getObjects().find(o=>o.name==='car');
-  let carDataURL='';
-  if(carObj){ const carCanvas=new fabric.StaticCanvas(null,{width:carObj.width*2,height:carObj.height*2});
-    carCanvas.add(carObj.clone()); carDataURL=carCanvas.toDataURL({format:'png'}); }
-
-  // Export wheels
-  const wheelObjs=canvas.getObjects().filter(o=>o.name==='wheel');
-  const wheelCanvas=new fabric.StaticCanvas(null,{width:1024,height:512});
-  wheelObjs.forEach(w=>wheelCanvas.add(w.clone()));
-  const wheelDataURL=wheelCanvas.toDataURL({format:'png'});
-
-  const carData={
-    carName, teamName, acceleration: accelSlider.value, topSpeed: speedSlider.value,
-    email, carImageData: carDataURL, wheelImageData: wheelDataURL,
-    wheelPositions: wheelObjs.map(w=>({x:w.left,y:w.top}))
-  };
-
-  try{
-    const res = await fetch('/api/submit-car',{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({carData})});
-    const result=await res.json(); alert(result.message);
-  } catch(err){ console.error(err); alert('Submission failed'); }
-};
+function downloadURL(url,name){ const a=document.createElement('a'); a.href=url; a.download=name; a.click(); }

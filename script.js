@@ -80,7 +80,7 @@ async function submitCarDesign() {
 
         const result = await response.json();
         if (response.ok) {
-            alert('Car submitted successfully 2!');
+            alert('Car submitted successfully 3!');
         } else {
             alert('Error: ' + result.message);
         }

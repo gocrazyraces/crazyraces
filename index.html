@@ -3,18 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <title>CrazyRaces Editor</title>
-
-<!-- Toast UI Image Editor -->
-<link rel="stylesheet" href="https://uicdn.toast.com/tui-image-editor/latest/tui-image-editor.css">
-<script src="https://uicdn.toast.com/tui-image-editor/latest/tui-image-editor.js"></script>
-
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/literallycanvas/lib/css/literallycanvas.css">
+<script src="https://cdn.jsdelivr.net/npm/literallycanvas/lib/js/literallycanvas.js"></script>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div id="editor-ui">
-
-  <div id="toast-image-editor"></div>
+<div id="editor-container">
+  <div id="lc"></div>
 
   <div id="controls">
     <input type="text" id="carName" placeholder="Car Name">
@@ -24,20 +20,15 @@
     <label>Acceleration: <input type="range" id="acceleration" min="1" max="50" value="25"></label>
     <label>Top Speed: <input type="range" id="topSpeed" min="10" max="80" value="50"></label>
 
-    <!-- Crosshair placement -->
     <button id="add-crosshair">Add Wheel Crosshair</button>
-
-    <!-- Image upload -->
     <button id="upload-car">Upload Car Image</button>
     <button id="upload-wheel">Upload Wheel Image</button>
 
-    <!-- Export / Submit -->
     <button id="export-car">Export Car PNG</button>
     <button id="export-wheel">Export Wheel PNG</button>
     <button id="export-json">Export JSON</button>
     <button id="submit-design">Submit Design</button>
   </div>
-
 </div>
 
 <script src="script.js"></script>

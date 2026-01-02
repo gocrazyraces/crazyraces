@@ -1,50 +1,58 @@
-// Initialize Toast UI Image Editor
-const imageEditor = new tui.ImageEditor('#toast-image-editor', {
-  includeUI: {
-    menu: ['draw', 'shape', 'text', 'flip', 'rotate', 'crop'],
-    initMenu: 'draw',
-    uiSize: { width: '1024px', height: '512px' },
-    menuBarPosition: 'bottom'
-  },
-  cssMaxWidth: 1024,
-  cssMaxHeight: 512,
-  selectionStyle: { cornerSize: 20, rotatingPointOffset: 70 }
+// Initialize LiterallyCanvas
+const lc = LC.init(document.getElementById('lc'), {
+  imageURLPrefix: 'https://cdn.jsdelivr.net/npm/literallycanvas/lib/img',
+  tools: [LC.tools.Pencil, LC.tools.Eraser, LC.tools.Rectangle, LC.tools.Ellipse, LC.tools.Text]
 });
 
-// Crosshairs
+// Wheel crosshairs
 let crosshairs = [];
+let placingCrosshair = false;
 
-// Add wheel crosshair
-document.getElementById('add-crosshair').addEventListener('click', () => {
-  alert('Click on the image to place a crosshair');
-  const onClick = (pos) => {
-    const x = pos.offsetX;
-    const y = pos.offsetY;
-    crosshairs.push({ x, y });
-    imageEditor.addText('✚', { x, y, fill: 'red', fontSize: 24 });
-    imageEditor.off('mousedown', onClick);
-  };
-  imageEditor.on('mousedown', onClick);
+// Add crosshair
+document.getElementById('add-crosshair').onclick = () => {
+  alert('Click on the canvas to place a crosshair');
+  placingCrosshair = true;
+};
+
+// Handle crosshair placement
+lc.canvas.addEventListener('click', e => {
+  if (!placingCrosshair) return;
+  const rect = lc.canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  crosshairs.push({x, y});
+
+  // Draw a small red cross
+  const size = 10;
+  lc.addShape(new LC.Shape.Rectangle({
+    x: x-size, y: y-size, width: size*2, height: size*2,
+    strokeColor: 'red', fillColor: 'red', strokeWidth:1
+  }));
+  placingCrosshair = false;
 });
 
-// Upload car/wheel
-function uploadImage(type) {
+// Image uploads
+function uploadImage(isCar) {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*';
   input.onchange = e => {
     const reader = new FileReader();
     reader.onload = evt => {
-      imageEditor.loadImageFromURL(evt.target.result, type, {
-        crossOrigin: 'anonymous'
-      }).then(() => console.log(type + ' loaded'));
+      const img = new Image();
+      img.onload = () => {
+        lc.saveShape(new LC.Shape.Image({x:0, y:0, image:img, width:img.width, height:img.height}));
+      };
+      img.src = evt.target.result;
+      if (isCar) window.carImageData = evt.target.result;
+      else window.wheelImageData = evt.target.result;
     };
     reader.readAsDataURL(e.target.files[0]);
   };
   input.click();
 }
-document.getElementById('upload-car').onclick = () => uploadImage('car');
-document.getElementById('upload-wheel').onclick = () => uploadImage('wheel');
+document.getElementById('upload-car').onclick = () => uploadImage(true);
+document.getElementById('upload-wheel').onclick = () => uploadImage(false);
 
 // Sliders capped at 100
 const accelSlider = document.getElementById("acceleration");
@@ -59,7 +67,7 @@ speedSlider.addEventListener("input", updateSliders);
 // Email validation
 function isValidEmail(email) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
 
-// Download helper
+// Export helpers
 function downloadURL(url, filename) {
   const a = document.createElement('a');
   a.href = url;
@@ -67,24 +75,20 @@ function downloadURL(url, filename) {
   a.click();
 }
 
-// Export car PNG
 document.getElementById('export-car').onclick = () => {
-  const dataURL = imageEditor.toDataURL();
+  const dataURL = lc.getImage().toDataURL();
   downloadURL(dataURL, 'car.png');
 };
 
-// Export wheels PNG (for demo, we export full image)
 document.getElementById('export-wheel').onclick = () => {
-  const dataURL = imageEditor.toDataURL();
-  downloadURL(dataURL, 'wheels.png');
+  const dataURL = window.wheelImageData || lc.getImage().toDataURL();
+  downloadURL(dataURL, 'wheel.png');
 };
 
-// Export JSON
 document.getElementById('export-json').onclick = () => {
   const carName = document.getElementById('carName').value;
   const teamName = document.getElementById('teamName').value;
   const email = document.getElementById('email').value;
-
   if(!isValidEmail(email)) return alert('Invalid email');
 
   const data = {
@@ -95,12 +99,12 @@ document.getElementById('export-json').onclick = () => {
     topSpeed: speedSlider.value,
     crosshairs
   };
-  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
-  downloadURL(url, 'car.json');
+  downloadURL(url,'car.json');
 };
 
-// Submit to serverless backend
+// Submit to backend
 document.getElementById('submit-design').onclick = async () => {
   const carName = document.getElementById('carName').value;
   const teamName = document.getElementById('teamName').value;
@@ -108,7 +112,6 @@ document.getElementById('submit-design').onclick = async () => {
 
   if(!isValidEmail(email)) return alert('Invalid email');
 
-  const carDataURL = imageEditor.toDataURL();
   const data = {
     carName,
     teamName,
@@ -116,16 +119,20 @@ document.getElementById('submit-design').onclick = async () => {
     acceleration: accelSlider.value,
     topSpeed: speedSlider.value,
     crosshairs,
-    carImage: carDataURL
+    carImage: window.carImageData || lc.getImage().toDataURL(),
+    wheelImage: window.wheelImageData || lc.getImage().toDataURL()
   };
 
   try {
     const res = await fetch('/api/submit-car', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
       body: JSON.stringify(data)
     });
     if(res.ok) alert('Submitted successfully!');
-    else alert('Error submitting.');
-  } catch(err) { console.error(err); alert('Submission failed.'); }
+    else alert('Submission failed.');
+  } catch(err) {
+    console.error(err);
+    alert('Submission failed.');
+  }
 };

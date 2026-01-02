@@ -1,46 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>CrazyRaces Car Designer</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/konva@8.4.3/konva.min.js"></script>
+<meta charset="UTF-8">
+<title>CrazyRaces Fabric Editor</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
 </head>
 <body>
-  <div id="crazy-races-container">
-    <!-- Drawing Canvas -->
-    <div id="drawing-pane"></div>
-
-    <!-- Controls -->
-    <div id="controls-pane">
-      <h2>Car Designer</h2>
-      <input type="text" id="carName" placeholder="Car Name">
-      <input type="text" id="teamName" placeholder="Team Name">
-      <input type="email" id="email" placeholder="Your Email">
-
-      <label>Acceleration: <input type="range" id="acceleration" min="1" max="50" value="25"></label>
-      <label>Top Speed: <input type="range" id="topSpeed" min="10" max="80" value="50"></label>
-
-      <hr>
-      <h3>Car Body</h3>
-      <button id="start-car-draw">Draw Car Body</button>
-      <button id="upload-car">Upload Car Image</button>
-      <label>Brush Color: <input type="color" id="brush-color" value="#000000"></label>
-      <label>Brush Size: <input type="number" id="brush-size" value="3" min="1" max="20"></label>
-      <button id="undo-car">Undo</button>
-
-      <hr>
-      <h3>Wheels</h3>
-      <button id="start-wheel-draw">Draw Wheel</button>
-      <button id="upload-wheel">Upload Wheel Image</button>
-      <button id="place-wheel-crosshair">Place Wheel Crosshair</button>
-      <button id="undo-wheel">Undo</button>
-
-      <hr>
-      <button id="preview-car">Preview Car</button>
-      <button id="submit-car">Submit</button>
+<div id="container">
+  <!-- Toolbar -->
+  <div id="toolbar">
+    <h3>Tools</h3>
+    <div class="tool-group">
+      <button id="select-tool" title="Select">&#x25B2;</button>
+      <button id="brush-tool" title="Brush">&#9998;</button>
+      <button id="eraser-tool" title="Eraser">&#9003;</button>
+    </div>
+    <div class="tool-group">
+      <button id="rect-tool" title="Rectangle">&#9633;</button>
+      <button id="circle-tool" title="Circle">&#9711;</button>
+      <button id="line-tool" title="Line">&#9472;</button>
+    </div>
+    <div class="tool-group">
+      <label>Brush Size:<input type="number" id="brush-size" value="5" min="1" max="50"></label>
+      <label>Brush Color:<input type="color" id="brush-color" value="#000000"></label>
+    </div>
+    <div class="tool-group">
+      <button id="undo" title="Undo">&#8630;</button>
+      <button id="redo" title="Redo">&#8631;</button>
+    </div>
+    <div class="tool-group">
+      <button id="upload-car">Upload Car</button>
+      <button id="upload-wheel">Upload Wheel</button>
+      <button id="add-crosshair">Add Crosshair</button>
     </div>
   </div>
-  <script src="script.js"></script>
+
+  <!-- Canvas -->
+  <div id="canvas-container">
+    <canvas id="fabric-canvas" width="1024" height="512"></canvas>
+  </div>
+
+  <!-- Controls -->
+  <div id="controls">
+    <input type="text" id="carName" placeholder="Car Name">
+    <input type="text" id="teamName" placeholder="Team Name">
+    <input type="email" id="email" placeholder="Your Email">
+    <label>Acceleration: <input type="range" id="acceleration" min="1" max="50" value="25"></label>
+    <label>Top Speed: <input type="range" id="topSpeed" min="10" max="80" value="50"></label>
+    <button id="preview-car">Preview Car</button>
+    <button id="submit-car">Submit</button>
+  </div>
+</div>
+
+<script src="script.js"></script>
 </body>
 </html>

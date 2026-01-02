@@ -3,30 +3,42 @@ body {
   font-family: Arial, sans-serif;
   background: #f5f5f5;
 }
-
-#crazy-races-container {
+#container {
   display: flex;
-  padding: 20px;
-  gap: 20px;
+  gap: 10px;
+  padding: 10px;
 }
-
-#drawing-pane {
-  border: 2px solid #333;
-  width: 1024px;
-  height: 512px;
-  background: #eee;
-}
-
-#controls-pane {
+#toolbar {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  width: 300px;
+  width: 220px;
+  background: #ddd;
+  padding: 10px;
+  border-radius: 5px;
 }
-
-#controls-pane input[type="text"],
-#controls-pane input[type="email"],
-#controls-pane input[type="number"] {
+.tool-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 5px;
+}
+#toolbar button {
+  font-size: 18px;
+  padding: 5px;
+  cursor: pointer;
+}
+#canvas-container {
+  border: 2px solid #333;
+}
+#controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 250px;
+}
+#controls input[type="text"],
+#controls input[type="email"] {
   padding: 5px;
   font-size: 14px;
 }

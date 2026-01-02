@@ -1,26 +1,46 @@
-// Konva setup
+// --- Konva Stage Setup ---
 const stage = new Konva.Stage({
   container: "drawing-pane",
   width: 1024,
-  height: 512
+  height: 512,
 });
+
 const layer = new Konva.Layer();
 stage.add(layer);
 
-// Car body (freehand)
-const carBody = new Konva.Line({
-  points: [],
-  stroke: "black",
-  strokeWidth: 3,
-  lineJoin: "round",
-  draggable: true
-});
-layer.add(carBody);
+// --- Freehand car body drawing ---
+let isDrawing = false;
+let currentLine;
 
-// Wheel array
+stage.on("mousedown touchstart", function () {
+  isDrawing = true;
+  currentLine = new Konva.Line({
+    stroke: "black",
+    strokeWidth: 3,
+    points: [],
+    lineJoin: "round",
+    lineCap: "round",
+    draggable: false,
+  });
+  layer.add(currentLine);
+});
+
+stage.on("mousemove touchmove", function (e) {
+  if (!isDrawing) return;
+  const pos = stage.getPointerPosition();
+  const newPoints = currentLine.points().concat([pos.x, pos.y]);
+  currentLine.points(newPoints);
+  layer.batchDraw();
+});
+
+stage.on("mouseup touchend", function () {
+  isDrawing = false;
+});
+
+// --- Wheels ---
 let wheels = [];
 
-// Add wheel
+// Add wheel button
 document.getElementById("add-wheel").addEventListener("click", () => {
   const wheel = new Konva.Circle({
     x: stage.width() / 2,
@@ -28,31 +48,40 @@ document.getElementById("add-wheel").addEventListener("click", () => {
     radius: 50,
     stroke: "red",
     strokeWidth: 2,
-    draggable: true
+    draggable: true,
   });
   wheels.push(wheel);
   layer.add(wheel);
   layer.draw();
 });
 
-// Preview car animation
+// --- Car preview animation ---
 document.getElementById("preview-car").addEventListener("click", () => {
-  wheels.forEach(wheel => {
+  wheels.forEach((wheel) => {
     new Konva.Tween({
       node: wheel,
       rotation: 360,
       duration: 2,
-      repeat: Infinity
+      repeat: Infinity,
+    }).play();
+  });
+
+  layer.find("Line").forEach((line) => {
+    new Konva.Tween({
+      node: line,
+      x: stage.width() - 200,
+      duration: 3,
+      easing: Konva.Easings.Linear,
     }).play();
   });
 });
 
-// Email validation
+// --- Email Validation ---
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-// Slider zero-sum
+// --- Sliders max 100 ---
 const accelSlider = document.getElementById("acceleration");
 const speedSlider = document.getElementById("topSpeed");
 
@@ -64,7 +93,7 @@ function updateSliders() {
 accelSlider.addEventListener("input", updateSliders);
 speedSlider.addEventListener("input", updateSliders);
 
-// Submit car
+// --- Submit Car ---
 document.getElementById("submit-car").addEventListener("click", async () => {
   const email = document.getElementById("email").value;
   if (!isValidEmail(email)) return alert("Enter a valid email.");
@@ -75,16 +104,21 @@ document.getElementById("submit-car").addEventListener("click", async () => {
     acceleration: accelSlider.value,
     topSpeed: speedSlider.value,
     email,
+    // Capture car body as image
     carImageData: stage.toDataURL({ pixelRatio: 2 }),
     wheelImageData: stage.toDataURL({ pixelRatio: 2 }),
-    wheelPositions: wheels.map(w => ({ x: w.x(), y: w.y(), radius: w.radius() }))
+    wheelPositions: wheels.map((w) => ({
+      x: w.x(),
+      y: w.y(),
+      radius: w.radius(),
+    })),
   };
 
   try {
     const res = await fetch("/api/submit-car", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ carData })
+      body: JSON.stringify({ carData }),
     });
     const result = await res.json();
     alert(result.message);

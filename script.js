@@ -1,37 +1,39 @@
-// Initialize LiterallyCanvas
-const lc = LC.init(document.getElementById('lc'), {
-  imageURLPrefix: 'https://cdn.jsdelivr.net/npm/literallycanvas/lib/img',
-  tools: [LC.tools.Pencil, LC.tools.Eraser, LC.tools.Rectangle, LC.tools.Ellipse, LC.tools.Text]
+// Initialize Fabric.js canvas
+const canvas = new fabric.Canvas('fabric-canvas', {
+  backgroundColor: '#fff',
+  preserveObjectStacking: true
 });
 
-// Wheel crosshairs
+// Store crosshairs and images
 let crosshairs = [];
 let placingCrosshair = false;
+let carImageObj = null;
+let wheelImageObj = null;
 
-// Add crosshair
+// Add crosshair button
 document.getElementById('add-crosshair').onclick = () => {
-  alert('Click on the canvas to place a crosshair');
+  alert('Click on canvas to place a crosshair');
   placingCrosshair = true;
 };
 
-// Handle crosshair placement
-lc.canvas.addEventListener('click', e => {
-  if (!placingCrosshair) return;
-  const rect = lc.canvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
-  crosshairs.push({x, y});
-
-  // Draw a small red cross
+// Handle canvas clicks for crosshairs
+canvas.on('mouse:down', function(options) {
+  if(!placingCrosshair) return;
+  const pointer = canvas.getPointer(options.e);
   const size = 10;
-  lc.addShape(new LC.Shape.Rectangle({
-    x: x-size, y: y-size, width: size*2, height: size*2,
-    strokeColor: 'red', fillColor: 'red', strokeWidth:1
-  }));
+
+  // Red crosshair (two lines)
+  const line1 = new fabric.Line([pointer.x-size, pointer.y, pointer.x+size, pointer.y], { stroke: 'red', strokeWidth: 2 });
+  const line2 = new fabric.Line([pointer.x, pointer.y-size, pointer.x, pointer.y+size], { stroke: 'red', strokeWidth: 2 });
+
+  canvas.add(line1);
+  canvas.add(line2);
+  crosshairs.push({x:pointer.x, y:pointer.y});
+
   placingCrosshair = false;
 });
 
-// Image uploads
+// Upload image helper
 function uploadImage(isCar) {
   const input = document.createElement('input');
   input.type = 'file';
@@ -39,13 +41,13 @@ function uploadImage(isCar) {
   input.onchange = e => {
     const reader = new FileReader();
     reader.onload = evt => {
-      const img = new Image();
-      img.onload = () => {
-        lc.saveShape(new LC.Shape.Image({x:0, y:0, image:img, width:img.width, height:img.height}));
-      };
-      img.src = evt.target.result;
-      if (isCar) window.carImageData = evt.target.result;
-      else window.wheelImageData = evt.target.result;
+      fabric.Image.fromURL(evt.target.result, function(img) {
+        img.set({ left: 0, top: 0, selectable: true });
+        canvas.add(img);
+        if(isCar) carImageObj = img;
+        else wheelImageObj = img;
+        canvas.renderAll();
+      });
     };
     reader.readAsDataURL(e.target.files[0]);
   };
@@ -75,16 +77,25 @@ function downloadURL(url, filename) {
   a.click();
 }
 
+// Export Car PNG
 document.getElementById('export-car').onclick = () => {
-  const dataURL = lc.getImage().toDataURL();
+  const dataURL = canvas.toDataURL({ format:'png' });
   downloadURL(dataURL, 'car.png');
 };
 
+// Export Wheel PNG (just the wheel image if uploaded)
 document.getElementById('export-wheel').onclick = () => {
-  const dataURL = window.wheelImageData || lc.getImage().toDataURL();
+  if(!wheelImageObj) {
+    alert('No wheel image uploaded');
+    return;
+  }
+  const tempCanvas = new fabric.StaticCanvas(null, { width: wheelImageObj.width, height: wheelImageObj.height });
+  tempCanvas.add(fabric.util.object.clone(wheelImageObj));
+  const dataURL = tempCanvas.toDataURL({ format:'png' });
   downloadURL(dataURL, 'wheel.png');
 };
 
+// Export JSON
 document.getElementById('export-json').onclick = () => {
   const carName = document.getElementById('carName').value;
   const teamName = document.getElementById('teamName').value;
@@ -109,8 +120,10 @@ document.getElementById('submit-design').onclick = async () => {
   const carName = document.getElementById('carName').value;
   const teamName = document.getElementById('teamName').value;
   const email = document.getElementById('email').value;
-
   if(!isValidEmail(email)) return alert('Invalid email');
+
+  const carDataURL = canvas.toDataURL({ format:'png' });
+  const wheelDataURL = wheelImageObj ? (new fabric.StaticCanvas(null, {width:wheelImageObj.width, height:wheelImageObj.height})).toDataURL({format:'png'}) : carDataURL;
 
   const data = {
     carName,
@@ -119,8 +132,8 @@ document.getElementById('submit-design').onclick = async () => {
     acceleration: accelSlider.value,
     topSpeed: speedSlider.value,
     crosshairs,
-    carImage: window.carImageData || lc.getImage().toDataURL(),
-    wheelImage: window.wheelImageData || lc.getImage().toDataURL()
+    carImage: carDataURL,
+    wheelImage: wheelDataURL
   };
 
   try {

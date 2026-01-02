@@ -3,14 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <title>CrazyRaces Editor</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/literallycanvas/lib/css/literallycanvas.css">
-<script src="https://cdn.jsdelivr.net/npm/literallycanvas/lib/js/literallycanvas.js"></script>
+
+<!-- Fabric.js CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/6.0.0/fabric.min.js"></script>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div id="editor-container">
-  <div id="lc"></div>
+  <canvas id="fabric-canvas" width="1024" height="512" style="border:2px solid #444;"></canvas>
 
   <div id="controls">
     <input type="text" id="carName" placeholder="Car Name">

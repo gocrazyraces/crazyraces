@@ -3,15 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <title>CrazyRaces Editor</title>
-
-<!-- Fabric.js CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/6.0.0/fabric.min.js"></script>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div id="editor-container">
-  <canvas id="fabric-canvas" width="1024" height="512" style="border:2px solid #444;"></canvas>
+  <canvas id="fabric-canvas" width="1024" height="512"></canvas>
 
   <div id="controls">
     <input type="text" id="carName" placeholder="Car Name">
@@ -22,13 +20,13 @@
     <label>Top Speed: <input type="range" id="topSpeed" min="10" max="80" value="50"></label>
 
     <button id="add-crosshair">Add Wheel Crosshair</button>
-    <button id="upload-car">Upload Car Image</button>
-    <button id="upload-wheel">Upload Wheel Image</button>
+    <input type="file" id="upload-car" accept="image/*">
+    <input type="file" id="upload-wheel" accept="image/*">
 
     <button id="export-car">Export Car PNG</button>
     <button id="export-wheel">Export Wheel PNG</button>
     <button id="export-json">Export JSON</button>
-    <button id="submit-design">Submit Design</button>
+    <button id="submit-design">Submit Design!</button>
   </div>
 </div>
 

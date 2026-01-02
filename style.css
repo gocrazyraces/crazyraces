@@ -9,6 +9,11 @@ body {
   padding: 20px;
 }
 
+#fabric-canvas {
+  border: 2px solid #444;
+  display: block;
+}
+
 #controls {
   display: flex;
   flex-direction: column;
@@ -16,9 +21,14 @@ body {
   width: 250px;
 }
 
-#controls input[type="text"], #controls input[type="email"] {
+#controls input[type="text"],
+#controls input[type="email"] {
   padding: 5px;
   width: 100%;
+}
+
+#controls input[type="file"] {
+  padding: 3px;
 }
 
 #controls button {

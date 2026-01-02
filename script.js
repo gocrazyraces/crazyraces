@@ -49,15 +49,15 @@ function uploadWheelImage(event) {
     reader.readAsDataURL(file);
 }
 
-// Handle form submission (mock)
-function submitCarDesign() {
+// Submit car design and data
+async function submitCarDesign() {
     const acceleration = document.getElementById('acceleration').value;
     const topSpeed = document.getElementById('topSpeed').value;
     const carName = document.getElementById('carName').value;
     const teamName = document.getElementById('teamName').value;
     const email = document.getElementById('email').value;
 
-    // Prepare JSON object for the car design
+    // Prepare the data to send
     const carData = {
         carName,
         teamName,
@@ -68,7 +68,24 @@ function submitCarDesign() {
         wheelImageData: wheelCanvas.toDataURL() // Base64 image data for the wheels
     };
 
-    console.log('Car data:', carData); // You can replace this with actual submission logic
+    try {
+        // Send the data to the backend API
+        const response = await fetch('/api/submit-car', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ carData }),
+        });
 
-    alert('Car submitted successfully!');
+        const result = await response.json();
+        if (response.ok) {
+            alert('Car submitted successfully!');
+        } else {
+            alert('Error: ' + result.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred while submitting the car.');
+    }
 }

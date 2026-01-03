@@ -1,58 +1,95 @@
+:root {
+  --bg: #f3f5f8;
+  --panel: #ffffff;
+  --accent: #4a6cf7;
+  --accent-dark: #3b55c5;
+  --border: #dcdfe6;
+}
+
 * {
   box-sizing: border-box;
-  font-family: system-ui, sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 body {
   margin: 0;
-  background: #f4f6f8;
+  background: var(--bg);
 }
 
 header {
   background: #1e1e2f;
   color: white;
-  padding: 12px;
+  padding: 12px 20px;
   text-align: center;
 }
 
 #app {
   display: flex;
-  height: calc(100vh - 60px);
+  height: calc(100vh - 56px);
 }
 
 #toolbar {
-  width: 260px;
+  width: 280px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
   padding: 12px;
-  background: white;
-  border-right: 1px solid #ddd;
   overflow-y: auto;
 }
 
-.tool-row {
+.section {
+  margin-bottom: 16px;
+}
+
+.section h3 {
+  margin: 0 0 6px;
+  font-size: 14px;
+  color: #444;
+}
+
+.row {
   display: flex;
   gap: 6px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
-#toolbar button {
+button {
   flex: 1;
   padding: 8px;
-  border: none;
-  background: #2d72d9;
-  color: white;
-  border-radius: 4px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: #f7f8fa;
+  cursor: pointer;
 }
 
-#toolbar button:hover {
-  background: #245bb2;
+button.active {
+  background: var(--accent);
+  color: white;
+}
+
+button.primary {
+  background: var(--accent);
+  color: white;
+  border: none;
+}
+
+button:hover {
+  background: var(--accent-dark);
+  color: white;
+}
+
+input[type="range"],
+input[type="color"],
+input[type="text"] {
+  width: 100%;
 }
 
 .file {
   display: block;
-  background: #eee;
   padding: 8px;
-  border-radius: 4px;
+  border-radius: 6px;
+  background: #f1f3f7;
   text-align: center;
+  cursor: pointer;
 }
 
 .file input {
@@ -67,6 +104,7 @@ main {
 }
 
 canvas {
+  background: white;
   border: 2px solid #333;
   max-width: 100%;
   height: auto;
@@ -85,11 +123,7 @@ canvas {
     gap: 8px;
   }
 
-  #toolbar hr {
+  .section {
     grid-column: span 2;
-  }
-
-  main {
-    padding: 8px;
   }
 }

@@ -4,107 +4,122 @@ const canvas = new fabric.Canvas('canvas', {
 });
 canvas.renderAll();
 
-/* ========= UNDO / REDO ========= */
-const history = [];
-let historyIndex = -1;
-
-function saveState() {
-  history.splice(historyIndex + 1);
-  history.push(JSON.stringify(canvas));
-  historyIndex++;
-}
-
-canvas.on('object:added', saveState);
-canvas.on('object:modified', saveState);
-canvas.on('object:removed', saveState);
-
-document.getElementById('undo').onclick = () => {
-  if (historyIndex <= 0) return;
-  historyIndex--;
-  canvas.loadFromJSON(history[historyIndex], canvas.renderAll.bind(canvas));
-};
-
-document.getElementById('redo').onclick = () => {
-  if (historyIndex >= history.length - 1) return;
-  historyIndex++;
-  canvas.loadFromJSON(history[historyIndex], canvas.renderAll.bind(canvas));
-};
-
-/* ========= TOOLING ========= */
+/* ===== STATE ===== */
+let mode = 'body';           // body | wheel
 let tool = 'select';
 let placingWheel = false;
+
 const wheelMarkers = [];
 const wheelImages = [];
 
-document.querySelectorAll('[data-tool]').forEach(b =>
-  b.onclick = () => setTool(b.dataset.tool)
-);
+/* ===== MODE BUTTONS ===== */
+const bodyBtn = document.getElementById('mode-body');
+const wheelBtn = document.getElementById('mode-wheel');
+
+bodyBtn.onclick = () => setMode('body');
+wheelBtn.onclick = () => setMode('wheel');
+
+function setMode(m) {
+  mode = m;
+  bodyBtn.classList.toggle('active', m === 'body');
+  wheelBtn.classList.toggle('active', m === 'wheel');
+  canvas.isDrawingMode = false;
+}
+
+/* ===== TOOLS ===== */
+document.querySelectorAll('.tool').forEach(btn => {
+  btn.onclick = () => setTool(btn.dataset.tool);
+});
 
 function setTool(t) {
   tool = t;
-  placingWheel = t === 'crosshair';
-  canvas.isDrawingMode = t === 'draw' || t === 'erase';
+  placingWheel = (t === 'crosshair' && mode === 'wheel');
 
-  if (t === 'erase') {
-    canvas.freeDrawingBrush.color = '#fff';
-  } else {
-    canvas.freeDrawingBrush.color = document.getElementById('color').value;
-  }
+  document.querySelectorAll('.tool').forEach(b =>
+    b.classList.toggle('active', b.dataset.tool === t)
+  );
+
+  canvas.isDrawingMode = (t === 'draw' || t === 'erase');
+  canvas.freeDrawingBrush.width = +brushSize.value;
+  canvas.freeDrawingBrush.color =
+    t === 'erase' ? '#fff' : color.value;
 }
 
-document.getElementById('brushSize').oninput =
-  e => canvas.freeDrawingBrush.width = +e.target.value;
+/* ===== BRUSH ===== */
+brushSize.oninput = e =>
+  canvas.freeDrawingBrush.width = +e.target.value;
 
-document.getElementById('color').oninput =
-  e => canvas.freeDrawingBrush.color = e.target.value;
+color.oninput = e =>
+  canvas.freeDrawingBrush.color = e.target.value;
 
-/* ========= WHEELS ========= */
+/* ===== WHEEL MARKERS (LOCKED) ===== */
 canvas.on('mouse:down', e => {
   if (!placingWheel) return;
+
   const p = canvas.getPointer(e.e);
   const s = 12;
 
-  const h = new fabric.Line([p.x - s, p.y, p.x + s, p.y], { stroke: 'red', selectable: false });
-  const v = new fabric.Line([p.x, p.y - s, p.x, p.y + s], { stroke: 'red', selectable: false });
+  const h = new fabric.Line([p.x - s, p.y, p.x + s, p.y], {
+    stroke: 'red',
+    selectable: false,
+    evented: false
+  });
+  const v = new fabric.Line([p.x, p.y - s, p.x, p.y + s], {
+    stroke: 'red',
+    selectable: false,
+    evented: false
+  });
 
   canvas.add(h, v);
   wheelMarkers.push({ x: p.x, y: p.y });
   placingWheel = false;
 });
 
-/* ========= UPLOAD ========= */
-function upload(input, targetArray) {
+/* ===== UPLOADS ===== */
+function upload(input, isWheel) {
   input.onchange = e => {
     const r = new FileReader();
     r.onload = ev => {
       fabric.Image.fromURL(ev.target.result, img => {
-        img.left = 200;
-        img.top = 200;
+        img.left = 300;
+        img.top = 250;
         img.lockRotation = true;
+
+        if (isWheel) {
+          img.lockMovementX = true;
+          img.lockMovementY = true;
+          wheelImages.push(img);
+        }
+
         canvas.add(img);
-        targetArray.push(img);
       });
     };
     r.readAsDataURL(e.target.files[0]);
   };
 }
 
-upload(uploadBody, []);
-upload(uploadWheel, wheelImages);
+upload(uploadBody, false);
+upload(uploadWheel, true);
 
-/* ========= SLIDERS ========= */
-function cap() {
-  if (+accel.value + +speed.value > 100)
+/* ===== SLIDER CAP ===== */
+function capStats() {
+  if (+accel.value + +speed.value > 100) {
     speed.value = 100 - accel.value;
+  }
 }
-accel.oninput = speed.oninput = cap;
+accel.oninput = speed.oninput = capStats;
 
-/* ========= PREVIEW ========= */
+/* ===== PREVIEW ===== */
 preview.onclick = () => {
   wheelImages.forEach((w, i) => {
     const m = wheelMarkers[i];
     if (!m) return;
-    w.set({ left: m.x - w.width / 2, top: m.y - w.height / 2 });
+
+    w.set({
+      left: m.x - w.width / 2,
+      top: m.y - w.height / 2
+    });
+
     w.animate('angle', '+=360', {
       duration: 800,
       onChange: canvas.renderAll.bind(canvas)
@@ -112,10 +127,12 @@ preview.onclick = () => {
   });
 };
 
-/* ========= SUBMIT (BACKEND COMPATIBLE) ========= */
+/* ===== SUBMIT (UNCHANGED CONTRACT) ===== */
 submit.onclick = async () => {
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value))
-    return alert('Invalid email');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
+    alert('Invalid email');
+    return;
+  }
 
   const carData = {
     carName: carName.value,

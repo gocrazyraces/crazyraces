@@ -1,11 +1,11 @@
 // ====================
-// FABRIC CANVASES
+// CANVASES
 // ====================
-const canvas = new fabric.Canvas('canvas', { preserveObjectStacking: true });
-const wheelCanvas = new fabric.Canvas('wheelCanvas', { preserveObjectStacking: true });
+const bodyCanvas = document.getElementById('bodyCanvas');
+const bodyCtx = bodyCanvas.getContext('2d');
 
-canvas.selection = true;
-wheelCanvas.selection = true;
+const wheelCanvas = document.getElementById('wheelCanvas');
+const wheelCtx = wheelCanvas.getContext('2d');
 
 // ====================
 // TABS
@@ -19,10 +19,16 @@ tabs.forEach(tab=>{
       document.getElementById(t+'Tab').classList.toggle('active', t===tab);
       document.getElementById(t+'Controls').classList.toggle('active', t===tab);
     });
-    if(currentTab==='wheel') wheelCanvas.getElement().style.display='block';
-    else wheelCanvas.getElement().style.display='none';
+    wheelCanvas.style.display=(currentTab==='wheel') ? 'block':'none';
   };
 });
+
+// ====================
+// IMAGE DATA
+// ====================
+let bodyImages = [];
+let wheelImage = null;
+let placedWheels = [];
 
 // ====================
 // BODY UPLOAD
@@ -31,68 +37,85 @@ document.getElementById('uploadBody').onchange=function(e){
   if(!this.files.length) return;
   const reader = new FileReader();
   reader.onload=function(ev){
-    fabric.Image.fromURL(ev.target.result, img=>{
-      img.set({ left:100, top:100, selectable:true });
-      canvas.add(img);
-      canvas.setActiveObject(img);
-      canvas.renderAll();
-    });
+    const img = new Image();
+    img.onload = ()=>{
+      bodyImages.push({img, x:100, y:100, width:img.width, height:img.height});
+      drawBodyCanvas();
+    };
+    img.src = ev.target.result;
   };
   reader.readAsDataURL(this.files[0]);
 };
-
-document.getElementById('clearBodyBtn').onclick=()=>canvas.clear();
+document.getElementById('clearBodyBtn').onclick=()=>{
+  bodyImages=[];
+  drawBodyCanvas();
+};
 
 // ====================
 // WHEEL UPLOAD
 // ====================
-const wheelImages = []; // store uploaded wheel images
 document.getElementById('uploadWheel').onchange=function(e){
   if(!this.files.length) return;
   const reader = new FileReader();
   reader.onload=function(ev){
-    fabric.Image.fromURL(ev.target.result, img=>{
-      img.set({ left:128, top:128, originX:'center', originY:'center', selectable:true });
-      img.scaleToWidth(128); // square guidance
-      wheelCanvas.add(img);
-      wheelCanvas.setActiveObject(img);
-      wheelCanvas.renderAll();
-      wheelImages.push(img);
-    });
+    const img = new Image();
+    img.onload = ()=>{
+      wheelImage = {img, x:128, y:128, width:img.width, height:img.height, scale:1};
+      drawWheelCanvas();
+    };
+    img.src = ev.target.result;
   };
   reader.readAsDataURL(this.files[0]);
 };
+document.getElementById('clearWheelBtn').onclick=()=>{
+  wheelImage=null;
+  drawWheelCanvas();
+};
 
-document.getElementById('clearWheelBtn').onclick=()=>wheelCanvas.clear();
-
-// Draw grey placeholder circle on wheel canvas
-function drawWheelPlaceholder(){
-  wheelCanvas.clear();
-  const circ = new fabric.Circle({
-    left:128, top:128, radius:64,
-    fill:'rgba(200,200,200,0.5)',
-    originX:'center', originY:'center',
-    selectable:false
-  });
-  wheelCanvas.add(circ);
+// Draw wheel placeholder
+function drawWheelCanvas(){
+  wheelCtx.clearRect(0,0,256,256);
+  wheelCtx.fillStyle='rgba(200,200,200,0.5)';
+  wheelCtx.beginPath();
+  wheelCtx.arc(128,128,64,0,2*Math.PI);
+  wheelCtx.fill();
+  if(wheelImage){
+    wheelCtx.drawImage(
+      wheelImage.img,
+      wheelImage.x - wheelImage.width/2,
+      wheelImage.y - wheelImage.height/2,
+      wheelImage.width*wheelImage.scale,
+      wheelImage.height*wheelImage.scale
+    );
+  }
 }
-drawWheelPlaceholder();
+
+// ====================
+// BODY CANVAS DRAW
+// ====================
+function drawBodyCanvas(){
+  bodyCtx.clearRect(0,0,1024,768);
+  bodyImages.forEach(obj=>{
+    bodyCtx.drawImage(obj.img,obj.x,obj.y,obj.width,obj.height);
+  });
+  placedWheels.forEach(obj=>{
+    bodyCtx.drawImage(obj.img,obj.x - obj.width/2,obj.y - obj.height/2,obj.width*obj.scale,obj.height*obj.scale);
+  });
+}
 
 // ====================
 // PLACEMENT
 // ====================
 document.getElementById('addWheelBtn').onclick=()=>{
-  const activeWheel = wheelCanvas.getActiveObject();
-  if(!activeWheel) return alert("Select a wheel to add!");
-  const dataUrl = activeWheel.toDataURL({ format:'png' });
-  fabric.Image.fromURL(dataUrl, img=>{
-    img.set({ left:200, top:400, originX:'center', originY:'center', selectable:true });
-    img.scaleX = activeWheel.scaleX; img.scaleY = activeWheel.scaleY;
-    img.customId = Date.now();
-    canvas.add(img);
-    canvas.setActiveObject(img);
-    canvas.renderAll();
+  if(!wheelImage) return alert("No wheel uploaded!");
+  placedWheels.push({
+    img: wheelImage.img,
+    x:200, y:400,
+    width: wheelImage.width,
+    height: wheelImage.height,
+    scale: wheelImage.scale
   });
+  drawBodyCanvas();
 };
 
 // ====================
@@ -118,43 +141,37 @@ document.getElementById('submitBtn').onclick=async function(){
   const carName=document.getElementById('carName').value.trim();
   const teamName=document.getElementById('teamName').value.trim();
   const email=document.getElementById('email').value.trim();
-  if(!carName || !teamName || !email){ alert('Fill Car Name, Team Name, Email'); return; }
+  if(!carName||!teamName||!email){ alert("Fill all fields"); return; }
 
-  const bodyDataURL = canvas.toDataURL({ format:'png' });
+  const bodyDataURL = bodyCanvas.toDataURL('image/png');
+  const wheelDataURL = wheelCanvas.toDataURL('image/png');
 
-  // Wheel placements on body
-  const wheelPlacements = [];
-  canvas.getObjects().forEach(obj=>{
-    if(obj.customId){
-      wheelPlacements.push({
-        wheelId: obj.customId,
-        x: obj.left,
-        y: obj.top,
-        scale: obj.scaleX
-      });
-    }
-  });
+  const wheelPositions = placedWheels.map((w,i)=>({
+    wheelId:i,
+    x:w.x,
+    y:w.y,
+    scale:w.scale
+  }));
 
   const payload = {
-    carData: {
+    carData:{
       carName, teamName, email,
       acceleration: parseInt(accSlider.value),
       topSpeed: parseInt(speedSlider.value),
       carImageData: bodyDataURL,
-      wheelImageData: '', // optional, we could include the wheel canvas if needed
-      wheelPositions: wheelPlacements
+      wheelImageData: wheelDataURL,
+      wheelPositions
     }
   };
 
   try{
-    const resp=await fetch('/api/submit-car',{
+    const resp = await fetch('/api/submit-car',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify(payload)
     });
-    if(resp.ok) document.getElementById('submitStatus').textContent='Submission successful!';
-    else document.getElementById('submitStatus').textContent='Submission failed!';
+    document.getElementById('submitStatus').textContent = resp.ok ? "Submission successful!" : "Submission failed!";
   } catch(e){
-    document.getElementById('submitStatus').textContent='Submission failed!';
+    document.getElementById('submitStatus').textContent = "Submission failed!";
   }
 };

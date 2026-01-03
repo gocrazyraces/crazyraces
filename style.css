@@ -22,5 +22,4 @@ label.file input { display: none; }
 
 main { flex: 1; display: flex; justify-content: center; align-items: center; position: relative; }
 canvas { border: 2px solid #333; background: white; touch-action: none; }
-
 #wheelCanvas { border: 2px dashed #888; background: #ddd; }

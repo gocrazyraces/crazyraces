@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CrazyRaces Editor</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/6.0.0/fabric.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CrazyRaces Editor</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header>
@@ -25,11 +24,13 @@
     <div id="bodyControls" class="tab-content active">
       <label class="file">Upload Body Image<input type="file" id="uploadBody" accept="image/*"></label>
       <button id="clearBodyBtn">Clear Body</button>
+      <button id="drawBodyBtn">Draw Body</button>
     </div>
 
     <div id="wheelControls" class="tab-content">
       <label class="file">Upload Wheel Image<input type="file" id="uploadWheel" accept="image/*"></label>
       <button id="clearWheelBtn">Clear Wheel</button>
+      <button id="drawWheelBtn">Draw Wheel</button>
     </div>
 
     <div id="placementControls" class="tab-content">
@@ -43,4 +44,25 @@
       </label>
       <label>Top Speed <span id="speedVal">50</span>
         <input type="range" id="topSpeed" min="10" max="80" value="50">
-      </labe
+      </label>
+      <p>Points remaining: <span id="pointsRemaining">0</span></p>
+    </div>
+
+    <div id="submitControls" class="tab-content">
+      <label>Car Name <input type="text" id="carName"></label>
+      <label>Team Name <input type="text" id="teamName"></label>
+      <label>Email <input type="email" id="email"></label>
+      <button id="submitBtn">Submit Car</button>
+      <p id="submitStatus"></p>
+    </div>
+  </aside>
+
+  <main>
+    <canvas id="bodyCanvas" width="1024" height="768"></canvas>
+    <canvas id="wheelCanvas" width="256" height="256" style="display:none;"></canvas>
+  </main>
+</div>
+
+<script src="editor.js"></script>
+</body>
+</html>

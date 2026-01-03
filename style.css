@@ -1,57 +1,25 @@
-* {
-  box-sizing: border-box;
-  font-family: system-ui, sans-serif;
+* { box-sizing: border-box; font-family: sans-serif; }
+body { margin: 0; background: #f0f2f5; }
+header { background: #1e1e2f; color: white; padding: 12px; text-align: center; }
+#app { display: flex; height: calc(100vh - 56px); }
+
+aside#toolbar {
+  width: 260px; padding: 12px; background: white; border-right: 1px solid #ccc; overflow-y: auto;
 }
 
-body {
-  margin: 0;
-  background: #f0f2f5;
+#tab-buttons button {
+  width: 48%; margin-right: 4%; margin-bottom: 12px;
+}
+#tab-buttons button.active { background: #333; color: white; }
+
+#tools button, #details button { width: 100%; margin: 4px 0; }
+
+#tools label, #properties label, #details label {
+  display: block; margin-bottom: 8px; font-size: 0.9em;
 }
 
-header {
-  background: #1e1e2f;
-  color: white;
-  padding: 12px;
-  text-align: center;
-}
+.file { background: #eee; padding: 6px; text-align: center; cursor: pointer; margin-bottom: 8px; }
+.file input { display: none; }
 
-#app {
-  display: flex;
-  height: calc(100vh - 56px);
-}
-
-#toolbar {
-  width: 240px;
-  padding: 12px;
-  background: white;
-  border-right: 1px solid #ccc;
-}
-
-#toolbar button {
-  width: 100%;
-  margin-bottom: 8px;
-}
-
-.file {
-  display: block;
-  padding: 8px;
-  background: #eee;
-  text-align: center;
-  cursor: pointer;
-}
-
-.file input {
-  display: none;
-}
-
-main {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-canvas {
-  background: white;
-  border: 2px solid #333;
-}
+main { flex: 1; display: flex; justify-content: center; align-items: center; }
+canvas { background: white; border: 2px solid #333; }

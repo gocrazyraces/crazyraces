@@ -1,41 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>CrazyRaces Editor – Stable</title>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CrazyRaces Editor</title>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <header>
-  <h1>CrazyRaces Editor</h1>
+  <h1>CrazyRaces Car Editor</h1>
 </header>
 
 <div id="app">
-
   <aside id="toolbar">
-    <button id="drawBtn">Draw</button>
-    <button id="selectBtn">Select</button>
+    <div id="tab-buttons">
+      <button id="bodyTab" class="active">Body</button>
+      <button id="wheelTab">Wheel</button>
+    </div>
 
-    <label>Brush size</label>
-    <input type="range" id="brushSize" min="1" max="20" value="4">
+    <div id="tools">
+      <button id="drawBtn">Draw</button>
+      <button id="selectBtn">Select</button>
+      <label>Brush size <input type="range" id="brushSize" min="1" max="20" value="4"></label>
+      <label>Color <input type="color" id="color" value="#000000"></label>
+      <label class="file">Upload Image<input type="file" id="upload" accept="image/*"></label>
+    </div>
 
-    <label>Color</label>
-    <input type="color" id="color" value="#000000">
+    <div id="properties">
+      <h3>Properties (100 points)</h3>
+      <label>Acceleration <span id="accVal">50</span>
+        <input type="range" id="acceleration" min="1" max="50" value="50">
+      </label>
+      <label>Top Speed <span id="speedVal">50</span>
+        <input type="range" id="topSpeed" min="10" max="80" value="50">
+      </label>
+      <p>Points remaining: <span id="pointsRemaining">0</span></p>
+    </div>
 
-    <label class="file">
-      Upload Image
-      <input type="file" id="upload" accept="image/*">
-    </label>
+    <div id="details">
+      <label>Car Name <input type="text" id="carName"></label>
+      <label>Team Name <input type="text" id="teamName"></label>
+      <label>Email <input type="email" id="email"></label>
+      <button id="submitBtn">Submit Car</button>
+      <p id="submitStatus"></p>
+    </div>
+
   </aside>
 
   <main>
     <canvas id="canvas" width="1024" height="512"></canvas>
   </main>
-
 </div>
 
 <script src="editor.js"></script>

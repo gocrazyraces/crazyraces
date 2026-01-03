@@ -4,30 +4,28 @@ const canvas = new fabric.Canvas('canvas', {
 });
 canvas.renderAll();
 
-/* ===== LAYERS ===== */
-const layers = {
-  body: [],
-  wheels: [],
-  markers: []
-};
-
-/* ===== MODE / TOOLS ===== */
+/* ========= STATE ========= */
 let mode = 'body';
 let tool = 'select';
 let placingMarker = false;
 
-document.getElementById('mode-body').onclick = () => setMode('body');
-document.getElementById('mode-wheel').onclick = () => setMode('wheel');
+const wheelMarkers = [];
+const wheelImages = [];
+
+/* ========= MODE ========= */
+modeBody.onclick = () => setMode('body');
+modeWheel.onclick = () => setMode('wheel');
 
 function setMode(m) {
   mode = m;
-  document.getElementById('mode-body').classList.toggle('active', m === 'body');
-  document.getElementById('mode-wheel').classList.toggle('active', m === 'wheel');
+  modeBody.classList.toggle('active', m === 'body');
+  modeWheel.classList.toggle('active', m === 'wheel');
   canvas.isDrawingMode = false;
 }
 
-document.querySelectorAll('.tool').forEach(b => {
-  b.onclick = () => setTool(b.dataset.tool);
+/* ========= TOOLS ========= */
+document.querySelectorAll('.tool').forEach(btn => {
+  btn.onclick = () => setTool(btn.dataset.tool);
 });
 
 function setTool(t) {
@@ -40,17 +38,22 @@ function setTool(t) {
 
   canvas.isDrawingMode = (t === 'draw' || t === 'erase');
   canvas.freeDrawingBrush.width = +brushSize.value;
-  canvas.freeDrawingBrush.color = t === 'erase' ? '#fff' : color.value;
+  canvas.freeDrawingBrush.color = t === 'erase' ? '#ffffff' : color.value;
 }
 
-/* ===== BRUSH ===== */
+/* ========= BRUSH ========= */
 brushSize.oninput = e =>
   canvas.freeDrawingBrush.width = +e.target.value;
 
 color.oninput = e =>
   canvas.freeDrawingBrush.color = e.target.value;
 
-/* ===== MARKERS ===== */
+/* ========= DRAWING PERSISTENCE FIX ========= */
+canvas.on('path:created', e => {
+  e.path.selectable = (mode === 'body');
+});
+
+/* ========= WHEEL MARKERS ========= */
 canvas.on('mouse:down', e => {
   if (!placingMarker) return;
 
@@ -58,67 +61,53 @@ canvas.on('mouse:down', e => {
   const s = 12;
 
   const h = new fabric.Line([p.x - s, p.y, p.x + s, p.y], {
-    stroke: 'red', selectable: false, evented: false
+    stroke: 'red',
+    selectable: false,
+    evented: false
   });
+
   const v = new fabric.Line([p.x, p.y - s, p.x, p.y + s], {
-    stroke: 'red', selectable: false, evented: false
+    stroke: 'red',
+    selectable: false,
+    evented: false
   });
 
   canvas.add(h, v);
-  layers.markers.push(h, v);
+  wheelMarkers.push({ x: p.x, y: p.y });
   placingMarker = false;
 });
 
-/* ===== UPLOADS (FIXED) ===== */
-function handleUpload(input, layerName, lock) {
-  input.addEventListener('change', e => {
-    if (!e.target.files.length) return;
+/* ========= UPLOAD FIX (CRITICAL) ========= */
+function setupUpload(input, isWheel) {
+  input.addEventListener('change', () => {
+    if (!input.files.length) return;
 
     const reader = new FileReader();
-    reader.onload = ev => {
-      fabric.Image.fromURL(ev.target.result, img => {
-        img.left = 300;
-        img.top = 250;
+    reader.onload = () => {
+      fabric.Image.fromURL(reader.result, img => {
+        img.left = 200;
+        img.top = 200;
         img.lockRotation = true;
-        img.selectable = !lock;
 
-        if (lock) {
+        if (isWheel) {
           img.lockMovementX = true;
           img.lockMovementY = true;
+          wheelImages.push(img);
         }
 
         canvas.add(img);
-        layers[layerName].push(img);
+        canvas.setActiveObject(img);
+        canvas.renderAll();
       });
     };
-    reader.readAsDataURL(e.target.files[0]);
+    reader.readAsDataURL(input.files[0]);
   });
 }
 
-handleUpload(uploadBody, 'body', false);
-handleUpload(uploadWheel, 'wheels', true);
+setupUpload(uploadBody, false);
+setupUpload(uploadWheel, true);
 
-/* ===== LAYER VISIBILITY / LOCK ===== */
-function toggleLayer(layer, visible) {
-  layers[layer].forEach(o => o.visible = visible);
-  canvas.renderAll();
-}
-
-document.getElementById('layer-body').onchange =
-  e => toggleLayer('body', e.target.checked);
-
-document.getElementById('layer-wheels').onchange =
-  e => toggleLayer('wheels', e.target.checked);
-
-document.getElementById('layer-markers').onchange =
-  e => toggleLayer('markers', e.target.checked);
-
-/* ===== STATS ===== */
-const accel = document.getElementById('accel');
-const speed = document.getElementById('speed');
-const accelVal = document.getElementById('accelVal');
-const speedVal = document.getElementById('speedVal');
-
+/* ========= STATS ========= */
 function updateStats() {
   if (+accel.value + +speed.value > 100) {
     speed.value = 100 - accel.value;
@@ -130,15 +119,15 @@ function updateStats() {
 accel.oninput = speed.oninput = updateStats;
 updateStats();
 
-/* ===== PREVIEW ===== */
+/* ========= PREVIEW ========= */
 preview.onclick = () => {
-  layers.wheels.forEach((w, i) => {
-    const m = layers.markers[i * 2];
+  wheelImages.forEach((w, i) => {
+    const m = wheelMarkers[i];
     if (!m) return;
 
     w.set({
-      left: m.x1 - w.width / 2,
-      top: m.y1 - w.height / 2
+      left: m.x - w.width / 2,
+      top: m.y - w.height / 2
     });
 
     w.animate('angle', '+=360', {
@@ -148,19 +137,11 @@ preview.onclick = () => {
   });
 };
 
-/* ===== SUBMIT (UNCHANGED CONTRACT) ===== */
+/* ========= SUBMIT ========= */
 submit.onclick = async () => {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
     alert('Invalid email');
     return;
-  }
-
-  const wheelPositions = [];
-  for (let i = 0; i < layers.markers.length; i += 2) {
-    wheelPositions.push({
-      x: layers.markers[i].x1,
-      y: layers.markers[i].y1
-    });
   }
 
   const carData = {
@@ -169,10 +150,10 @@ submit.onclick = async () => {
     email: email.value,
     acceleration: +accel.value,
     topSpeed: +speed.value,
-    wheelPositions,
+    wheelPositions: wheelMarkers,
     carImageData: canvas.toDataURL({ format: 'png' }),
-    wheelImageData: layers.wheels[0]
-      ? layers.wheels[0].toDataURL({ format: 'png' })
+    wheelImageData: wheelImages[0]
+      ? wheelImages[0].toDataURL({ format: 'png' })
       : canvas.toDataURL({ format: 'png' })
   };
 

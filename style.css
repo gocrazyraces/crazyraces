@@ -23,23 +23,16 @@ header {
 }
 
 #app {
-  display: grid;
-  grid-template-columns: 280px 1fr 220px;
+  display: flex;
   height: calc(100vh - 56px);
 }
 
-aside {
+#toolbar {
+  width: 280px;
   background: var(--panel);
+  border-right: 1px solid var(--border);
   padding: 12px;
   overflow-y: auto;
-}
-
-#toolbar {
-  border-right: 1px solid var(--border);
-}
-
-#layers {
-  border-left: 1px solid var(--border);
 }
 
 .section {
@@ -83,14 +76,8 @@ button.primary {
   display: none;
 }
 
-.layer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
 main {
+  flex: 1;
   display: flex;
   justify-content: center;
   align-items: center;

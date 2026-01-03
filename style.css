@@ -1,18 +1,7 @@
-:root {
-  --bg: #f3f5f8;
-  --panel: #ffffff;
-  --accent: #4a6cf7;
-  --border: #dcdfe6;
-}
-
-* {
-  box-sizing: border-box;
-  font-family: system-ui, sans-serif;
-}
-
 body {
   margin: 0;
-  background: var(--bg);
+  font-family: system-ui, sans-serif;
+  background: #f0f2f5;
 }
 
 header {
@@ -28,48 +17,24 @@ header {
 }
 
 #toolbar {
-  width: 280px;
-  background: var(--panel);
-  border-right: 1px solid var(--border);
+  width: 260px;
   padding: 12px;
-  overflow-y: auto;
+  background: white;
+  border-right: 1px solid #ccc;
 }
 
-.section {
-  margin-bottom: 16px;
-}
-
-.section h3 {
-  margin: 0 0 8px;
-  font-size: 14px;
-}
-
-.row {
-  display: flex;
-  gap: 6px;
-}
-
-button {
-  padding: 6px;
-  border-radius: 6px;
-  border: 1px solid var(--border);
-  background: #f7f8fa;
-  cursor: pointer;
-}
-
-button.active,
-button.primary {
-  background: var(--accent);
-  color: white;
+#toolbar button {
+  width: 100%;
+  margin-bottom: 8px;
 }
 
 .file {
   display: block;
   padding: 8px;
-  background: #f1f3f7;
-  border-radius: 6px;
-  text-align: center;
+  background: #eee;
+  margin-bottom: 8px;
   cursor: pointer;
+  text-align: center;
 }
 
 .file input {
@@ -84,7 +49,6 @@ main {
 }
 
 canvas {
-  border: 2px solid #333;
   background: white;
-  max-width: 100%;
+  border: 2px solid #333;
 }

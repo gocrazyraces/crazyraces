@@ -3,9 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <title>CrazyRaces Designer</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <!-- Fabric -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -17,67 +19,35 @@
 <div id="app">
 
   <aside id="toolbar">
+    <h3>Tools</h3>
 
-    <div class="section">
-      <h3>Mode</h3>
-      <div class="row">
-        <button id="mode-body" class="active">Body</button>
-        <button id="mode-wheel">Wheels</button>
-      </div>
-    </div>
+    <button id="selectTool">Select</button>
+    <button id="drawTool">Draw</button>
 
-    <div class="section">
-      <h3>Tools</h3>
-      <div class="row">
-        <button data-tool="select" class="tool active">Select</button>
-        <button data-tool="draw" class="tool">Draw</button>
-        <button data-tool="erase" class="tool">Erase</button>
-        <button data-tool="crosshair" class="tool">Wheel Spot</button>
-      </div>
+    <label>Brush Size</label>
+    <input type="range" id="brushSize" min="1" max="20" value="4">
 
-      <label>Brush size</label>
-      <input type="range" id="brushSize" min="1" max="20" value="4">
+    <label>Color</label>
+    <input type="color" id="color" value="#000000">
 
-      <label>Color</label>
-      <input type="color" id="color" value="#000000">
-    </div>
+    <hr>
 
-    <div class="section">
-      <h3>Assets</h3>
+    <label class="file">
+      Upload Car Body
+      <input type="file" id="uploadBody" accept="image/*">
+    </label>
 
-      <label class="file">
-        Upload Car Body
-        <input type="file" id="uploadBody" accept="image/*">
-      </label>
+    <label class="file">
+      Upload Wheel Image
+      <input type="file" id="uploadWheel" accept="image/*">
+    </label>
 
-      <label class="file">
-        Upload Wheel Image
-        <input type="file" id="uploadWheel" accept="image/*">
-      </label>
-    </div>
+    <hr>
 
-    <div class="section">
-      <h3>Stats (100 total)</h3>
+    <label>Email</label>
+    <input id="email" placeholder="Email">
 
-      <label>Acceleration: <span id="accelVal">50</span></label>
-      <input type="range" id="accel" min="1" max="50" value="50">
-
-      <label>Top Speed: <span id="speedVal">50</span></label>
-      <input type="range" id="speed" min="10" max="80" value="50">
-    </div>
-
-    <div class="section">
-      <h3>Info</h3>
-      <input id="carName" placeholder="Car Name">
-      <input id="teamName" placeholder="Team Name">
-      <input id="email" placeholder="Email">
-    </div>
-
-    <div class="section">
-      <button id="preview">Preview</button>
-      <button id="submit" class="primary">Submit</button>
-    </div>
-
+    <button id="submit">Submit</button>
   </aside>
 
   <main>

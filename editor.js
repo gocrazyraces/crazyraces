@@ -37,11 +37,16 @@ let currentColor = '#000000';
 let currentTool = null;
 let penPoints = [];
 
+// For dragging/scaling/rotation
+let selectedObj = null;
+let offsetX=0, offsetY=0;
+let isDragging=false;
+
 // ====================
 // BODY DRAW / UPLOAD
 // ====================
 document.getElementById('bodyColor').onchange = (e)=>{currentColor=e.target.value;};
-document.getElementById('drawBodyBtn').onclick = ()=>{currentTab='body'; currentTool='bodyPen';};
+document.getElementById('drawBodyBtn').onclick = ()=>{currentTool='bodyPen';};
 
 document.getElementById('uploadBody').onchange = function(e){
   if(!this.files.length) return;
@@ -49,7 +54,7 @@ document.getElementById('uploadBody').onchange = function(e){
   reader.onload=function(ev){
     const img = new Image();
     img.onload = ()=>{
-      bodyElements.push({type:'image', img, x:100, y:100, width:img.width, height:img.height});
+      bodyElements.push({type:'image', img, x:bodyCanvas.width/2, y:bodyCanvas.height/2, width:img.width, height:img.height, scale:1, rotation:0});
       drawBodyCanvas();
     };
     img.src = ev.target.result;
@@ -65,7 +70,7 @@ document.getElementById('clearBodyBtn').onclick = ()=>{
 // WHEEL DRAW / UPLOAD
 // ====================
 document.getElementById('wheelColor').onchange = (e)=>{currentColor=e.target.value;};
-document.getElementById('drawWheelBtn').onclick = ()=>{currentTab='wheel'; currentTool='wheelPen';};
+document.getElementById('drawWheelBtn').onclick = ()=>{currentTool='wheelPen';};
 
 document.getElementById('uploadWheel').onchange = function(e){
   if(!this.files.length) return;
@@ -73,7 +78,7 @@ document.getElementById('uploadWheel').onchange = function(e){
   reader.onload=function(ev){
     const img = new Image();
     img.onload = ()=>{
-      wheelElement = {type:'image', img, x:128, y:128, width:img.width, height:img.height, scale:1, rotation:0};
+      wheelElement = {type:'image', img, x:wheelCanvas.width/2, y:wheelCanvas.height/2, width:img.width, height:img.height, scale:1, rotation:0};
       drawWheelCanvas();
     };
     img.src = ev.target.result;
@@ -89,14 +94,13 @@ document.getElementById('clearWheelBtn').onclick = ()=>{
 // DRAWING FUNCTIONS
 // ====================
 function drawBodyCanvas(){
-  bodyCtx.clearRect(0,0,1024,768);
+  bodyCtx.clearRect(0,0,bodyCanvas.width,bodyCanvas.height);
+  // body images & paths
   bodyElements.forEach(el=>{
-    if(el.type==='image'){
-      bodyCtx.save();
-      bodyCtx.translate(el.x,el.y);
-      bodyCtx.drawImage(el.img,-el.width/2,-el.height/2,el.width,el.height);
-      bodyCtx.restore();
-    }
+    bodyCtx.save();
+    bodyCtx.translate(el.x,el.y);
+    bodyCtx.rotate(el.rotation||0);
+    if(el.type==='image') bodyCtx.drawImage(el.img,-el.width/2,-el.height/2,el.width*el.scale,el.height*el.scale);
     if(el.type==='path'){
       bodyCtx.strokeStyle=el.color;
       bodyCtx.lineWidth=2;
@@ -104,25 +108,24 @@ function drawBodyCanvas(){
       el.points.forEach((p,i)=> i===0 ? bodyCtx.moveTo(p.x,p.y) : bodyCtx.lineTo(p.x,p.y));
       bodyCtx.stroke();
     }
+    bodyCtx.restore();
   });
-  // Draw wheels on placement tab
-  if(currentTab==='placement'){
-    placedWheels.forEach(w=>{
-      bodyCtx.save();
-      bodyCtx.translate(w.x,w.y);
-      bodyCtx.rotate(w.rotation);
-      bodyCtx.drawImage(w.img,-w.width/2,-w.height/2,w.width*w.scale,w.height*w.scale);
-      bodyCtx.restore();
-    });
-  }
+  // placed wheels
+  placedWheels.forEach(w=>{
+    bodyCtx.save();
+    bodyCtx.translate(w.x,w.y);
+    bodyCtx.rotate(w.rotation);
+    bodyCtx.drawImage(w.img,-w.width/2,-w.height/2,w.width*w.scale,w.height*w.scale);
+    bodyCtx.restore();
+  });
 }
 
 function drawWheelCanvas(){
-  wheelCtx.clearRect(0,0,256,256);
-  // placeholder circle
+  wheelCtx.clearRect(0,0,wheelCanvas.width,wheelCanvas.height);
+  // placeholder
   wheelCtx.fillStyle='rgba(200,200,200,0.5)';
   wheelCtx.beginPath();
-  wheelCtx.arc(128,128,64,0,2*Math.PI);
+  wheelCtx.arc(wheelCanvas.width/2,wheelCanvas.height/2,64,0,2*Math.PI);
   wheelCtx.fill();
   // wheel image
   if(wheelElement){
@@ -135,7 +138,7 @@ function drawWheelCanvas(){
 }
 
 // ====================
-// POINTER INTERACTIONS
+// POINTER HELPERS
 // ====================
 function getMousePos(canvas, evt){
   const rect = canvas.getBoundingClientRect();
@@ -145,58 +148,81 @@ function getMousePos(canvas, evt){
   };
 }
 
-// BODY DRAWING
+// ====================
+// BODY CANVAS EVENTS
+// ====================
 bodyCanvas.onpointerdown = function(e){
+  const pos = getMousePos(bodyCanvas,e);
   if(currentTool==='bodyPen'){
-    drawing=true;
-    penPoints=[getMousePos(bodyCanvas,e)];
+    drawing=true; penPoints=[pos];
   } else if(currentTab==='placement'){
-    // TODO: implement wheel selection/dragging
+    // Check if a wheel is selected
+    selectedObj=null;
+    for(let i=placedWheels.length-1;i>=0;i--){
+      const w=placedWheels[i];
+      const dx=pos.x-w.x, dy=pos.y-w.y;
+      if(Math.hypot(dx,dy)<Math.max(w.width,w.height)*w.scale/2){ selectedObj=w; offsetX=dx; offsetY=dy; isDragging=true; break; }
+    }
   }
 };
 bodyCanvas.onpointermove = function(e){
+  const pos = getMousePos(bodyCanvas,e);
   if(drawing && currentTool==='bodyPen'){
-    penPoints.push(getMousePos(bodyCanvas,e));
+    penPoints.push(pos);
     drawBodyCanvas();
-    bodyCtx.strokeStyle=currentColor;
-    bodyCtx.lineWidth=2;
+    bodyCtx.strokeStyle=currentColor; bodyCtx.lineWidth=2;
     bodyCtx.beginPath();
     penPoints.forEach((p,i)=> i===0 ? bodyCtx.moveTo(p.x,p.y) : bodyCtx.lineTo(p.x,p.y));
     bodyCtx.stroke();
+  } else if(isDragging && selectedObj){
+    selectedObj.x = pos.x-offsetX;
+    selectedObj.y = pos.y-offsetY;
+    drawBodyCanvas();
   }
 };
 bodyCanvas.onpointerup = function(e){
   if(drawing && currentTool==='bodyPen'){
     bodyElements.push({type:'path', points:penPoints, color:currentColor});
-    drawing=false;
-    penPoints=[];
+    drawing=false; penPoints=[];
   }
+  isDragging=false; selectedObj=null;
 };
 
-// WHEEL DRAWING
+// ====================
+// WHEEL CANVAS EVENTS
+// ====================
 wheelCanvas.onpointerdown = function(e){
+  const pos = getMousePos(wheelCanvas,e);
   if(currentTool==='wheelPen'){
-    drawing=true;
-    penPoints=[getMousePos(wheelCanvas,e)];
+    drawing=true; penPoints=[pos];
+  } else if(wheelElement){
+    const dx=pos.x-wheelElement.x, dy=pos.y-wheelElement.y;
+    if(Math.hypot(dx,dy)<Math.max(wheelElement.width,wheelElement.height)/2){
+      selectedObj=wheelElement; offsetX=dx; offsetY=dy; isDragging=true;
+    }
   }
 };
 wheelCanvas.onpointermove = function(e){
+  const pos = getMousePos(wheelCanvas,e);
   if(drawing && currentTool==='wheelPen'){
-    penPoints.push(getMousePos(wheelCanvas,e));
+    penPoints.push(pos);
     drawWheelCanvas();
-    wheelCtx.strokeStyle=currentColor;
-    wheelCtx.lineWidth=2;
+    wheelCtx.strokeStyle=currentColor; wheelCtx.lineWidth=2;
     wheelCtx.beginPath();
     penPoints.forEach((p,i)=> i===0 ? wheelCtx.moveTo(p.x,p.y) : wheelCtx.lineTo(p.x,p.y));
     wheelCtx.stroke();
+  } else if(isDragging && selectedObj){
+    selectedObj.x=pos.x-offsetX;
+    selectedObj.y=pos.y-offsetY;
+    drawWheelCanvas();
   }
 };
 wheelCanvas.onpointerup = function(e){
   if(drawing && currentTool==='wheelPen'){
     wheelElement={type:'path', points:penPoints, color:currentColor, ...wheelElement};
-    drawing=false;
-    penPoints=[];
+    drawing=false; penPoints=[];
   }
+  isDragging=false; selectedObj=null;
 };
 
 // ====================
@@ -204,7 +230,7 @@ wheelCanvas.onpointerup = function(e){
 // ====================
 document.getElementById('addWheelBtn').onclick = ()=>{
   if(!wheelElement) return alert("Upload or draw wheel first!");
-  placedWheels.push({...wheelElement,x:200,y:400,scale:1,rotation:0});
+  placedWheels.push({...wheelElement,x:bodyCanvas.width/2, y:bodyCanvas.height/2, scale:1, rotation:0});
   drawBodyCanvas();
 };
 
@@ -250,7 +276,7 @@ document.getElementById('submitBtn').onclick=async function(){
       acceleration: parseInt(accSlider.value),
       topSpeed: parseInt(speedSlider.value),
       carImageData: bodyDataURL,
-      wheelImageData: wheelDataURL,
+      wheelImageData:wheelDataURL,
       wheelPositions
     }
   };

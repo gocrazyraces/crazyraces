@@ -4,7 +4,7 @@ header { background: #1e1e2f; color: white; padding: 12px; text-align: center; }
 #app { display: flex; height: calc(100vh - 56px); }
 
 aside#toolbar {
-  width: 260px; padding: 12px; background: white; border-right: 1px solid #ccc; overflow-y: auto;
+  width: 280px; padding: 12px; background: white; border-right: 1px solid #ccc; overflow-y: auto;
 }
 
 #tab-buttons button {
@@ -12,9 +12,12 @@ aside#toolbar {
 }
 #tab-buttons button.active { background: #333; color: white; }
 
-#tools button, #details button { width: 100%; margin: 4px 0; }
+.tab-content { display: none; margin-bottom: 12px; }
+.tab-content.active { display: block; }
 
-#tools label, #properties label, #details label {
+#tools button, #details button, #bodyControls button, #wheelControls button { width: 100%; margin: 4px 0; }
+
+#tools label, #properties label, #details label, #bodyControls label, #wheelControls label {
   display: block; margin-bottom: 8px; font-size: 0.9em;
 }
 

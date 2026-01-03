@@ -13,22 +13,33 @@
 </header>
 
 <div id="app">
+
   <aside id="toolbar">
     <div id="tab-buttons">
       <button id="bodyTab" class="active">Body</button>
       <button id="wheelTab">Wheel</button>
+      <button id="propertiesTab">Properties</button>
+      <button id="submitTab">Submit</button>
     </div>
 
-    <div id="tools">
+    <div id="bodyControls" class="tab-content">
+      <h3>Body Tools</h3>
       <button id="drawBtn">Draw</button>
       <button id="eraseBtn">Erase</button>
-      <button id="clearBtn">Clear Canvas</button>
+      <button id="clearBtn">Clear</button>
       <label>Brush size <input type="range" id="brushSize" min="1" max="20" value="4"></label>
       <label>Color <input type="color" id="color" value="#000000"></label>
-      <label class="file">Upload Image<input type="file" id="upload" accept="image/*"></label>
+      <label class="file">Upload Body Image<input type="file" id="uploadBody" accept="image/*"></label>
+      <button id="addWheelPlaceholder">Add Wheel Placeholder</button>
+      <p>Click to add wheel positions</p>
     </div>
 
-    <div id="properties">
+    <div id="wheelControls" class="tab-content">
+      <h3>Wheel Tools</h3>
+      <label class="file">Upload Wheel Image<input type="file" id="uploadWheel" accept="image/*"></label>
+    </div>
+
+    <div id="propertiesControls" class="tab-content">
       <h3>Properties (100 points)</h3>
       <label>Acceleration <span id="accVal">50</span>
         <input type="range" id="acceleration" min="1" max="50" value="50">
@@ -39,7 +50,8 @@
       <p>Points remaining: <span id="pointsRemaining">0</span></p>
     </div>
 
-    <div id="details">
+    <div id="submitControls" class="tab-content">
+      <h3>Car Info</h3>
       <label>Car Name <input type="text" id="carName"></label>
       <label>Team Name <input type="text" id="teamName"></label>
       <label>Email <input type="email" id="email"></label>
@@ -52,6 +64,7 @@
   <main>
     <canvas id="canvas" width="1024" height="512"></canvas>
   </main>
+
 </div>
 
 <script src="editor.js"></script>

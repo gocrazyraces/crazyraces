@@ -10,23 +10,27 @@ let erasing = false;
 let brushSize = 4;
 let brushColor = '#000000';
 
-let bodyElements = [];
-let wheelElements = [];
+let bodyElements = []; // paths/images on body
+let wheelElements = []; // wheel images
+let wheelPlaceholders = []; // {x, y, radius, id}
 
 let currentPath = [];
+let selectedElement = null; // for moving images or paths
 
 // ====================
 // TAB SWITCH
 // ====================
-document.getElementById('bodyTab').onclick = () => switchTab('body');
-document.getElementById('wheelTab').onclick = () => switchTab('wheel');
-
-function switchTab(tab) {
-  currentTab = tab;
-  document.getElementById('bodyTab').classList.toggle('active', tab==='body');
-  document.getElementById('wheelTab').classList.toggle('active', tab==='wheel');
-  redrawCanvas();
-}
+const tabs = ['body','wheel','properties','submit'];
+tabs.forEach(tab=>{
+  document.getElementById(tab+'Tab').onclick = ()=>{
+    currentTab = tab;
+    tabs.forEach(t=>{
+      document.getElementById(t+'Tab').classList.toggle('active', t===tab);
+      document.getElementById(t+'Controls').classList.toggle('active', t===tab);
+    });
+    redrawCanvas();
+  };
+});
 
 // ====================
 // TOOL CONTROLS
@@ -36,36 +40,56 @@ document.getElementById('eraseBtn').onclick = () => erasing=true;
 document.getElementById('brushSize').oninput = function(){ brushSize = parseInt(this.value,10); };
 document.getElementById('color').oninput = function(){ brushColor = this.value; };
 document.getElementById('clearBtn').onclick = function() {
-  if(currentTab==='body') bodyElements=[]; else wheelElements=[];
+  if(currentTab==='body') bodyElements=[]; 
+  else if(currentTab==='wheel') wheelElements=[]; 
   redrawCanvas();
 };
+
+// ====================
+// ADD WHEEL PLACEHOLDER
+// ====================
+document.getElementById('addWheelPlaceholder').onclick = function(){
+  canvas.addEventListener('click', addWheelPlaceholderOnce, {once:true});
+  alert('Click on canvas to add a wheel placeholder');
+};
+function addWheelPlaceholderOnce(e){
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  wheelPlaceholders.push({x,y,radius:20,id:Date.now()});
+  redrawCanvas();
+}
 
 // ====================
 // DRAWING LOGIC
 // ====================
 canvas.addEventListener('pointerdown', e=>{
-  drawing=true;
-  currentPath = [{x:e.offsetX, y:e.offsetY}];
+  if(currentTab==='body'){
+    drawing=true;
+    currentPath = [{x:e.offsetX, y:e.offsetY}];
+  }
 });
 canvas.addEventListener('pointermove', e=>{
   if(!drawing) return;
+  if(currentTab!=='body') return;
   const point = {x:e.offsetX, y:e.offsetY};
   currentPath.push(point);
-  drawLineSegment(currentPath[currentPath.length-2], point);
+  drawLineSegment(currentPath[currentPath.length-2], point, brushColor, brushSize);
 });
 canvas.addEventListener('pointerup', e=>{
-  drawing=false;
-  if(currentPath.length>1){
-    const element = {type:'path', color:brushColor, size:brushSize, path:currentPath};
-    if(currentTab==='body') bodyElements.push(element);
-    else wheelElements.push(element);
+  if(drawing && currentTab==='body'){
+    drawing=false;
+    if(currentPath.length>1){
+      bodyElements.push({type:'path', color:brushColor, size:brushSize, path:currentPath});
+    }
+    currentPath=[];
+    redrawCanvas();
   }
-  currentPath=[];
 });
 
-function drawLineSegment(p1, p2){
-  ctx.strokeStyle = erasing ? '#fff' : brushColor;
-  ctx.lineWidth = brushSize;
+function drawLineSegment(p1, p2, color, size){
+  ctx.strokeStyle = erasing ? '#fff' : color;
+  ctx.lineWidth = size;
   ctx.lineCap = 'round';
   ctx.beginPath();
   ctx.moveTo(p1.x,p1.y);
@@ -76,16 +100,29 @@ function drawLineSegment(p1, p2){
 // ====================
 // IMAGE UPLOAD
 // ====================
-document.getElementById('upload').onchange = function(e){
+document.getElementById('uploadBody').onchange = function(e){
   if(!this.files.length) return;
   const file = this.files[0];
   const reader = new FileReader();
   reader.onload = function(ev){
     const img = new Image();
     img.onload = function(){
-      const element = {type:'image', image:img, x:100, y:100, width:img.width, height:img.height};
-      if(currentTab==='body') bodyElements.push(element);
-      else wheelElements.push(element);
+      bodyElements.push({type:'image', image:img, x:100, y:100, width:img.width, height:img.height});
+      redrawCanvas();
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+};
+
+document.getElementById('uploadWheel').onchange = function(e){
+  if(!this.files.length) return;
+  const file = this.files[0];
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    const img = new Image();
+    img.onload = function(){
+      wheelElements.push({type:'image', image:img, width:100, height:100}); // square wheel
       redrawCanvas();
     };
     img.src = ev.target.result;
@@ -99,23 +136,35 @@ document.getElementById('upload').onchange = function(e){
 function redrawCanvas(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  bodyElements.forEach(el=>drawElement(el));
-  wheelElements.forEach(el=>drawElement(el));
-}
-
-function drawElement(el){
-  if(el.type==='path'){
-    ctx.strokeStyle=el.color;
-    ctx.lineWidth=el.size;
-    ctx.lineCap='round';
-    ctx.beginPath();
-    ctx.moveTo(el.path[0].x, el.path[0].y);
-    for(let i=1;i<el.path.length;i++){
-      ctx.lineTo(el.path[i].x, el.path[i].y);
+  // Body elements
+  bodyElements.forEach(el=>{
+    if(el.type==='path'){
+      ctx.strokeStyle=el.color;
+      ctx.lineWidth=el.size;
+      ctx.lineCap='round';
+      ctx.beginPath();
+      ctx.moveTo(el.path[0].x, el.path[0].y);
+      for(let i=1;i<el.path.length;i++) ctx.lineTo(el.path[i].x, el.path[i].y);
+      ctx.stroke();
+    } else if(el.type==='image'){
+      ctx.drawImage(el.image, el.x, el.y, el.width, el.height);
     }
+  });
+
+  // Wheel placeholders
+  wheelPlaceholders.forEach(ph=>{
+    ctx.strokeStyle='red';
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.arc(ph.x, ph.y, ph.radius, 0, Math.PI*2);
     ctx.stroke();
-  } else if(el.type==='image'){
-    ctx.drawImage(el.image, el.x, el.y, el.width, el.height);
+  });
+
+  // Wheel images snapped to placeholders
+  for(let i=0; i<wheelPlaceholders.length && i<wheelElements.length; i++){
+    const ph = wheelPlaceholders[i];
+    const wheel = wheelElements[i];
+    ctx.drawImage(wheel.image, ph.x - wheel.width/2, ph.y - wheel.height/2, wheel.width, wheel.height);
   }
 }
 
@@ -146,7 +195,7 @@ document.getElementById('submitBtn').onclick = async function(){
 
   if(!carName || !teamName || !email){ alert('Fill Car Name, Team Name, Email'); return; }
 
-  // Export canvas for body and wheel separately
+  // Export body canvas
   let bodyCanvas = document.createElement('canvas');
   bodyCanvas.width = canvas.width; bodyCanvas.height = canvas.height;
   let bodyCtx = bodyCanvas.getContext('2d');
@@ -164,22 +213,15 @@ document.getElementById('submitBtn').onclick = async function(){
     }
   });
 
+  // Export wheels separately
   let wheelCanvas = document.createElement('canvas');
   wheelCanvas.width = canvas.width; wheelCanvas.height = canvas.height;
   let wheelCtx = wheelCanvas.getContext('2d');
-  wheelElements.forEach(el=>{
-    if(el.type==='path'){
-      wheelCtx.strokeStyle = el.color;
-      wheelCtx.lineWidth = el.size;
-      wheelCtx.lineCap='round';
-      wheelCtx.beginPath();
-      wheelCtx.moveTo(el.path[0].x,el.path[0].y);
-      for(let i=1;i<el.path.length;i++) wheelCtx.lineTo(el.path[i].x,el.path[i].y);
-      wheelCtx.stroke();
-    } else if(el.type==='image'){
-      wheelCtx.drawImage(el.image,el.x,el.y,el.width,el.height);
-    }
-  });
+  for(let i=0;i<wheelPlaceholders.length && i<wheelElements.length;i++){
+    const ph = wheelPlaceholders[i];
+    const wheel = wheelElements[i];
+    wheelCtx.drawImage(wheel.image, ph.x - wheel.width/2, ph.y - wheel.height/2, wheel.width, wheel.height);
+  }
 
   const payload = {
     carData:{
@@ -187,7 +229,8 @@ document.getElementById('submitBtn').onclick = async function(){
       acceleration: parseInt(accSlider.value),
       topSpeed: parseInt(speedSlider.value),
       carImageData: bodyCanvas.toDataURL('image/png'),
-      wheelImageData: wheelCanvas.toDataURL('image/png')
+      wheelImageData: wheelCanvas.toDataURL('image/png'),
+      wheelPositions: wheelPlaceholders.map(ph=>({x:ph.x,y:ph.y}))
     }
   };
 

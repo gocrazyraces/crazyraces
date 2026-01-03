@@ -22,15 +22,17 @@
     </div>
 
     <div id="bodyControls" class="tab-content active">
+      <button id="drawBodyBtn">Pen Tool</button>
+      <input type="color" id="bodyColor" value="#000000">
       <label class="file">Upload Body Image<input type="file" id="uploadBody" accept="image/*"></label>
       <button id="clearBodyBtn">Clear Body</button>
-      <button id="drawBodyBtn">Draw Body</button>
     </div>
 
     <div id="wheelControls" class="tab-content">
+      <button id="drawWheelBtn">Pen Tool</button>
+      <input type="color" id="wheelColor" value="#000000">
       <label class="file">Upload Wheel Image<input type="file" id="uploadWheel" accept="image/*"></label>
       <button id="clearWheelBtn">Clear Wheel</button>
-      <button id="drawWheelBtn">Draw Wheel</button>
     </div>
 
     <div id="placementControls" class="tab-content">
@@ -59,7 +61,7 @@
 
   <main>
     <canvas id="bodyCanvas" width="1024" height="768"></canvas>
-    <canvas id="wheelCanvas" width="256" height="256" style="display:none;"></canvas>
+    <canvas id="wheelCanvas" width="256" height="256"></canvas>
   </main>
 </div>
 

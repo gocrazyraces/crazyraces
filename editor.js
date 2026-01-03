@@ -19,102 +19,161 @@ tabs.forEach(tab=>{
       document.getElementById(t+'Tab').classList.toggle('active', t===tab);
       document.getElementById(t+'Controls').classList.toggle('active', t===tab);
     });
-    wheelCanvas.style.display=(currentTab==='wheel') ? 'block':'none';
+    bodyCanvas.style.display=(currentTab==='body' || currentTab==='placement')?'block':'none';
+    wheelCanvas.style.display=(currentTab==='wheel')?'block':'none';
+    drawBodyCanvas();
+    drawWheelCanvas();
   };
 });
 
 // ====================
-// IMAGE DATA
+// DATA
 // ====================
-let bodyImages = [];
-let wheelImage = null;
+let bodyElements = [];
+let wheelElement = null;
 let placedWheels = [];
+let drawing = false;
+let currentColor = '#000000';
+let penPoints = [];
 
 // ====================
-// BODY UPLOAD
+// BODY DRAW / UPLOAD
 // ====================
-document.getElementById('uploadBody').onchange=function(e){
+document.getElementById('bodyColor').onchange = (e)=>{currentColor=e.target.value;};
+document.getElementById('drawBodyBtn').onclick = ()=>{currentTab='body'; currentTool='bodyPen';};
+let currentTool = null;
+
+document.getElementById('uploadBody').onchange = function(e){
   if(!this.files.length) return;
   const reader = new FileReader();
   reader.onload=function(ev){
     const img = new Image();
     img.onload = ()=>{
-      bodyImages.push({img, x:100, y:100, width:img.width, height:img.height});
+      bodyElements.push({type:'image', img, x:100, y:100, width:img.width, height:img.height});
       drawBodyCanvas();
     };
     img.src = ev.target.result;
   };
   reader.readAsDataURL(this.files[0]);
 };
-document.getElementById('clearBodyBtn').onclick=()=>{
-  bodyImages=[];
+document.getElementById('clearBodyBtn').onclick = ()=>{
+  bodyElements = [];
   drawBodyCanvas();
 };
 
 // ====================
-// WHEEL UPLOAD
+// WHEEL DRAW / UPLOAD
 // ====================
-document.getElementById('uploadWheel').onchange=function(e){
+document.getElementById('wheelColor').onchange = (e)=>{currentColor=e.target.value;};
+document.getElementById('drawWheelBtn').onclick = ()=>{currentTab='wheel'; currentTool='wheelPen';};
+
+document.getElementById('uploadWheel').onchange = function(e){
   if(!this.files.length) return;
   const reader = new FileReader();
   reader.onload=function(ev){
     const img = new Image();
     img.onload = ()=>{
-      wheelImage = {img, x:128, y:128, width:img.width, height:img.height, scale:1};
+      wheelElement = {img, x:128, y:128, width:img.width, height:img.height, scale:1};
       drawWheelCanvas();
     };
     img.src = ev.target.result;
   };
   reader.readAsDataURL(this.files[0]);
 };
-document.getElementById('clearWheelBtn').onclick=()=>{
-  wheelImage=null;
+document.getElementById('clearWheelBtn').onclick = ()=>{
+  wheelElement=null;
   drawWheelCanvas();
 };
-
-// Draw wheel placeholder
-function drawWheelCanvas(){
-  wheelCtx.clearRect(0,0,256,256);
-  wheelCtx.fillStyle='rgba(200,200,200,0.5)';
-  wheelCtx.beginPath();
-  wheelCtx.arc(128,128,64,0,2*Math.PI);
-  wheelCtx.fill();
-  if(wheelImage){
-    wheelCtx.drawImage(
-      wheelImage.img,
-      wheelImage.x - wheelImage.width/2,
-      wheelImage.y - wheelImage.height/2,
-      wheelImage.width*wheelImage.scale,
-      wheelImage.height*wheelImage.scale
-    );
-  }
-}
 
 // ====================
 // BODY CANVAS DRAW
 // ====================
 function drawBodyCanvas(){
   bodyCtx.clearRect(0,0,1024,768);
-  bodyImages.forEach(obj=>{
-    bodyCtx.drawImage(obj.img,obj.x,obj.y,obj.width,obj.height);
+  bodyElements.forEach(el=>{
+    if(el.type==='image') bodyCtx.drawImage(el.img, el.x, el.y, el.width, el.height);
+    if(el.type==='path'){
+      bodyCtx.strokeStyle=el.color;
+      bodyCtx.lineWidth=2;
+      bodyCtx.beginPath();
+      el.points.forEach((p,i)=>{
+        if(i===0) bodyCtx.moveTo(p.x,p.y);
+        else bodyCtx.lineTo(p.x,p.y);
+      });
+      bodyCtx.stroke();
+    }
   });
-  placedWheels.forEach(obj=>{
-    bodyCtx.drawImage(obj.img,obj.x - obj.width/2,obj.y - obj.height/2,obj.width*obj.scale,obj.height*obj.scale);
-  });
+  // Draw wheels on placement tab
+  if(currentTab==='placement'){
+    placedWheels.forEach(w=>{
+      bodyCtx.drawImage(w.img,w.x-w.width/2,w.y-w.height/2,w.width*w.scale,w.height*w.scale);
+    });
+  }
 }
 
 // ====================
-// PLACEMENT
+// WHEEL CANVAS DRAW
 // ====================
-document.getElementById('addWheelBtn').onclick=()=>{
-  if(!wheelImage) return alert("No wheel uploaded!");
-  placedWheels.push({
-    img: wheelImage.img,
-    x:200, y:400,
-    width: wheelImage.width,
-    height: wheelImage.height,
-    scale: wheelImage.scale
-  });
+function drawWheelCanvas(){
+  wheelCtx.clearRect(0,0,256,256);
+  wheelCtx.fillStyle='rgba(200,200,200,0.5)';
+  wheelCtx.beginPath();
+  wheelCtx.arc(128,128,64,0,2*Math.PI);
+  wheelCtx.fill();
+  if(wheelElement){
+    wheelCtx.drawImage(wheelElement.img,wheelElement.x-wheelElement.width/2,wheelElement.y-wheelElement.height/2,
+      wheelElement.width*wheelElement.scale,wheelElement.height*wheelElement.scale);
+  }
+}
+
+// ====================
+// CANVAS INTERACTION
+// ====================
+function getMousePos(canvas, evt){
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x:(evt.clientX-rect.left)*(canvas.width/rect.width),
+    y:(evt.clientY-rect.top)*(canvas.height/rect.height)
+  };
+}
+
+// BODY DRAWING
+bodyCanvas.onpointerdown = function(e){
+  if(currentTool==='bodyPen'){
+    drawing=true;
+    const pos = getMousePos(bodyCanvas,e);
+    penPoints=[pos];
+  }
+};
+bodyCanvas.onpointermove = function(e){
+  if(drawing && currentTool==='bodyPen'){
+    const pos = getMousePos(bodyCanvas,e);
+    penPoints.push(pos);
+    drawBodyCanvas();
+    // draw current line
+    bodyCtx.strokeStyle=currentColor;
+    bodyCtx.lineWidth=2;
+    bodyCtx.beginPath();
+    penPoints.forEach((p,i)=> i===0 ? bodyCtx.moveTo(p.x,p.y) : bodyCtx.lineTo(p.x,p.y));
+    bodyCtx.stroke();
+  }
+};
+bodyCanvas.onpointerup = function(e){
+  if(drawing && currentTool==='bodyPen'){
+    bodyElements.push({type:'path', points:penPoints, color:currentColor});
+    drawing=false;
+    penPoints=[];
+  }
+};
+
+// TODO: Add drag/scale for images and wheels (next step)
+
+// ====================
+// PLACEMENT TAB
+// ====================
+document.getElementById('addWheelBtn').onclick = ()=>{
+  if(!wheelElement) return alert("Upload wheel first!");
+  placedWheels.push({img:wheelElement.img,x:200,y:400,width:wheelElement.width,height:wheelElement.height,scale:wheelElement.scale});
   drawBodyCanvas();
 };
 

@@ -26,6 +26,7 @@
       <input type="color" id="bodyColor" value="#000000">
       <label class="file">Upload Body Image<input type="file" id="uploadBody" accept="image/*"></label>
       <button id="clearBodyBtn">Clear Body</button>
+      <button id="undoBodyBtn">Undo</button>
     </div>
 
     <div id="wheelControls" class="tab-content">
@@ -33,11 +34,13 @@
       <input type="color" id="wheelColor" value="#000000">
       <label class="file">Upload Wheel Image<input type="file" id="uploadWheel" accept="image/*"></label>
       <button id="clearWheelBtn">Clear Wheel</button>
+      <button id="undoWheelBtn">Undo</button>
     </div>
 
     <div id="placementControls" class="tab-content">
       <button id="addWheelBtn">Add Wheel to Body</button>
-      <p>Drag, scale, and rotate wheels on body canvas.</p>
+      <p>Drag, scale, rotate wheels on body canvas. Click wheel to select.</p>
+      <button id="deleteWheelBtn">Delete Selected Wheel</button>
     </div>
 
     <div id="propertiesControls" class="tab-content">
@@ -60,7 +63,7 @@
   </aside>
 
   <main>
-    <canvas id="bodyCanvas" width="1024" height="768"></canvas>
+    <canvas id="bodyCanvas" width="1024" height="512"></canvas>
     <canvas id="wheelCanvas" width="256" height="256"></canvas>
   </main>
 </div>

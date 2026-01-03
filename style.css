@@ -1,7 +1,11 @@
+* {
+  box-sizing: border-box;
+  font-family: system-ui, sans-serif;
+}
+
 body {
   margin: 0;
-  font-family: system-ui, sans-serif;
-  background: #f0f2f5;
+  background: #f3f5f8;
 }
 
 header {
@@ -16,14 +20,37 @@ header {
   height: calc(100vh - 56px);
 }
 
-#toolbar {
-  width: 260px;
+#panel {
+  width: 280px;
   padding: 12px;
   background: white;
   border-right: 1px solid #ccc;
+  overflow-y: auto;
 }
 
-#toolbar button {
+.tabs {
+  display: flex;
+  margin-bottom: 12px;
+}
+
+.tab {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  background: #eee;
+  cursor: pointer;
+}
+
+.tab.active {
+  background: #4a6cf7;
+  color: white;
+}
+
+.hidden {
+  display: none;
+}
+
+button {
   width: 100%;
   margin-bottom: 8px;
 }
@@ -32,13 +59,24 @@ header {
   display: block;
   padding: 8px;
   background: #eee;
-  margin-bottom: 8px;
-  cursor: pointer;
   text-align: center;
+  cursor: pointer;
 }
 
 .file input {
   display: none;
+}
+
+.section input {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.primary {
+  background: #4a6cf7;
+  color: white;
+  border: none;
+  padding: 10px;
 }
 
 main {
@@ -51,4 +89,5 @@ main {
 canvas {
   background: white;
   border: 2px solid #333;
+  max-width: 100%;
 }

@@ -1,63 +1,105 @@
-// ----- CANVAS -----
+// ---------- CANVAS ----------
 const canvas = new fabric.Canvas('canvas', {
   backgroundColor: '#ffffff'
 });
-
-// IMPORTANT: do not touch this unless needed
 canvas.renderAll();
 
-// ----- DRAWING -----
-const drawTool = document.getElementById('drawTool');
-const selectTool = document.getElementById('selectTool');
-const brushSize = document.getElementById('brushSize');
-const color = document.getElementById('color');
+// ---------- STATE ----------
+let currentTab = 'body';
 
-drawTool.onclick = () => {
+// ---------- TABS ----------
+document.querySelectorAll('.tab').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    currentTab = btn.dataset.tab;
+
+    editorTools.classList.toggle('hidden', currentTab === 'props');
+    properties.classList.toggle('hidden', currentTab !== 'props');
+  };
+});
+
+// ---------- DRAWING ----------
+drawBtn.onclick = () => {
   canvas.isDrawingMode = true;
 };
 
-selectTool.onclick = () => {
+selectBtn.onclick = () => {
   canvas.isDrawingMode = false;
 };
 
 brushSize.oninput = () => {
-  canvas.freeDrawingBrush.width = brushSize.value;
+  canvas.freeDrawingBrush.width = +brushSize.value;
 };
 
 color.oninput = () => {
   canvas.freeDrawingBrush.color = color.value;
 };
 
-// Initialize brush defaults
 canvas.freeDrawingBrush.width = brushSize.value;
 canvas.freeDrawingBrush.color = color.value;
 
-// ----- UPLOADS (WORKING) -----
-function setupUpload(inputId) {
-  const input = document.getElementById(inputId);
+// ---------- UPLOAD ----------
+uploadImage.addEventListener('change', () => {
+  if (!uploadImage.files.length) return;
 
-  input.addEventListener('change', () => {
-    if (!input.files.length) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    fabric.Image.fromURL(reader.result, img => {
+      img.left = 200;
+      img.top = 200;
+      img.scaleToWidth(300);
+      img.customType = currentTab; // body or wheel
+      canvas.add(img);
+      canvas.setActiveObject(img);
+      canvas.renderAll();
+    });
+  };
+  reader.readAsDataURL(uploadImage.files[0]);
+});
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      fabric.Image.fromURL(reader.result, img => {
-        img.left = 200;
-        img.top = 200;
-        img.scaleToWidth(300);
-        canvas.add(img);
-        canvas.setActiveObject(img);
-        canvas.renderAll();
-      });
-    };
-    reader.readAsDataURL(input.files[0]);
-  });
+// ---------- PROPERTIES ----------
+function updateStats() {
+  const a = +accel.value;
+  const s = +speed.value;
+  const total = a + s;
+
+  if (total > 100) {
+    speed.value = 100 - a;
+  }
+
+  accelVal.textContent = accel.value;
+  speedVal.textContent = speed.value;
+  remaining.textContent = 100 - (+accel.value + +speed.value);
 }
 
-setupUpload('uploadBody');
-setupUpload('uploadWheel');
+accel.oninput = speed.oninput = updateStats;
+updateStats();
 
-// ----- SUBMIT (placeholder test) -----
-document.getElementById('submit').onclick = () => {
-  alert('Editor baseline works. Submission can be reconnected next.');
+// ---------- SUBMIT (SAME API CONTRACT) ----------
+submit.onclick = async () => {
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
+    alert('Invalid email');
+    return;
+  }
+
+  const carData = {
+    carName: carName.value,
+    teamName: teamName.value,
+    email: email.value,
+    acceleration: +accel.value,
+    topSpeed: +speed.value,
+    wheelPositions: [],
+    carImageData: canvas.toDataURL({ format: 'png' }),
+    wheelImageData: canvas.toDataURL({ format: 'png' })
+  };
+
+  const res = await fetch('/api/submit-car', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ carData })
+  });
+
+  alert(res.ok ? 'Submitted successfully!' : 'Submission failed');
 };

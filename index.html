@@ -3,11 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <title>CrazyRaces Designer</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Fabric -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
-
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -18,36 +16,63 @@
 
 <div id="app">
 
-  <aside id="toolbar">
-    <h3>Tools</h3>
+  <aside id="panel">
 
-    <button id="selectTool">Select</button>
-    <button id="drawTool">Draw</button>
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active" data-tab="body">Body</button>
+      <button class="tab" data-tab="wheel">Wheels</button>
+      <button class="tab" data-tab="props">Properties</button>
+    </div>
 
-    <label>Brush Size</label>
-    <input type="range" id="brushSize" min="1" max="20" value="4">
+    <!-- BODY / WHEEL TOOLS -->
+    <div id="editorTools">
 
-    <label>Color</label>
-    <input type="color" id="color" value="#000000">
+      <button id="drawBtn">Draw</button>
+      <button id="selectBtn">Select</button>
 
-    <hr>
+      <label>Brush size</label>
+      <input type="range" id="brushSize" min="1" max="20" value="4">
 
-    <label class="file">
-      Upload Car Body
-      <input type="file" id="uploadBody" accept="image/*">
-    </label>
+      <label>Color</label>
+      <input type="color" id="color" value="#000000">
 
-    <label class="file">
-      Upload Wheel Image
-      <input type="file" id="uploadWheel" accept="image/*">
-    </label>
+      <label class="file">
+        Upload Image
+        <input type="file" id="uploadImage" accept="image/*">
+      </label>
 
-    <hr>
+    </div>
 
-    <label>Email</label>
-    <input id="email" placeholder="Email">
+    <!-- PROPERTIES -->
+    <div id="properties" class="hidden">
 
-    <button id="submit">Submit</button>
+      <label>
+        Acceleration: <span id="accelVal">50</span>
+      </label>
+      <input type="range" id="accel" min="0" max="100" value="50">
+
+      <label>
+        Top Speed: <span id="speedVal">50</span>
+      </label>
+      <input type="range" id="speed" min="0" max="100" value="50">
+
+      <p>
+        Points remaining:
+        <strong id="remaining">0</strong>
+      </p>
+
+    </div>
+
+    <!-- INFO -->
+    <div class="section">
+      <input id="carName" placeholder="Car Name">
+      <input id="teamName" placeholder="Team Name">
+      <input id="email" placeholder="Email">
+    </div>
+
+    <button id="submit" class="primary">Submit</button>
+
   </aside>
 
   <main>

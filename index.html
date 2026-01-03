@@ -5,15 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CrazyRaces Editor</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/6.0.0/fabric.min.js"></script>
 </head>
 <body>
-
 <header>
   <h1>CrazyRaces Car Editor</h1>
 </header>
 
 <div id="app">
-
   <aside id="toolbar">
     <div id="tab-buttons">
       <button id="bodyTab" class="active">Body</button>
@@ -24,58 +23,24 @@
     </div>
 
     <div id="bodyControls" class="tab-content active">
-      <h3>Body Tools</h3>
-      <button id="drawBodyBtn">Draw</button>
-      <button id="eraseBodyBtn">Erase</button>
-      <button id="clearBodyBtn">Clear</button>
-      <label>Brush size <input type="range" id="bodyBrushSize" min="1" max="20" value="4"></label>
-      <label>Color <input type="color" id="bodyColor" value="#000000"></label>
       <label class="file">Upload Body Image<input type="file" id="uploadBody" accept="image/*"></label>
+      <button id="clearBodyBtn">Clear Body</button>
     </div>
 
     <div id="wheelControls" class="tab-content">
-      <h3>Wheel Tools</h3>
-      <button id="drawWheelBtn">Draw</button>
-      <button id="eraseWheelBtn">Erase</button>
-      <button id="clearWheelBtn">Clear</button>
-      <label>Brush size <input type="range" id="wheelBrushSize" min="1" max="20" value="4"></label>
-      <label>Color <input type="color" id="wheelColor" value="#000000"></label>
       <label class="file">Upload Wheel Image<input type="file" id="uploadWheel" accept="image/*"></label>
+      <button id="clearWheelBtn">Clear Wheel</button>
     </div>
 
     <div id="placementControls" class="tab-content">
-      <h3>Place Wheels</h3>
-      <p>Drag wheels onto body canvas. Use handles to resize.</p>
+      <button id="addWheelBtn">Add Wheel to Body</button>
+      <p>Drag and scale wheels on body canvas.</p>
     </div>
 
     <div id="propertiesControls" class="tab-content">
-      <h3>Properties (100 points)</h3>
       <label>Acceleration <span id="accVal">50</span>
         <input type="range" id="acceleration" min="1" max="50" value="50">
       </label>
       <label>Top Speed <span id="speedVal">50</span>
         <input type="range" id="topSpeed" min="10" max="80" value="50">
-      </label>
-      <p>Points remaining: <span id="pointsRemaining">0</span></p>
-    </div>
-
-    <div id="submitControls" class="tab-content">
-      <h3>Car Info & Submit</h3>
-      <label>Car Name <input type="text" id="carName"></label>
-      <label>Team Name <input type="text" id="teamName"></label>
-      <label>Email <input type="email" id="email"></label>
-      <button id="submitBtn">Submit Car</button>
-      <p id="submitStatus"></p>
-    </div>
-
-  </aside>
-
-  <main>
-    <canvas id="canvas" width="1024" height="512"></canvas>
-  </main>
-
-</div>
-
-<script src="editor.js"></script>
-</body>
-</html>
+      </labe

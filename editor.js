@@ -1,27 +1,17 @@
 // ====================
-// CANVAS SETUP
+// FABRIC CANVASES
 // ====================
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
+const canvas = new fabric.Canvas('canvas', { preserveObjectStacking: true });
+const wheelCanvas = new fabric.Canvas('wheelCanvas', { preserveObjectStacking: true });
 
-// tabs
+canvas.selection = true;
+wheelCanvas.selection = true;
+
+// ====================
+// TABS
+// ====================
 let currentTab = 'body';
-
-// Body & wheel data
-let bodyElements = []; // {type:'path'|'image', path?, image?, x?, y?, width?, height?}
-let wheelElements = []; // {id, type:'path'|'image', image?, width?, height?}
-let wheelPlacements = []; // {wheelId, x, y, scale}
-
-// Drawing states
-let drawing=false, erasing=false;
-let brushSize=4, brushColor='#000000';
-let currentPath=[];
-let selectedElement=null;
-
-// ====================
-// TAB SWITCH
-// ====================
-const tabs=['body','wheel','placement','properties','submit'];
+const tabs = ['body','wheel','placement','properties','submit'];
 tabs.forEach(tab=>{
   document.getElementById(tab+'Tab').onclick = ()=>{
     currentTab=tab;
@@ -29,121 +19,81 @@ tabs.forEach(tab=>{
       document.getElementById(t+'Tab').classList.toggle('active', t===tab);
       document.getElementById(t+'Controls').classList.toggle('active', t===tab);
     });
-    redrawCanvas();
+    if(currentTab==='wheel') wheelCanvas.getElement().style.display='block';
+    else wheelCanvas.getElement().style.display='none';
   };
 });
 
 // ====================
-// BODY CONTROLS
-// ====================
-document.getElementById('drawBodyBtn').onclick=()=>{drawing=true; erasing=false;};
-document.getElementById('eraseBodyBtn').onclick=()=>{drawing=true; erasing=true;};
-document.getElementById('clearBodyBtn').onclick=()=>{
-  bodyElements=[];
-  redrawCanvas();
-};
-document.getElementById('bodyBrushSize').oninput=function(){ brushSize=parseInt(this.value,10); };
-document.getElementById('bodyColor').oninput=function(){ brushColor=this.value; };
-
-// ====================
-// WHEEL CONTROLS
-// ====================
-document.getElementById('drawWheelBtn').onclick=()=>{drawing=true; erasing=false;};
-document.getElementById('eraseWheelBtn').onclick=()=>{drawing=true; erasing=true;};
-document.getElementById('clearWheelBtn').onclick=()=>{
-  wheelElements=[];
-  redrawCanvas();
-};
-document.getElementById('wheelBrushSize').oninput=function(){ brushSize=parseInt(this.value,10); };
-document.getElementById('wheelColor').oninput=function(){ brushColor=this.value; };
-
-// ====================
-// DRAWING HANDLERS
-// ====================
-canvas.addEventListener('pointerdown', e=>{
-  if(currentTab==='body' || currentTab==='wheel'){
-    drawing=true;
-    currentPath=[{x:e.offsetX,y:e.offsetY}];
-  }
-});
-canvas.addEventListener('pointermove', e=>{
-  if(!drawing) return;
-  const point={x:e.offsetX,y:e.offsetY};
-  currentPath.push(point);
-  drawTempLine(currentPath[currentPath.length-2], point);
-});
-canvas.addEventListener('pointerup', e=>{
-  if(drawing){
-    drawing=false;
-    if(currentPath.length>1){
-      const el={type:'path', path:currentPath.slice(), color:brushColor, size:brushSize};
-      if(currentTab==='body') bodyElements.push(el);
-      else if(currentTab==='wheel') wheelElements.push({...el, id:Date.now()});
-    }
-    currentPath=[];
-    redrawCanvas();
-  }
-});
-
-function drawTempLine(p1,p2){
-  ctx.strokeStyle=erasing?'#fff':brushColor;
-  ctx.lineWidth=brushSize;
-  ctx.lineCap='round';
-  ctx.beginPath();
-  ctx.moveTo(p1.x,p1.y);
-  ctx.lineTo(p2.x,p2.y);
-  ctx.stroke();
-}
-
-// ====================
-// IMAGE UPLOAD
+// BODY UPLOAD
 // ====================
 document.getElementById('uploadBody').onchange=function(e){
   if(!this.files.length) return;
-  const file=this.files[0];
-  const reader=new FileReader();
+  const reader = new FileReader();
   reader.onload=function(ev){
-    const img=new Image();
-    img.onload=function(){
-      bodyElements.push({type:'image', image:img, x:100, y:100, width:img.width, height:img.height});
-      redrawCanvas();
-    };
-    img.src=ev.target.result;
+    fabric.Image.fromURL(ev.target.result, img=>{
+      img.set({ left:100, top:100, selectable:true });
+      canvas.add(img);
+      canvas.setActiveObject(img);
+      canvas.renderAll();
+    });
   };
-  reader.readAsDataURL(file);
+  reader.readAsDataURL(this.files[0]);
 };
 
+document.getElementById('clearBodyBtn').onclick=()=>canvas.clear();
+
+// ====================
+// WHEEL UPLOAD
+// ====================
+const wheelImages = []; // store uploaded wheel images
 document.getElementById('uploadWheel').onchange=function(e){
   if(!this.files.length) return;
-  const file=this.files[0];
-  const reader=new FileReader();
+  const reader = new FileReader();
   reader.onload=function(ev){
-    const img=new Image();
-    img.onload=function(){
-      wheelElements.push({id:Date.now(), type:'image', image:img, width:100, height:100});
-      redrawCanvas();
-    };
-    img.src=ev.target.result;
+    fabric.Image.fromURL(ev.target.result, img=>{
+      img.set({ left:128, top:128, originX:'center', originY:'center', selectable:true });
+      img.scaleToWidth(128); // square guidance
+      wheelCanvas.add(img);
+      wheelCanvas.setActiveObject(img);
+      wheelCanvas.renderAll();
+      wheelImages.push(img);
+    });
   };
-  reader.readAsDataURL(file);
+  reader.readAsDataURL(this.files[0]);
 };
 
+document.getElementById('clearWheelBtn').onclick=()=>wheelCanvas.clear();
+
+// Draw grey placeholder circle on wheel canvas
+function drawWheelPlaceholder(){
+  wheelCanvas.clear();
+  const circ = new fabric.Circle({
+    left:128, top:128, radius:64,
+    fill:'rgba(200,200,200,0.5)',
+    originX:'center', originY:'center',
+    selectable:false
+  });
+  wheelCanvas.add(circ);
+}
+drawWheelPlaceholder();
+
 // ====================
-// PLACEMENT LOGIC
+// PLACEMENT
 // ====================
-canvas.addEventListener('pointerdown', e=>{
-  if(currentTab==='placement'){
-    const mx=e.offsetX, my=e.offsetY;
-    // place first available wheel at click
-    for(let w of wheelElements){
-      if(!wheelPlacements.find(p=>p.wheelId===w.id)){
-        wheelPlacements.push({wheelId:w.id, x:mx, y:my, scale:1});
-        redrawCanvas();
-        break;
-      }
-    }
-  }
-});
+document.getElementById('addWheelBtn').onclick=()=>{
+  const activeWheel = wheelCanvas.getActiveObject();
+  if(!activeWheel) return alert("Select a wheel to add!");
+  const dataUrl = activeWheel.toDataURL({ format:'png' });
+  fabric.Image.fromURL(dataUrl, img=>{
+    img.set({ left:200, top:400, originX:'center', originY:'center', selectable:true });
+    img.scaleX = activeWheel.scaleX; img.scaleY = activeWheel.scaleY;
+    img.customId = Date.now();
+    canvas.add(img);
+    canvas.setActiveObject(img);
+    canvas.renderAll();
+  });
+};
 
 // ====================
 // PROPERTIES
@@ -170,39 +120,31 @@ document.getElementById('submitBtn').onclick=async function(){
   const email=document.getElementById('email').value.trim();
   if(!carName || !teamName || !email){ alert('Fill Car Name, Team Name, Email'); return; }
 
-  // Export body canvas
-  let bodyCanvas=document.createElement('canvas');
-  bodyCanvas.width=canvas.width; bodyCanvas.height=canvas.height;
-  let bodyCtx=bodyCanvas.getContext('2d');
-  bodyElements.forEach(el=>{
-    if(el.type==='path'){
-      bodyCtx.strokeStyle=el.color; bodyCtx.lineWidth=el.size; bodyCtx.lineCap='round';
-      bodyCtx.beginPath();
-      bodyCtx.moveTo(el.path[0].x,el.path[0].y);
-      for(let i=1;i<el.path.length;i++) bodyCtx.lineTo(el.path[i].x,el.path[i].y);
-      bodyCtx.stroke();
-    } else if(el.type==='image'){
-      bodyCtx.drawImage(el.image,el.x,el.y,el.width,el.height);
+  const bodyDataURL = canvas.toDataURL({ format:'png' });
+
+  // Wheel placements on body
+  const wheelPlacements = [];
+  canvas.getObjects().forEach(obj=>{
+    if(obj.customId){
+      wheelPlacements.push({
+        wheelId: obj.customId,
+        x: obj.left,
+        y: obj.top,
+        scale: obj.scaleX
+      });
     }
   });
 
-  // Export wheels separately
-  let wheelCanvas=document.createElement('canvas');
-  wheelCanvas.width=canvas.width; wheelCanvas.height=canvas.height;
-  let wheelCtx=wheelCanvas.getContext('2d');
-  wheelPlacements.forEach(p=>{
-    const w=wheelElements.find(w=>w.id===p.wheelId);
-    if(w) wheelCtx.drawImage(w.image,p.x-w.width*p.scale/2,p.y-w.height*p.scale/2,w.width*p.scale,w.height*p.scale);
-  });
-
-  const payload={carData:{
-    carName, teamName, email,
-    acceleration:parseInt(accSlider.value),
-    topSpeed:parseInt(speedSlider.value),
-    carImageData:bodyCanvas.toDataURL('image/png'),
-    wheelImageData:wheelCanvas.toDataURL('image/png'),
-    wheelPositions:wheelPlacements.map(p=>({wheelId:p.wheelId,x:p.x,y:p.y,scale:p.scale}))
-  }};
+  const payload = {
+    carData: {
+      carName, teamName, email,
+      acceleration: parseInt(accSlider.value),
+      topSpeed: parseInt(speedSlider.value),
+      carImageData: bodyDataURL,
+      wheelImageData: '', // optional, we could include the wheel canvas if needed
+      wheelPositions: wheelPlacements
+    }
+  };
 
   try{
     const resp=await fetch('/api/submit-car',{
@@ -216,29 +158,3 @@ document.getElementById('submitBtn').onclick=async function(){
     document.getElementById('submitStatus').textContent='Submission failed!';
   }
 };
-
-// ====================
-// REDRAW CANVAS
-// ====================
-function redrawCanvas(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  // Body
-  bodyElements.forEach(el=>{
-    if(el.type==='path'){
-      ctx.strokeStyle=el.color; ctx.lineWidth=el.size; ctx.lineCap='round';
-      ctx.beginPath();
-      ctx.moveTo(el.path[0].x,el.path[0].y);
-      for(let i=1;i<el.path.length;i++) ctx.lineTo(el.path[i].x,el.path[i].y);
-      ctx.stroke();
-    } else if(el.type==='image'){
-      ctx.drawImage(el.image,el.x,el.y,el.width,el.height);
-    }
-  });
-
-  // Wheels (placement)
-  wheelPlacements.forEach(p=>{
-    const w=wheelElements.find(w=>w.id===p.wheelId);
-    if(w) ctx.drawImage(w.image,p.x-w.width*p.scale/2,p.y-w.height*p.scale/2,w.width*p.scale,w.height*p.scale);
-  });
-}

@@ -15,16 +15,12 @@ aside#toolbar {
 .tab-content { display: none; margin-bottom: 12px; }
 .tab-content.active { display: block; }
 
-#bodyControls button,#wheelControls button,#placementControls button {
-  width: 100%; margin: 4px 0;
-}
+button { width: 100%; margin: 4px 0; padding: 6px; cursor: pointer; }
 
-#bodyControls label,#wheelControls label,#propertiesControls label,#submitControls label {
-  display: block; margin-bottom: 8px; font-size: 0.9em;
-}
+label.file { background: #eee; padding: 6px; text-align: center; cursor: pointer; margin-bottom: 8px; }
+label.file input { display: none; }
 
-.file { background: #eee; padding: 6px; text-align: center; cursor: pointer; margin-bottom: 8px; }
-.file input { display: none; }
+main { flex: 1; display: flex; justify-content: center; align-items: center; position: relative; }
+canvas { border: 2px solid #333; background: white; touch-action: none; }
 
-main { flex: 1; display: flex; justify-content: center; align-items: center; }
-canvas { background: white; border: 2px solid #333; touch-action: none; }
+#wheelCanvas { border: 2px dashed #888; background: #ddd; }

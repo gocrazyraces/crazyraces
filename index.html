@@ -18,25 +18,34 @@
     <div id="tab-buttons">
       <button id="bodyTab" class="active">Body</button>
       <button id="wheelTab">Wheel</button>
+      <button id="placementTab">Placement</button>
       <button id="propertiesTab">Properties</button>
       <button id="submitTab">Submit</button>
     </div>
 
-    <div id="bodyControls" class="tab-content">
+    <div id="bodyControls" class="tab-content active">
       <h3>Body Tools</h3>
-      <button id="drawBtn">Draw</button>
-      <button id="eraseBtn">Erase</button>
-      <button id="clearBtn">Clear</button>
-      <label>Brush size <input type="range" id="brushSize" min="1" max="20" value="4"></label>
-      <label>Color <input type="color" id="color" value="#000000"></label>
+      <button id="drawBodyBtn">Draw</button>
+      <button id="eraseBodyBtn">Erase</button>
+      <button id="clearBodyBtn">Clear</button>
+      <label>Brush size <input type="range" id="bodyBrushSize" min="1" max="20" value="4"></label>
+      <label>Color <input type="color" id="bodyColor" value="#000000"></label>
       <label class="file">Upload Body Image<input type="file" id="uploadBody" accept="image/*"></label>
-      <button id="addWheelPlaceholder">Add Wheel Placeholder</button>
-      <p>Click to add wheel positions</p>
     </div>
 
     <div id="wheelControls" class="tab-content">
       <h3>Wheel Tools</h3>
+      <button id="drawWheelBtn">Draw</button>
+      <button id="eraseWheelBtn">Erase</button>
+      <button id="clearWheelBtn">Clear</button>
+      <label>Brush size <input type="range" id="wheelBrushSize" min="1" max="20" value="4"></label>
+      <label>Color <input type="color" id="wheelColor" value="#000000"></label>
       <label class="file">Upload Wheel Image<input type="file" id="uploadWheel" accept="image/*"></label>
+    </div>
+
+    <div id="placementControls" class="tab-content">
+      <h3>Place Wheels</h3>
+      <p>Drag wheels onto body canvas. Use handles to resize.</p>
     </div>
 
     <div id="propertiesControls" class="tab-content">
@@ -51,7 +60,7 @@
     </div>
 
     <div id="submitControls" class="tab-content">
-      <h3>Car Info</h3>
+      <h3>Car Info & Submit</h3>
       <label>Car Name <input type="text" id="carName"></label>
       <label>Team Name <input type="text" id="teamName"></label>
       <label>Email <input type="email" id="email"></label>

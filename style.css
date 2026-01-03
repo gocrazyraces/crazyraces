@@ -15,9 +15,11 @@ aside#toolbar {
 .tab-content { display: none; margin-bottom: 12px; }
 .tab-content.active { display: block; }
 
-#tools button, #details button, #bodyControls button, #wheelControls button { width: 100%; margin: 4px 0; }
+#bodyControls button,#wheelControls button,#placementControls button {
+  width: 100%; margin: 4px 0;
+}
 
-#tools label, #properties label, #details label, #bodyControls label, #wheelControls label {
+#bodyControls label,#wheelControls label,#propertiesControls label,#submitControls label {
   display: block; margin-bottom: 8px; font-size: 0.9em;
 }
 

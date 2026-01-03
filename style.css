@@ -5,7 +5,7 @@
 
 body {
   margin: 0;
-  background: #f3f5f8;
+  background: #f0f2f5;
 }
 
 header {
@@ -20,37 +20,14 @@ header {
   height: calc(100vh - 56px);
 }
 
-#panel {
-  width: 280px;
+#toolbar {
+  width: 240px;
   padding: 12px;
   background: white;
   border-right: 1px solid #ccc;
-  overflow-y: auto;
 }
 
-.tabs {
-  display: flex;
-  margin-bottom: 12px;
-}
-
-.tab {
-  flex: 1;
-  padding: 8px;
-  border: none;
-  background: #eee;
-  cursor: pointer;
-}
-
-.tab.active {
-  background: #4a6cf7;
-  color: white;
-}
-
-.hidden {
-  display: none;
-}
-
-button {
+#toolbar button {
   width: 100%;
   margin-bottom: 8px;
 }
@@ -67,18 +44,6 @@ button {
   display: none;
 }
 
-.section input {
-  width: 100%;
-  margin-bottom: 8px;
-}
-
-.primary {
-  background: #4a6cf7;
-  color: white;
-  border: none;
-  padding: 10px;
-}
-
 main {
   flex: 1;
   display: flex;
@@ -86,8 +51,8 @@ main {
   align-items: center;
 }
 
+/* CRITICAL: do NOT size canvas here */
 canvas {
-  background: white;
   border: 2px solid #333;
-  max-width: 100%;
+  background: white;
 }

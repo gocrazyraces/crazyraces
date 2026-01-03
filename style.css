@@ -51,8 +51,7 @@ main {
   align-items: center;
 }
 
-/* CRITICAL: do NOT size canvas here */
 canvas {
-  border: 2px solid #333;
   background: white;
+  border: 2px solid #333;
 }

@@ -16,8 +16,11 @@
 </header>
 
 <div id="app">
-  <!-- TOOLBAR -->
+
+  <!-- LEFT PANEL -->
   <aside id="toolbar">
+
+    <!-- MODE -->
     <div class="section">
       <h3>Mode</h3>
       <div class="row">
@@ -26,62 +29,98 @@
       </div>
     </div>
 
+    <!-- TOOLS -->
     <div class="section">
       <h3>Tools</h3>
       <div class="row">
-        <button data-tool="select" class="tool active">🖱 Select</button>
-        <button data-tool="draw" class="tool">✏️ Draw</button>
-        <button data-tool="erase" class="tool">🧽 Erase</button>
-        <button data-tool="crosshair" class="tool">⭕ Wheel Spot</button>
+        <button data-tool="select" class="tool active">Select</button>
+        <button data-tool="draw" class="tool">Draw</button>
+        <button data-tool="erase" class="tool">Erase</button>
+        <button data-tool="crosshair" class="tool">Wheel Spot</button>
       </div>
 
       <label>Brush size</label>
-      <input type="range" id="brushSize" min="1" max="20" value="4" />
+      <input type="range" id="brushSize" min="1" max="20" value="4">
 
       <label>Color</label>
-      <input type="color" id="color" value="#000000" />
+      <input type="color" id="color" value="#000000">
     </div>
 
+    <!-- UPLOAD -->
     <div class="section">
       <h3>Assets</h3>
       <label class="file">
         Upload Car Body
-        <input type="file" id="uploadBody" accept="image/*" />
+        <input type="file" id="uploadBody" accept="image/*">
       </label>
 
       <label class="file">
         Upload Wheel Image
-        <input type="file" id="uploadWheel" accept="image/*" />
+        <input type="file" id="uploadWheel" accept="image/*">
       </label>
     </div>
 
+    <!-- STATS -->
     <div class="section">
       <h3>Stats (100 total)</h3>
-      <label>Acceleration
-        <input type="range" id="accel" min="1" max="50" value="50" />
+
+      <label>
+        Acceleration:
+        <span id="accelVal">50</span>
       </label>
-      <label>Top Speed
-        <input type="range" id="speed" min="10" max="80" value="50" />
+      <input type="range" id="accel" min="1" max="50" value="50">
+
+      <label>
+        Top Speed:
+        <span id="speedVal">50</span>
       </label>
+      <input type="range" id="speed" min="10" max="80" value="50">
     </div>
 
+    <!-- INFO -->
     <div class="section">
       <h3>Info</h3>
-      <input id="carName" placeholder="Car Name" />
-      <input id="teamName" placeholder="Team Name" />
-      <input id="email" placeholder="Email" />
+      <input id="carName" placeholder="Car Name">
+      <input id="teamName" placeholder="Team Name">
+      <input id="email" placeholder="Email">
     </div>
 
+    <!-- ACTIONS -->
     <div class="section">
-      <button id="preview">▶ Preview</button>
-      <button id="submit" class="primary">📤 Submit</button>
+      <button id="preview">Preview</button>
+      <button id="submit" class="primary">Submit</button>
     </div>
+
   </aside>
 
   <!-- CANVAS -->
   <main>
     <canvas id="canvas" width="1024" height="512"></canvas>
   </main>
+
+  <!-- RIGHT PANEL -->
+  <aside id="layers">
+    <h3>Layers</h3>
+
+    <div class="layer">
+      <input type="checkbox" id="layer-body" checked>
+      <label>Body</label>
+      <button data-lock="body">🔒</button>
+    </div>
+
+    <div class="layer">
+      <input type="checkbox" id="layer-wheels" checked>
+      <label>Wheels</label>
+      <button data-lock="wheels">🔒</button>
+    </div>
+
+    <div class="layer">
+      <input type="checkbox" id="layer-markers" checked>
+      <label>Markers</label>
+      <button data-lock="markers">🔒</button>
+    </div>
+  </aside>
+
 </div>
 
 <script src="editor.js"></script>

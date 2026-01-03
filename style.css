@@ -2,13 +2,12 @@
   --bg: #f3f5f8;
   --panel: #ffffff;
   --accent: #4a6cf7;
-  --accent-dark: #3b55c5;
   --border: #dcdfe6;
 }
 
 * {
   box-sizing: border-box;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: system-ui, sans-serif;
 }
 
 body {
@@ -19,21 +18,28 @@ body {
 header {
   background: #1e1e2f;
   color: white;
-  padding: 12px 20px;
+  padding: 12px;
   text-align: center;
 }
 
 #app {
-  display: flex;
+  display: grid;
+  grid-template-columns: 280px 1fr 220px;
   height: calc(100vh - 56px);
 }
 
-#toolbar {
-  width: 280px;
+aside {
   background: var(--panel);
-  border-right: 1px solid var(--border);
   padding: 12px;
   overflow-y: auto;
+}
+
+#toolbar {
+  border-right: 1px solid var(--border);
+}
+
+#layers {
+  border-left: 1px solid var(--border);
 }
 
 .section {
@@ -41,53 +47,34 @@ header {
 }
 
 .section h3 {
-  margin: 0 0 6px;
+  margin: 0 0 8px;
   font-size: 14px;
-  color: #444;
 }
 
 .row {
   display: flex;
   gap: 6px;
-  margin-bottom: 6px;
 }
 
 button {
-  flex: 1;
-  padding: 8px;
+  padding: 6px;
   border-radius: 6px;
   border: 1px solid var(--border);
   background: #f7f8fa;
   cursor: pointer;
 }
 
-button.active {
-  background: var(--accent);
-  color: white;
-}
-
+button.active,
 button.primary {
   background: var(--accent);
   color: white;
-  border: none;
-}
-
-button:hover {
-  background: var(--accent-dark);
-  color: white;
-}
-
-input[type="range"],
-input[type="color"],
-input[type="text"] {
-  width: 100%;
 }
 
 .file {
   display: block;
   padding: 8px;
-  border-radius: 6px;
   background: #f1f3f7;
+  border-radius: 6px;
   text-align: center;
   cursor: pointer;
 }
@@ -96,34 +83,21 @@ input[type="text"] {
   display: none;
 }
 
+.layer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
 main {
-  flex: 1;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
 canvas {
-  background: white;
   border: 2px solid #333;
+  background: white;
   max-width: 100%;
-  height: auto;
-}
-
-/* Mobile */
-@media (max-width: 768px) {
-  #app {
-    flex-direction: column;
-  }
-
-  #toolbar {
-    width: 100%;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-  }
-
-  .section {
-    grid-column: span 2;
-  }
 }

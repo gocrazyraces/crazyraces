@@ -1,28 +1,17 @@
 /**
  * =========================================================
- * CRAZY RACES (temporary name) — Car Designer
+ * DOODLE DERBY 2D — Car Designer
  * =========================================================
  *
- * Goals (this iteration):
- * - Professional, simple workflow:
- *     1) Draw/upload body
- *     2) Draw/upload wheel
- *     3) Place wheels (multiple copies, scale/rotate)
- *     4) Allocate 100 credits (acc + speed)
- *     5) Submit to API
+ * Changes implemented in this iteration:
+ * 5) Body is now moveable:
+ *    - In Body tab, choose "Move body"
+ *    - Drag body around the canvas
+ *    - Wheels are positioned RELATIVE to the body, so they move with it
  *
- * Key implementation decision:
- * - We keep TWO “art” layers on OFFSCREEN canvases:
- *     - bodyArtCanvas: holds ONLY the body drawing/upload (no wheels)
- *     - wheelArtCanvas: holds ONLY the wheel drawing/upload
- *
- * The visible bodyCanvas shows:
- *     bodyArt + placed wheels (composite)
- *
- * Why?
- * - Undo/redo for body and wheel are much simpler and robust (ImageData snapshots).
- * - Wheel placement can be edited without destroying the body artwork.
- * - Submission can send: body image + wheel image + wheel transforms (positions).
+ * 6) Status pill moved into page (workspace topbar)
+ * 7) Tips moved underneath drawing area (dynamic per tab)
+ * 8) Button spacing handled in CSS (row gap + stack spacing)
  */
 
 // ============================
@@ -30,6 +19,7 @@
 // ============================
 const ui = {
   statusPill: document.getElementById("uiStatusPill"),
+  tipsText: document.getElementById("tipsText"),
 
   // Tabs
   tabs: {
@@ -109,7 +99,6 @@ const ui = {
 const TOTAL_CREDITS = window.CRAZY_RACES_TOTAL_CREDITS ?? 100;
 const SUBMIT_ENDPOINT = window.CRAZY_RACES_SUBMIT_ENDPOINT ?? "/api/submit-car";
 
-// Canvas sizes (single source of truth)
 const BODY_W = window.CRAZY_RACES_BODY_W ?? 1024;
 const BODY_H = window.CRAZY_RACES_BODY_H ?? 512;
 const WHEEL_W = window.CRAZY_RACES_WHEEL_W ?? 256;
@@ -118,15 +107,11 @@ const WHEEL_H = window.CRAZY_RACES_WHEEL_H ?? 256;
 // Visual tuning
 const BODY_PEN_WIDTH = 4;
 const WHEEL_PEN_WIDTH = 4;
-
-// How “clickable” a wheel is (hit radius multiplier)
 const WHEEL_HIT_PAD = 1.05;
 
 // ============================
 // CANVAS SETUP
 // ============================
-
-// Visible canvases
 ui.bodyCanvas.width = BODY_W;
 ui.bodyCanvas.height = BODY_H;
 ui.wheelCanvas.width = WHEEL_W;
@@ -139,8 +124,8 @@ const wheelCtx = ui.wheelCanvas.getContext("2d");
 const previewCtx = ui.previewCanvas.getContext("2d");
 
 // Offscreen “art” canvases:
-// - bodyArt: only body artwork
-// - wheelArt: only wheel artwork
+// - bodyArtCanvas holds ONLY body pixels (in its own local coordinates)
+// - wheelArtCanvas holds ONLY wheel pixels (in its own local coordinates)
 const bodyArtCanvas = document.createElement("canvas");
 bodyArtCanvas.width = BODY_W;
 bodyArtCanvas.height = BODY_H;
@@ -152,50 +137,63 @@ wheelArtCanvas.height = WHEEL_H;
 const wheelArtCtx = wheelArtCanvas.getContext("2d");
 
 // ============================
-// EDITOR STATE
+// STATE
 // ============================
 
-/**
- * Tabs: 'body' | 'wheel' | 'placement' | 'properties' | 'submit'
- */
 let currentTab = "body";
-
-/**
- * Tools:
- * - pen: draw strokes
- * - move: currently "inspect only" (we keep it for future transforms)
- */
 let currentTool = "pen"; // 'pen' | 'move'
-
-// Current pen colour (body & wheel have separate pickers, but we store it here)
 let currentPenColor = "#2C2B3A";
 
-// Pointer drawing state
 let isDrawing = false;
-let strokePoints = []; // [{x,y}, ...] captured during a stroke
+let strokePoints = [];
 
-// Body / wheel undo stacks store ImageData snapshots for robustness
+// Body layer position (NEW)
+// This is the big change enabling body movement.
+// - bodyArtCanvas stays unchanged; we draw it into the visible canvas at (bodyOffsetX, bodyOffsetY).
+// - Wheels are stored in BODY-LOCAL coordinates; rendering adds the body offset.
+let bodyOffsetX = 0;
+let bodyOffsetY = 0;
+let isBodyDragging = false;
+let bodyDragStartX = 0;
+let bodyDragStartY = 0;
+let bodyDragOffsetStartX = 0;
+let bodyDragOffsetStartY = 0;
+
+// Undo stacks for artwork layers
 const bodyUndo = [];
 const bodyRedo = [];
 const wheelUndo = [];
 const wheelRedo = [];
 
-/**
- * Wheel “master” availability:
- * - We consider a wheel “ready” if wheelArt has any non-empty pixels.
- *   (We approximate this by tracking a boolean set when drawing/uploading/clearing.)
- */
 let hasWheelArt = false;
 
-// Wheel placements on the car.
-// Each wheel is a “copy” of wheelArt, drawn with transform.
+// Wheels stored in BODY-LOCAL coordinates
 const placedWheels = [];
-let selectedWheelIndex = -1; // -1 means none selected
+let selectedWheelIndex = -1;
+
+// ============================
+// TIPS (under drawing area)
+// ============================
+const TAB_TIPS = {
+  body:
+    "Draw or upload your car body. Use Move body to drag the whole body around. Tip: upload a PNG with transparency for clean edges.",
+  wheel:
+    "Create a wheel (square works best). Keep it simple—wheels render small. You can upload a PNG too.",
+  placement:
+    "Click a wheel to select it, drag to move, then scale/rotate with sliders. Wheels are placed relative to the body, so moving the body moves wheels too.",
+  properties:
+    "Spend exactly 100 credits across Acceleration and Top Speed. Remaining must hit 0 to submit.",
+  submit:
+    "Enter team name, car name, and email, then submit. The payload includes artwork, wheel layout, body offset, and performance credits."
+};
+
+function setTips(tabName) {
+  ui.tipsText.textContent = TAB_TIPS[tabName] ?? "";
+}
 
 // ============================
 // UTILS
 // ============================
-
 function setStatus(text) {
   ui.statusPill.textContent = text;
 }
@@ -204,9 +202,6 @@ function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
 }
 
-/**
- * Convert pointer event -> canvas coordinates, accounting for CSS scaling.
- */
 function getCanvasPos(canvas, evt) {
   const rect = canvas.getBoundingClientRect();
   return {
@@ -215,14 +210,22 @@ function getCanvasPos(canvas, evt) {
   };
 }
 
-/**
- * Basic wheel hit test:
- * We treat each wheel as a circle with radius proportional to its scaled size.
- */
-function hitTestWheel(pos, wheel) {
-  const dx = pos.x - wheel.x;
-  const dy = pos.y - wheel.y;
-  const r = (Math.max(WHEEL_W, WHEEL_H) * wheel.scale * 0.5) * WHEEL_HIT_PAD;
+// Convert global canvas coordinates -> body-local coordinates
+function toBodyLocal(pos) {
+  return { x: pos.x - bodyOffsetX, y: pos.y - bodyOffsetY };
+}
+
+// Convert body-local coordinates -> global canvas coordinates
+function toGlobalFromBodyLocal(pos) {
+  return { x: pos.x + bodyOffsetX, y: pos.y + bodyOffsetY };
+}
+
+// Wheel hit test uses GLOBAL position (body offset included)
+function hitTestWheelGlobal(globalPos, wheelLocal) {
+  const wheelGlobal = toGlobalFromBodyLocal({ x: wheelLocal.x, y: wheelLocal.y });
+  const dx = globalPos.x - wheelGlobal.x;
+  const dy = globalPos.y - wheelGlobal.y;
+  const r = (Math.max(WHEEL_W, WHEEL_H) * wheelLocal.scale * 0.5) * WHEEL_HIT_PAD;
   return (dx * dx + dy * dy) <= r * r;
 }
 
@@ -231,16 +234,12 @@ function getSelectedWheel() {
   return placedWheels[selectedWheelIndex];
 }
 
-/**
- * Draw a “paper-ish” background grid (very subtle).
- * This makes it feel more like a design surface.
- */
+// Subtle background grid for a “design surface”
 function drawSubtleGrid(ctx, w, h) {
   ctx.save();
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, w, h);
 
-  // faint grid
   ctx.globalAlpha = 0.10;
   ctx.strokeStyle = "#2C2B3A";
   ctx.lineWidth = 1;
@@ -261,14 +260,9 @@ function drawSubtleGrid(ctx, w, h) {
   ctx.restore();
 }
 
-/**
- * Snapshot helpers (undo/redo):
- * We store ImageData because it faithfully captures the canvas
- * including alpha, and doesn’t lose references like JSON would.
- */
+// Undo snapshots
 function pushBodyUndoSnapshot() {
   bodyUndo.push(bodyArtCtx.getImageData(0, 0, BODY_W, BODY_H));
-  // Any new action clears redo history
   bodyRedo.length = 0;
 }
 
@@ -277,21 +271,14 @@ function pushWheelUndoSnapshot() {
   wheelRedo.length = 0;
 }
 
-/**
- * Safe undo: requires at least 2 snapshots to “go back”.
- */
-function undoCanvas(undoStack, redoStack, targetCtx, w, h) {
-  if (undoStack.length < 2) return; // nothing to undo to
+function undoCanvas(undoStack, redoStack, targetCtx) {
+  if (undoStack.length < 2) return;
   const current = undoStack.pop();
   redoStack.push(current);
-
   const prev = undoStack[undoStack.length - 1];
   targetCtx.putImageData(prev, 0, 0);
 }
 
-/**
- * Safe redo.
- */
 function redoCanvas(undoStack, redoStack, targetCtx) {
   if (redoStack.length === 0) return;
   const next = redoStack.pop();
@@ -299,17 +286,11 @@ function redoCanvas(undoStack, redoStack, targetCtx) {
   targetCtx.putImageData(next, 0, 0);
 }
 
-/**
- * Clear an art canvas and push an undo snapshot.
- */
 function clearArtCanvas(ctx, w, h, pushSnapshotFn) {
   ctx.clearRect(0, 0, w, h);
   pushSnapshotFn();
 }
 
-/**
- * Draw a stroke preview on top of the *visible* canvas (not committed).
- */
 function strokePreview(ctx, points, color, width) {
   if (points.length < 2) return;
   ctx.save();
@@ -324,9 +305,6 @@ function strokePreview(ctx, points, color, width) {
   ctx.restore();
 }
 
-/**
- * Commit a stroke onto a target art layer (bodyArt or wheelArt).
- */
 function commitStroke(targetCtx, points, color, width) {
   if (points.length < 2) return;
   targetCtx.save();
@@ -341,16 +319,10 @@ function commitStroke(targetCtx, points, color, width) {
   targetCtx.restore();
 }
 
-/**
- * Upload helpers:
- * - Body upload: draws image centered and scaled to fit nicely.
- * - Wheel upload: draws image centered and scaled to fit the square.
- */
 function drawUploadedImageToArt(img, targetCtx, w, h) {
   targetCtx.save();
   targetCtx.clearRect(0, 0, w, h);
 
-  // Scale to fit inside target canvas while preserving aspect ratio
   const scale = Math.min(w / img.width, h / img.height);
   const drawW = img.width * scale;
   const drawH = img.height * scale;
@@ -361,102 +333,88 @@ function drawUploadedImageToArt(img, targetCtx, w, h) {
   targetCtx.restore();
 }
 
-/**
- * Export a PNG of the composite preview (body + wheels).
- */
-function exportCompositePNG() {
-  const png = getCompositeDataURL();
-  const a = document.createElement("a");
-  a.href = png;
-  a.download = "crazyraces_car_preview.png";
-  a.click();
-}
+// ============================
+// RENDERING
+// ============================
 
-/**
- * Composite renderer:
- * - always renders:
- *    1) grid background
- *    2) bodyArt
- *    3) placed wheels
- *    4) selection highlight (placement tab only)
- */
 function renderBodyComposite() {
-  // Background/grid
   drawSubtleGrid(bodyCtx, BODY_W, BODY_H);
 
-  // Body art layer
-  bodyCtx.drawImage(bodyArtCanvas, 0, 0);
+  // Draw body art at current body offset (NEW)
+  bodyCtx.drawImage(bodyArtCanvas, bodyOffsetX, bodyOffsetY);
 
-  // Wheels
+  // Draw wheels at bodyOffset + wheelLocal(x,y)
   for (let i = 0; i < placedWheels.length; i++) {
     const w = placedWheels[i];
+    const g = toGlobalFromBodyLocal({ x: w.x, y: w.y });
 
     bodyCtx.save();
-    bodyCtx.translate(w.x, w.y);
+    bodyCtx.translate(g.x, g.y);
     bodyCtx.rotate(w.rotationRad);
     bodyCtx.scale(w.scale, w.scale);
 
-    // Draw wheel art centered
     bodyCtx.drawImage(wheelArtCanvas, -WHEEL_W / 2, -WHEEL_H / 2, WHEEL_W, WHEEL_H);
 
     // Selection highlight
     if (currentTab === "placement" && i === selectedWheelIndex) {
       bodyCtx.lineWidth = 3;
-      bodyCtx.strokeStyle = "#ED4D2E"; // orange highlight
+      bodyCtx.strokeStyle = "#ED4D2E";
       bodyCtx.strokeRect(-WHEEL_W / 2, -WHEEL_H / 2, WHEEL_W, WHEEL_H);
     }
 
     bodyCtx.restore();
   }
+
+  // Optional: show a gentle outline around the body bounds while moving (helps UX)
+  if (currentTab === "body" && currentTool === "move") {
+    bodyCtx.save();
+    bodyCtx.globalAlpha = 0.55;
+    bodyCtx.strokeStyle = "#224C8F";
+    bodyCtx.lineWidth = 2;
+    bodyCtx.strokeRect(bodyOffsetX + 4, bodyOffsetY + 4, BODY_W - 8, BODY_H - 8);
+    bodyCtx.restore();
+  }
 }
 
-/**
- * Wheel editor renderer:
- * - subtle background
- * - wheelArt
- */
 function renderWheelEditor() {
-  // light background
   wheelCtx.save();
   wheelCtx.clearRect(0, 0, WHEEL_W, WHEEL_H);
 
-  // faint “target” to suggest centering
   wheelCtx.globalAlpha = 0.08;
   wheelCtx.fillStyle = "#224C8F";
   wheelCtx.beginPath();
   wheelCtx.arc(WHEEL_W / 2, WHEEL_H / 2, 90, 0, 2 * Math.PI);
   wheelCtx.fill();
-  wheelCtx.restore();
 
-  // wheel art on top
+  wheelCtx.restore();
   wheelCtx.drawImage(wheelArtCanvas, 0, 0);
 }
 
-/**
- * Preview canvas: shows a scaled composite (like a thumbnail).
- */
 function renderPreview() {
   previewCtx.clearRect(0, 0, ui.previewCanvas.width, ui.previewCanvas.height);
 
-  // Build a temporary offscreen composite for export/preview
   const composite = document.createElement("canvas");
   composite.width = BODY_W;
   composite.height = BODY_H;
   const cctx = composite.getContext("2d");
 
-  drawSubtleGrid(cctx, BODY_W, BODY_H);
-  cctx.drawImage(bodyArtCanvas, 0, 0);
+  cctx.fillStyle = "#ffffff";
+  cctx.fillRect(0, 0, BODY_W, BODY_H);
 
+  // Body with offset
+  cctx.drawImage(bodyArtCanvas, bodyOffsetX, bodyOffsetY);
+
+  // Wheels with offset
   for (const w of placedWheels) {
+    const g = toGlobalFromBodyLocal({ x: w.x, y: w.y });
     cctx.save();
-    cctx.translate(w.x, w.y);
+    cctx.translate(g.x, g.y);
     cctx.rotate(w.rotationRad);
     cctx.scale(w.scale, w.scale);
     cctx.drawImage(wheelArtCanvas, -WHEEL_W / 2, -WHEEL_H / 2);
     cctx.restore();
   }
 
-  // Fit composite into preview canvas (preserve aspect)
   const pw = ui.previewCanvas.width;
   const ph = ui.previewCanvas.height;
   const scale = Math.min(pw / BODY_W, ph / BODY_H);
@@ -469,23 +427,21 @@ function renderPreview() {
   previewCtx.drawImage(composite, dx, dy, dw, dh);
 }
 
-/**
- * Convenience: composite DataURL (for export OR submission preview)
- */
 function getCompositeDataURL() {
   const composite = document.createElement("canvas");
   composite.width = BODY_W;
   composite.height = BODY_H;
   const cctx = composite.getContext("2d");
 
-  // White bg (race engine-friendly)
   cctx.fillStyle = "#ffffff";
   cctx.fillRect(0, 0, BODY_W, BODY_H);
 
-  cctx.drawImage(bodyArtCanvas, 0, 0);
+  cctx.drawImage(bodyArtCanvas, bodyOffsetX, bodyOffsetY);
+
   for (const w of placedWheels) {
+    const g = toGlobalFromBodyLocal({ x: w.x, y: w.y });
     cctx.save();
-    cctx.translate(w.x, w.y);
+    cctx.translate(g.x, g.y);
     cctx.rotate(w.rotationRad);
     cctx.scale(w.scale, w.scale);
     cctx.drawImage(wheelArtCanvas, -WHEEL_W / 2, -WHEEL_H / 2);
@@ -495,9 +451,15 @@ function getCompositeDataURL() {
   return composite.toDataURL("image/png");
 }
 
-/**
- * Update wheel UI text and controls based on selection.
- */
+function exportCompositePNG() {
+  const png = getCompositeDataURL();
+  const a = document.createElement("a");
+  a.href = png;
+  a.download = "doodlederby_car_preview.png";
+  a.click();
+}
+
+// Wheel UI refresh
 function refreshWheelUI() {
   ui.wheelCountLabel.textContent = `Wheels: ${placedWheels.length}`;
 
@@ -514,55 +476,6 @@ function refreshWheelUI() {
   ui.wheelRotation.value = String(Math.round(w.rotationDeg));
 }
 
-/**
- * Switch tab UI + canvas visibility + titles.
- */
-function setTab(tabName) {
-  currentTab = tabName;
-
-  // Buttons + panels
-  for (const t of Object.keys(ui.tabs)) {
-    const active = t === tabName;
-    ui.tabs[t].classList.toggle("active", active);
-    ui.tabs[t].setAttribute("aria-selected", String(active));
-    ui.panels[t].classList.toggle("active", active);
-  }
-
-  // Canvas visibility:
-  // - body canvas shown in body + placement (and also in other tabs as context)
-  // - wheel canvas shown ONLY in wheel tab
-  ui.wheelCanvas.style.display = (tabName === "wheel") ? "block" : "none";
-
-  // Update workspace labels for clarity
-  if (tabName === "wheel") {
-    ui.canvasTitle.textContent = "Wheel canvas";
-    ui.canvasSubtitle.textContent = "Draw or upload a wheel (square)";
-    setStatus("Editing wheel");
-  } else if (tabName === "placement") {
-    ui.canvasTitle.textContent = "Body canvas";
-    ui.canvasSubtitle.textContent = "Drag wheels to position them";
-    setStatus("Placing wheels");
-  } else if (tabName === "body") {
-    ui.canvasTitle.textContent = "Body canvas";
-    ui.canvasSubtitle.textContent = "Draw or upload the car body";
-    setStatus("Editing body");
-  } else if (tabName === "properties") {
-    ui.canvasTitle.textContent = "Body canvas";
-    ui.canvasSubtitle.textContent = "Adjust performance credits";
-    setStatus("Adjusting performance");
-  } else {
-    ui.canvasTitle.textContent = "Body canvas";
-    ui.canvasSubtitle.textContent = "Final checks before submission";
-    setStatus("Ready to submit");
-  }
-
-  // Render the correct canvases
-  renderAll();
-}
-
-/**
- * Render everything.
- */
 function renderAll() {
   renderBodyComposite();
   renderWheelEditor();
@@ -570,33 +483,21 @@ function renderAll() {
   refreshWheelUI();
 }
 
-/**
- * Ensure we start with at least one undo snapshot (so undo works).
- */
-function initUndoStacks() {
-  // Start clean + snapshot
-  bodyArtCtx.clearRect(0, 0, BODY_W, BODY_H);
-  wheelArtCtx.clearRect(0, 0, WHEEL_W, WHEEL_H);
-  pushBodyUndoSnapshot();
-  pushWheelUndoSnapshot();
-}
+// ============================
+// BODY CENTERING (updated)
+// ============================
 
 /**
- * Center body art:
- * For now, “center body” means: put the body art bitmap centered by moving pixels.
- * This is a very lightweight approach.
- *
- * (Later we can support “select/move body layer” properly; this is good enough for v1.)
+ * Center body by adjusting bodyOffset (not by shifting pixels).
+ * This is far safer now that the body layer can move.
  */
-function centerBodyArt() {
-  // Extract current pixels
+function centerBodyArtByOffset() {
   const img = bodyArtCtx.getImageData(0, 0, BODY_W, BODY_H);
+  const data = img.data;
 
-  // Find bounding box of non-transparent pixels
   let minX = BODY_W, minY = BODY_H, maxX = 0, maxY = 0;
   let found = false;
 
-  const data = img.data;
   for (let y = 0; y < BODY_H; y++) {
     for (let x = 0; x < BODY_W; x++) {
       const idx = (y * BODY_W + x) * 4;
@@ -619,30 +520,69 @@ function centerBodyArt() {
   const boxW = maxX - minX + 1;
   const boxH = maxY - minY + 1;
 
-  // Create temp canvas containing just the box
-  const temp = document.createElement("canvas");
-  temp.width = boxW;
-  temp.height = boxH;
-  const tctx = temp.getContext("2d");
+  // Choose offsets so that the bounding box is centered in the visible canvas
+  bodyOffsetX = Math.round((BODY_W - boxW) / 2 - minX);
+  bodyOffsetY = Math.round((BODY_H - boxH) / 2 - minY);
 
-  // Copy pixels
-  const box = bodyArtCtx.getImageData(minX, minY, boxW, boxH);
-  tctx.putImageData(box, 0, 0);
-
-  // Clear and paste centered
-  bodyArtCtx.clearRect(0, 0, BODY_W, BODY_H);
-  const dx = Math.round((BODY_W - boxW) / 2);
-  const dy = Math.round((BODY_H - boxH) / 2);
-  bodyArtCtx.drawImage(temp, dx, dy);
-
-  pushBodyUndoSnapshot();
-  renderAll();
   setStatus("Body centered");
+  renderAll();
 }
 
 // ============================
-// TAB WIRING
+// INIT UNDO STACKS
 // ============================
+
+function initUndoStacks() {
+  bodyArtCtx.clearRect(0, 0, BODY_W, BODY_H);
+  wheelArtCtx.clearRect(0, 0, WHEEL_W, WHEEL_H);
+  pushBodyUndoSnapshot();
+  pushWheelUndoSnapshot();
+}
+
+// ============================
+// TAB CONTROL
+// ============================
+
+function setTab(tabName) {
+  currentTab = tabName;
+
+  for (const t of Object.keys(ui.tabs)) {
+    const active = t === tabName;
+    ui.tabs[t].classList.toggle("active", active);
+    ui.tabs[t].setAttribute("aria-selected", String(active));
+    ui.panels[t].classList.toggle("active", active);
+  }
+
+  // Wheel canvas is only visible in wheel tab
+  ui.wheelCanvas.style.display = (tabName === "wheel") ? "block" : "none";
+
+  if (tabName === "wheel") {
+    ui.canvasTitle.textContent = "Wheel canvas";
+    ui.canvasSubtitle.textContent = "Draw or upload a wheel (square)";
+    setStatus("Editing wheel");
+  } else if (tabName === "placement") {
+    ui.canvasTitle.textContent = "Body canvas";
+    ui.canvasSubtitle.textContent = "Drag wheels to position them";
+    setStatus("Placing wheels");
+  } else if (tabName === "body") {
+    ui.canvasTitle.textContent = "Body canvas";
+    ui.canvasSubtitle.textContent = "Draw or upload the car body (Move tool drags body)";
+    setStatus("Editing body");
+  } else if (tabName === "properties") {
+    ui.canvasTitle.textContent = "Body canvas";
+    ui.canvasSubtitle.textContent = "Adjust performance credits";
+    setStatus("Adjusting performance");
+  } else {
+    ui.canvasTitle.textContent = "Body canvas";
+    ui.canvasSubtitle.textContent = "Final checks before submission";
+    setStatus("Ready to submit");
+  }
+
+  setTips(tabName);
+  renderAll();
+}
+
+// Tab wiring
 ui.tabs.body.onclick = () => setTab("body");
 ui.tabs.wheel.onclick = () => setTab("wheel");
 ui.tabs.placement.onclick = () => setTab("placement");
@@ -653,39 +593,40 @@ ui.tabs.submit.onclick = () => setTab("submit");
 // TOOL BUTTONS
 // ============================
 
-// Body tool buttons
 ui.bodyPenBtn.onclick = () => {
   currentTool = "pen";
   currentPenColor = ui.bodyColor.value;
   setStatus("Body pen tool");
 };
+
 ui.bodyMoveBtn.onclick = () => {
   currentTool = "move";
-  setStatus("Body move/inspect (v1)");
+  setStatus("Body move tool (drag the body)");
 };
 
-// Wheel tool buttons
 ui.wheelPenBtn.onclick = () => {
   currentTool = "pen";
   currentPenColor = ui.wheelColor.value;
   setStatus("Wheel pen tool");
 };
+
 ui.wheelMoveBtn.onclick = () => {
   currentTool = "move";
-  setStatus("Wheel move/inspect (v1)");
+  setStatus("Wheel inspect (drawing disabled)");
 };
 
-// Pen colour changes
+// Pen colour updates
 ui.bodyColor.oninput = () => { if (currentTab === "body") currentPenColor = ui.bodyColor.value; };
 ui.wheelColor.oninput = () => { if (currentTab === "wheel") currentPenColor = ui.wheelColor.value; };
 
 // Workspace buttons
-ui.centerBodyBtn.onclick = centerBodyArt;
+ui.centerBodyBtn.onclick = centerBodyArtByOffset;
 ui.exportPreviewBtn.onclick = exportCompositePNG;
 
 // ============================
 // UPLOADS
 // ============================
+
 ui.uploadBody.onchange = (e) => {
   const file = e.target.files?.[0];
   if (!file) return;
@@ -696,14 +637,17 @@ ui.uploadBody.onchange = (e) => {
     img.onload = () => {
       drawUploadedImageToArt(img, bodyArtCtx, BODY_W, BODY_H);
       pushBodyUndoSnapshot();
+
+      // Reset offsets so the newly uploaded body starts “naturally”
+      bodyOffsetX = 0;
+      bodyOffsetY = 0;
+
       renderAll();
       setStatus("Body image uploaded");
     };
     img.src = ev.target.result;
   };
   reader.readAsDataURL(file);
-
-  // allow re-uploading same file without needing to change name
   e.target.value = "";
 };
 
@@ -724,7 +668,6 @@ ui.uploadWheel.onchange = (e) => {
     img.src = ev.target.result;
   };
   reader.readAsDataURL(file);
-
   e.target.value = "";
 };
 
@@ -732,25 +675,26 @@ ui.uploadWheel.onchange = (e) => {
 // UNDO / REDO / CLEAR
 // ============================
 
-// Body
-ui.bodyUndoBtn.onclick = () => { undoCanvas(bodyUndo, bodyRedo, bodyArtCtx, BODY_W, BODY_H); renderAll(); };
+ui.bodyUndoBtn.onclick = () => { undoCanvas(bodyUndo, bodyRedo, bodyArtCtx); renderAll(); };
 ui.bodyRedoBtn.onclick = () => { redoCanvas(bodyUndo, bodyRedo, bodyArtCtx); renderAll(); };
 ui.bodyClearBtn.onclick = () => {
   clearArtCanvas(bodyArtCtx, BODY_W, BODY_H, pushBodyUndoSnapshot);
+  bodyOffsetX = 0;
+  bodyOffsetY = 0;
   renderAll();
   setStatus("Body cleared");
 };
 
-// Wheel
 ui.wheelUndoBtn.onclick = () => {
-  undoCanvas(wheelUndo, wheelRedo, wheelArtCtx, WHEEL_W, WHEEL_H);
-  // Recompute hasWheelArt very roughly:
-  // If we undo back to first snapshot (empty), this becomes false.
-  // We’ll just set true if there is at least 2 snapshots (likely drawn/uploaded).
+  undoCanvas(wheelUndo, wheelRedo, wheelArtCtx);
   hasWheelArt = wheelUndo.length > 1;
   renderAll();
 };
-ui.wheelRedoBtn.onclick = () => { redoCanvas(wheelUndo, wheelRedo, wheelArtCtx); hasWheelArt = true; renderAll(); };
+ui.wheelRedoBtn.onclick = () => {
+  redoCanvas(wheelUndo, wheelRedo, wheelArtCtx);
+  hasWheelArt = true;
+  renderAll();
+};
 ui.wheelClearBtn.onclick = () => {
   clearArtCanvas(wheelArtCtx, WHEEL_W, WHEEL_H, pushWheelUndoSnapshot);
   hasWheelArt = false;
@@ -759,34 +703,28 @@ ui.wheelClearBtn.onclick = () => {
 };
 
 // ============================
-// BODY CANVAS POINTER EVENTS
+// POINTER EVENTS — BODY CANVAS
 // ============================
 
-/**
- * bodyCanvas serves two roles:
- * - Body tab: draw strokes onto bodyArt (commit on pointerup)
- * - Placement tab: select/drag wheels
- */
 ui.bodyCanvas.onpointerdown = (e) => {
-  const pos = getCanvasPos(ui.bodyCanvas, e);
+  const globalPos = getCanvasPos(ui.bodyCanvas, e);
 
-  // Placement tab: selection/drag
+  // PLACEMENT TAB: click/select/drag wheels (stored body-local)
   if (currentTab === "placement") {
     selectedWheelIndex = -1;
 
-    // Find top-most wheel under pointer (iterate backwards)
     for (let i = placedWheels.length - 1; i >= 0; i--) {
-      if (hitTestWheel(pos, placedWheels[i])) {
+      if (hitTestWheelGlobal(globalPos, placedWheels[i])) {
         selectedWheelIndex = i;
         break;
       }
     }
 
-    // If selected, store drag offset
     const w = getSelectedWheel();
     if (w) {
-      w.dragOffsetX = pos.x - w.x;
-      w.dragOffsetY = pos.y - w.y;
+      const wheelGlobal = toGlobalFromBodyLocal({ x: w.x, y: w.y });
+      w.dragOffsetX = globalPos.x - wheelGlobal.x;
+      w.dragOffsetY = globalPos.y - wheelGlobal.y;
       w.isDragging = true;
       setStatus(`Selected wheel #${selectedWheelIndex + 1}`);
     } else {
@@ -797,57 +735,106 @@ ui.bodyCanvas.onpointerdown = (e) => {
     return;
   }
 
-  // Body tab drawing
-  if (currentTab === "body" && currentTool === "pen") {
-    isDrawing = true;
-    currentPenColor = ui.bodyColor.value;
-    strokePoints = [pos];
-    ui.bodyCanvas.setPointerCapture(e.pointerId);
-    return;
-  }
+  // BODY TAB:
+  if (currentTab === "body") {
+    // 5) MOVE TOOL: drag the body offset
+    if (currentTool === "move") {
+      isBodyDragging = true;
+      bodyDragStartX = globalPos.x;
+      bodyDragStartY = globalPos.y;
+      bodyDragOffsetStartX = bodyOffsetX;
+      bodyDragOffsetStartY = bodyOffsetY;
+      ui.bodyCanvas.setPointerCapture(e.pointerId);
+      setStatus("Dragging body...");
+      return;
+    }
 
-  // In other tabs, we ignore pointerdown
+    // PEN TOOL: draw onto bodyArtCanvas in BODY-LOCAL coordinates
+    if (currentTool === "pen") {
+      isDrawing = true;
+      currentPenColor = ui.bodyColor.value;
+
+      // Convert pointer into body-local coordinates before drawing
+      const localPos = toBodyLocal(globalPos);
+      strokePoints = [localPos];
+
+      ui.bodyCanvas.setPointerCapture(e.pointerId);
+      return;
+    }
+  }
 };
 
 ui.bodyCanvas.onpointermove = (e) => {
-  const pos = getCanvasPos(ui.bodyCanvas, e);
+  const globalPos = getCanvasPos(ui.bodyCanvas, e);
 
-  // Placement: drag selected wheel
+  // Placement: drag wheel (wheel coords are body-local)
   if (currentTab === "placement") {
     const w = getSelectedWheel();
     if (w && w.isDragging) {
-      w.x = clamp(pos.x - w.dragOffsetX, 0, BODY_W);
-      w.y = clamp(pos.y - w.dragOffsetY, 0, BODY_H);
+      // convert global into body-local, accounting for drag offset
+      const desiredGlobalX = globalPos.x - w.dragOffsetX;
+      const desiredGlobalY = globalPos.y - w.dragOffsetY;
+
+      const local = toBodyLocal({ x: desiredGlobalX, y: desiredGlobalY });
+
+      w.x = clamp(local.x, -BODY_W, BODY_W * 2);
+      w.y = clamp(local.y, -BODY_H, BODY_H * 2);
+
       renderAll();
     }
     return;
   }
 
-  // Body drawing preview
-  if (currentTab === "body" && isDrawing && currentTool === "pen") {
-    strokePoints.push(pos);
+  // Body move
+  if (currentTab === "body" && currentTool === "move" && isBodyDragging) {
+    const dx = globalPos.x - bodyDragStartX;
+    const dy = globalPos.y - bodyDragStartY;
 
-    // Render composite then overlay stroke preview
+    bodyOffsetX = Math.round(bodyDragOffsetStartX + dx);
+    bodyOffsetY = Math.round(bodyDragOffsetStartY + dy);
+
+    renderAll();
+    return;
+  }
+
+  // Body draw preview (draw preview onto visible composite, not onto art yet)
+  if (currentTab === "body" && currentTool === "pen" && isDrawing) {
+    const localPos = toBodyLocal(globalPos);
+    strokePoints.push(localPos);
+
+    // Render composite first
     renderBodyComposite();
-    strokePreview(bodyCtx, strokePoints, currentPenColor, BODY_PEN_WIDTH);
 
-    // Preview still updates thumbnail
+    // Overlay stroke preview at GLOBAL coords by translating local->global
+    // We can preview by temporarily shifting points by bodyOffset.
+    const previewPoints = strokePoints.map(p => ({
+      x: p.x + bodyOffsetX,
+      y: p.y + bodyOffsetY
+    }));
+
+    strokePreview(bodyCtx, previewPoints, currentPenColor, BODY_PEN_WIDTH);
     renderPreview();
   }
 };
 
 ui.bodyCanvas.onpointerup = (e) => {
-  // Placement: stop dragging
+  // Placement: stop dragging wheel
   if (currentTab === "placement") {
     const w = getSelectedWheel();
     if (w) w.isDragging = false;
     return;
   }
 
-  // Body drawing commit
-  if (currentTab === "body" && isDrawing && currentTool === "pen") {
+  // Stop dragging body
+  if (currentTab === "body" && currentTool === "move" && isBodyDragging) {
+    isBodyDragging = false;
+    setStatus("Body moved");
+    return;
+  }
+
+  // Commit body stroke onto art (in body-local coords)
+  if (currentTab === "body" && currentTool === "pen" && isDrawing) {
     isDrawing = false;
-    // Commit stroke to body art
     commitStroke(bodyArtCtx, strokePoints, currentPenColor, BODY_PEN_WIDTH);
     pushBodyUndoSnapshot();
     strokePoints = [];
@@ -857,7 +844,7 @@ ui.bodyCanvas.onpointerup = (e) => {
 };
 
 // ============================
-// WHEEL CANVAS POINTER EVENTS
+// POINTER EVENTS — WHEEL CANVAS
 // ============================
 
 ui.wheelCanvas.onpointerdown = (e) => {
@@ -887,8 +874,6 @@ ui.wheelCanvas.onpointerup = (e) => {
   if (!isDrawing || currentTool !== "pen") return;
 
   isDrawing = false;
-
-  // Commit to wheel art
   commitStroke(wheelArtCtx, strokePoints, currentPenColor, WHEEL_PEN_WIDTH);
   hasWheelArt = true;
   pushWheelUndoSnapshot();
@@ -908,6 +893,7 @@ ui.addWheelBtn.onclick = () => {
     return;
   }
 
+  // Add wheel at center of body-local space (i.e., visually centered once body offset applied)
   placedWheels.push({
     x: BODY_W / 2,
     y: BODY_H / 2,
@@ -933,9 +919,8 @@ ui.duplicateWheelBtn.onclick = () => {
 
   placedWheels.push({
     ...w,
-    // Offset the duplicate slightly so you can see it
-    x: clamp(w.x + 30, 0, BODY_W),
-    y: clamp(w.y + 20, 0, BODY_H),
+    x: w.x + 30,
+    y: w.y + 20,
     isDragging: false,
   });
 
@@ -957,7 +942,6 @@ ui.deleteWheelBtn.onclick = () => {
   setStatus("Wheel deleted");
 };
 
-// Scale/rotation sliders operate on the *selected* wheel
 ui.wheelScale.oninput = () => {
   const w = getSelectedWheel();
   if (!w) return;
@@ -977,8 +961,6 @@ ui.wheelRotation.oninput = () => {
 // PERFORMANCE CREDITS (100 TOTAL)
 // ============================
 
-let lastChanged = "acc"; // track which slider was touched last for nicer constraint handling
-
 function updateCreditsUI() {
   const acc = parseInt(ui.accSlider.value, 10);
   const spd = parseInt(ui.speedSlider.value, 10);
@@ -988,23 +970,12 @@ function updateCreditsUI() {
   ui.speedVal.textContent = String(spd);
   ui.pointsRemaining.textContent = String(remaining);
 
-  // Friendly hint text
-  if (remaining === 0) {
-    ui.creditsHelp.textContent = "Perfect — you can submit";
-  } else if (remaining > 0) {
-    ui.creditsHelp.textContent = "Allocate all credits to submit";
-  } else {
-    ui.creditsHelp.textContent = "Over budget — adjust sliders";
-  }
+  if (remaining === 0) ui.creditsHelp.textContent = "Perfect — you can submit";
+  else if (remaining > 0) ui.creditsHelp.textContent = "Allocate all credits to submit";
+  else ui.creditsHelp.textContent = "Over budget — adjust sliders";
 }
 
-/**
- * Enforce acc + speed <= 100.
- * If the user pushes one slider too high, we automatically reduce the other.
- */
 function enforceCreditConstraint(changed) {
-  lastChanged = changed;
-
   let acc = parseInt(ui.accSlider.value, 10);
   let spd = parseInt(ui.speedSlider.value, 10);
 
@@ -1014,7 +985,6 @@ function enforceCreditConstraint(changed) {
     return;
   }
 
-  // Need to reduce the other slider
   const overflow = total - TOTAL_CREDITS;
 
   if (changed === "acc") {
@@ -1047,18 +1017,7 @@ ui.presetSpeedBtn.onclick = () => {
 // SUBMISSION
 // ============================
 
-/**
- * Gather payload for API.
- * We send:
- * - teamName, carName, email
- * - acceleration, topSpeed (credits)
- * - bodyImageData: PNG of body ONLY (no wheels)
- * - wheelImageData: PNG of wheel ONLY
- * - wheelPositions: array of transforms for each placed wheel
- * - previewComposite: PNG of body+wheels (optional convenience)
- */
 async function submitCar() {
-  // Basic validation
   const teamName = ui.teamName.value.trim();
   const carName = ui.carName.value.trim();
   const email = ui.email.value.trim();
@@ -1076,17 +1035,18 @@ async function submitCar() {
     return;
   }
 
-  // Ensure user has created something
   if (!hasWheelArt) {
     alert("Please create a wheel (Step 2) before submitting.");
     return;
   }
 
-  // Export images from OFFSCREEN art canvases (not the UI canvas)
+  // Body art is still exported as its raw layer.
+  // NEW: we also include bodyOffsetX/Y so the server/race engine can place it.
   const bodyImageData = bodyArtCanvas.toDataURL("image/png");
   const wheelImageData = wheelArtCanvas.toDataURL("image/png");
   const previewComposite = getCompositeDataURL();
 
+  // Wheels are stored in body-local coords (NEW)
   const wheelPositions = placedWheels.map((w, i) => ({
     wheelId: i,
     x: w.x,
@@ -1103,14 +1063,14 @@ async function submitCar() {
       acceleration: acc,
       topSpeed: spd,
 
-      // artwork
       bodyImageData,
       wheelImageData,
 
-      // transforms
+      // NEW: body offset + local wheel transforms
+      bodyOffsetX,
+      bodyOffsetY,
       wheelPositions,
 
-      // optional (handy for debugging or a gallery view)
       previewComposite,
     },
   };
@@ -1141,17 +1101,15 @@ async function submitCar() {
 ui.submitBtn.onclick = submitCar;
 
 // ============================
-// INITIALISATION
+// INIT
 // ============================
 function init() {
   initUndoStacks();
-
-  // Start with balanced credits
   updateCreditsUI();
 
-  // Start on body tab, pen tool
   currentPenColor = ui.bodyColor.value;
   currentTool = "pen";
+
   setTab("body");
   renderAll();
 }

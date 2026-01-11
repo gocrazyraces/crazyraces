@@ -1,13 +1,11 @@
 /* =========================================================
-   CRAZY RACES (temporary name) — DESIGN SYSTEM
-   Palette requested:
-     224C8F (blue)
-     ECD8BF (warm sand)
-     2C2B3A (ink)
-     F3EACF (paper)
-     ED4D2E (orange)
-
-   We expose these as CSS variables so you can retheme easily.
+   DOODLE DERBY 2D — DESIGN SYSTEM
+   Palette:
+     #224C8F (blue)
+     #ECD8BF (warm sand)
+     #2C2B3A (ink)
+     #F3EACF (paper)
+     #ED4D2E (orange)
    ========================================================= */
 
 :root {
@@ -21,7 +19,7 @@
   --border: rgba(44, 43, 58, 0.15);
   --shadow: 0 8px 28px rgba(44, 43, 58, 0.12);
 
-  /* “Bookish” vibe: use serif for titles, clean sans for UI */
+  /* “Bookish” vibe: serif titles, clean sans UI */
   --ui-font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   --title-font: Georgia, "Times New Roman", Times, serif;
 
@@ -38,55 +36,108 @@ body {
 }
 
 /* =========================================================
-   HEADER BAR
+   HEADER + NAV
+   Changes:
+   2) Header constrained to ~150px max height
+   3) Tagline on right
+   4) Nav row added
    ========================================================= */
+
 .topbar {
   background: var(--sand);
   border-bottom: 1px solid var(--border);
 }
 
+/* Top brand row */
 .topbar-inner {
   max-width: 1320px;
   margin: 0 auto;
-  padding: 14px 16px;
+  padding: 10px 16px 6px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 14px;
+
+  /* Keep this row compact */
+  max-height: 110px;
+  overflow: hidden;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  min-width: 220px;
+}
+
+/* Scale logo to fit within the new header constraint */
+.brand-logo {
+  display: block;
+  max-height: 95px;        /* <= keeps header compact */
+  width: auto;             /* preserve aspect */
+  max-width: 62vw;         /* avoid overflowing on smaller screens */
+}
+
+/* Right side tagline */
+.header-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.tagline {
+  font-family: var(--ui-font); /* explicitly sans-serif */
+  font-weight: 700;
+  font-size: 16px;
+  color: rgba(44, 43, 58, 0.85);
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(44, 43, 58, 0.14);
+  background: rgba(243, 234, 207, 0.55);
+  white-space: nowrap;
+}
+
+/* Nav bar */
+.topnav {
+  border-top: 1px solid rgba(44, 43, 58, 0.10);
+  background: rgba(236, 216, 191, 0.55);
+}
+
+.topnav-inner {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
   gap: 12px;
 }
 
-.brand-logo {
-  /* Requirement: base size 670 x 142 via HTML attributes.
-     We also make it responsive so it doesn’t overflow on small screens. */
-  width: 670px;
-  height: 142px;
-  max-width: 90vw;
-  height: auto;
-  display: block;
-}
-
-.topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.status-pill {
-  background: rgba(34, 76, 143, 0.10);
+.navlink {
+  text-decoration: none;
   color: var(--ink);
-  border: 1px solid rgba(34, 76, 143, 0.20);
-  padding: 8px 10px;
+  font-weight: 750;
+  font-size: 14px;
+  padding: 8px 12px;
   border-radius: 999px;
-  font-size: 13px;
-  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.navlink:hover {
+  border-color: rgba(34, 76, 143, 0.28);
+  background: rgba(34, 76, 143, 0.08);
+}
+
+.navlink.active {
+  border-color: rgba(34, 76, 143, 0.35);
+  background: rgba(34, 76, 143, 0.12);
 }
 
 /* =========================================================
    APP LAYOUT
    ========================================================= */
+
 #app {
   display: flex;
-  min-height: calc(100vh - 80px); /* approximate; header image may change height */
+  min-height: calc(100vh - 150px);
 }
 
 /* Left panel */
@@ -99,7 +150,7 @@ body {
   overflow-y: auto;
 }
 
-/* Right workspace */
+/* Workspace */
 #workspace {
   flex: 1;
   padding: 18px;
@@ -108,6 +159,45 @@ body {
 .workspace-inner {
   max-width: 1320px;
   margin: 0 auto;
+}
+
+/* A topbar INSIDE the page (where status now lives) */
+.workspace-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.workspace-title {
+  font-family: var(--title-font);
+  font-size: 22px;
+  line-height: 1.1;
+}
+
+.workspace-subtitle {
+  display: inline-block;
+  font-family: var(--ui-font);
+  font-size: 13px;
+  font-weight: 650;
+  color: rgba(44, 43, 58, 0.75);
+  margin-left: 10px;
+}
+
+/* The status pill is now used in-page, not in header */
+.status-pill {
+  background: rgba(34, 76, 143, 0.10);
+  color: var(--ink);
+  border: 1px solid rgba(34, 76, 143, 0.20);
+  padding: 8px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* Workspace grid: canvas card + preview card */
+.workspace-grid {
   display: grid;
   grid-template-columns: 1.55fr 0.85fr;
   gap: 16px;
@@ -116,16 +206,20 @@ body {
 @media (max-width: 1100px) {
   #app { flex-direction: column; }
   #toolbar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
-  .workspace-inner { grid-template-columns: 1fr; }
+  .workspace-grid { grid-template-columns: 1fr; }
+  .topbar-inner { max-height: none; }
+  .tagline { display: none; } /* optional: hide on very small screens */
 }
 
 /* =========================================================
-   TABS (STEP BUTTONS)
+   TABS / STEPS
+   9) Step numbers appear as circles
    ========================================================= */
+
 .tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: 10px;               /* 8) a touch more spacing */
   margin-bottom: 14px;
 }
 
@@ -134,10 +228,15 @@ body {
   background: var(--paper);
   color: var(--ink);
   border-radius: 999px;
-  padding: 10px 10px;
+  padding: 10px 12px;
   cursor: pointer;
-  font-weight: 650;
+  font-weight: 750;
   font-size: 14px;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
   transition: transform 0.05s ease, background 0.12s ease;
 }
 
@@ -148,9 +247,25 @@ body {
   border-color: rgba(34, 76, 143, 0.30);
 }
 
+.step {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 13px;
+  font-weight: 850;
+
+  background: rgba(34, 76, 143, 0.12);
+  border: 1px solid rgba(34, 76, 143, 0.30);
+}
+
 /* =========================================================
    PANELS
    ========================================================= */
+
 .tab-content { display: none; }
 .tab-content.active { display: block; }
 
@@ -170,13 +285,19 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 12px;
-  background: rgba(243, 234, 207, 0.55); /* paper tint */
+  background: rgba(243, 234, 207, 0.55);
 }
 
+/* 8) Loosen button clusters a bit */
 .row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: 10px;              /* was 8 */
+  margin-top: 10px;
+}
+
+.stack {
+  margin-top: 12px;       /* creates breathing room between action groups */
 }
 
 .field {
@@ -210,37 +331,25 @@ body {
   width: 100%;
 }
 
-/* “Upload” label that looks like a button */
+/* Upload label that looks like a button */
 label.file {
   display: block;
-  margin-top: 10px;
   border: 1px dashed rgba(44, 43, 58, 0.35);
   border-radius: 12px;
   padding: 10px;
   cursor: pointer;
   background: rgba(236, 216, 191, 0.35);
   text-align: center;
-  font-weight: 650;
+  font-weight: 750;
 }
 
 label.file input { display: none; }
 
-.tip {
-  margin-top: 10px;
-  font-size: 13px;
-  line-height: 1.35;
-  padding: 10px;
-  border-left: 4px solid rgba(34, 76, 143, 0.45);
-  background: rgba(34, 76, 143, 0.06);
-  border-radius: 10px;
-}
-
-/* Divider inside panels */
 .divider {
   border: none;
   height: 1px;
   background: var(--border);
-  margin: 12px 0;
+  margin: 14px 0;
 }
 
 .pill-row {
@@ -263,9 +372,20 @@ label.file input { display: none; }
   background: rgba(237, 77, 46, 0.08);
 }
 
+.note {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.35;
+  padding: 10px;
+  border-left: 4px solid rgba(34, 76, 143, 0.45);
+  background: rgba(34, 76, 143, 0.06);
+  border-radius: 10px;
+}
+
 /* =========================================================
    BUTTONS
    ========================================================= */
+
 .btn {
   width: 100%;
   border: 1px solid var(--border);
@@ -274,11 +394,14 @@ label.file input { display: none; }
   border-radius: 12px;
   padding: 10px 10px;
   cursor: pointer;
-  font-weight: 700;
+  font-weight: 800;
   transition: transform 0.05s ease, box-shadow 0.12s ease, background 0.12s ease;
 }
 
-.btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(44,43,58,0.10); }
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(44,43,58,0.10);
+}
 
 .btn.primary {
   background: rgba(34, 76, 143, 0.12);
@@ -294,13 +417,14 @@ label.file input { display: none; }
   width: auto;
   padding: 8px 10px;
   border-radius: 999px;
-  font-weight: 650;
+  font-weight: 700;
   font-size: 13px;
 }
 
 /* =========================================================
    WORKSPACE CARDS + CANVASES
    ========================================================= */
+
 .canvas-card,
 .preview-card {
   background: var(--panel);
@@ -346,24 +470,22 @@ label.file input { display: none; }
   flex-wrap: wrap;
 }
 
-/* Main body canvas is visible in most tabs */
 #bodyCanvas {
   border: 2px solid rgba(44, 43, 58, 0.25);
   border-radius: 12px;
   background: #fff;
   width: min(1024px, 100%);
   height: auto;
-  touch-action: none; /* IMPORTANT: allows pointer events without scrolling */
+  touch-action: none;
 }
 
-/* Wheel canvas is only shown in wheel tab (JS toggles display) */
 #wheelCanvas {
   border: 2px dashed rgba(44, 43, 58, 0.35);
   border-radius: 12px;
   background: #fff;
   width: min(256px, 50vw);
   height: auto;
-  display: none; /* default off; JS turns on in wheel tab */
+  display: none;
   touch-action: none;
 }
 
@@ -382,9 +504,27 @@ label.file input { display: none; }
   height: auto;
 }
 
-/* Submit status text */
 .submit-status {
   margin: 10px 0 0;
   font-size: 13px;
   color: rgba(44, 43, 58, 0.85);
+}
+
+/* 7) Tips beneath drawing area */
+.workspace-tips {
+  border-top: 1px solid var(--border);
+  padding: 12px 14px;
+  background: rgba(243, 234, 207, 0.55);
+}
+
+.tips-title {
+  font-family: var(--title-font);
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+
+.tips-text {
+  font-size: 13px;
+  color: rgba(44, 43, 58, 0.85);
+  line-height: 1.4;
 }

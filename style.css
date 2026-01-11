@@ -1,26 +1,390 @@
-* { box-sizing: border-box; font-family: sans-serif; }
-body { margin: 0; background: #f0f2f5; }
-header { background: #1e1e2f; color: white; padding: 12px; text-align: center; }
-#app { display: flex; height: calc(100vh - 56px); }
+/* =========================================================
+   CRAZY RACES (temporary name) — DESIGN SYSTEM
+   Palette requested:
+     224C8F (blue)
+     ECD8BF (warm sand)
+     2C2B3A (ink)
+     F3EACF (paper)
+     ED4D2E (orange)
 
-aside#toolbar {
-  width: 280px; padding: 12px; background: white; border-right: 1px solid #ccc; overflow-y: auto;
+   We expose these as CSS variables so you can retheme easily.
+   ========================================================= */
+
+:root {
+  --blue: #224C8F;
+  --sand: #ECD8BF;
+  --ink: #2C2B3A;
+  --paper: #F3EACF;
+  --orange: #ED4D2E;
+
+  --panel: #ffffff;
+  --border: rgba(44, 43, 58, 0.15);
+  --shadow: 0 8px 28px rgba(44, 43, 58, 0.12);
+
+  /* “Bookish” vibe: use serif for titles, clean sans for UI */
+  --ui-font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  --title-font: Georgia, "Times New Roman", Times, serif;
+
+  --radius: 14px;
 }
 
-#tab-buttons button {
-  width: 48%; margin-right: 4%; margin-bottom: 12px;
-}
-#tab-buttons button.active { background: #333; color: white; }
+* { box-sizing: border-box; }
 
-.tab-content { display: none; margin-bottom: 12px; }
+body {
+  margin: 0;
+  font-family: var(--ui-font);
+  color: var(--ink);
+  background: var(--paper);
+}
+
+/* =========================================================
+   HEADER BAR
+   ========================================================= */
+.topbar {
+  background: var(--sand);
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar-inner {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.brand-logo {
+  /* Requirement: base size 670 x 142 via HTML attributes.
+     We also make it responsive so it doesn’t overflow on small screens. */
+  width: 670px;
+  height: 142px;
+  max-width: 90vw;
+  height: auto;
+  display: block;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.status-pill {
+  background: rgba(34, 76, 143, 0.10);
+  color: var(--ink);
+  border: 1px solid rgba(34, 76, 143, 0.20);
+  padding: 8px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* =========================================================
+   APP LAYOUT
+   ========================================================= */
+#app {
+  display: flex;
+  min-height: calc(100vh - 80px); /* approximate; header image may change height */
+}
+
+/* Left panel */
+#toolbar {
+  width: 360px;
+  max-width: 92vw;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  padding: 14px;
+  overflow-y: auto;
+}
+
+/* Right workspace */
+#workspace {
+  flex: 1;
+  padding: 18px;
+}
+
+.workspace-inner {
+  max-width: 1320px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.55fr 0.85fr;
+  gap: 16px;
+}
+
+@media (max-width: 1100px) {
+  #app { flex-direction: column; }
+  #toolbar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
+  .workspace-inner { grid-template-columns: 1fr; }
+}
+
+/* =========================================================
+   TABS (STEP BUTTONS)
+   ========================================================= */
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.tab {
+  border: 1px solid var(--border);
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 10px 10px;
+  cursor: pointer;
+  font-weight: 650;
+  font-size: 14px;
+  transition: transform 0.05s ease, background 0.12s ease;
+}
+
+.tab:hover { transform: translateY(-1px); }
+
+.tab.active {
+  background: rgba(34, 76, 143, 0.12);
+  border-color: rgba(34, 76, 143, 0.30);
+}
+
+/* =========================================================
+   PANELS
+   ========================================================= */
+.tab-content { display: none; }
 .tab-content.active { display: block; }
 
-button { width: 100%; margin: 4px 0; padding: 6px; cursor: pointer; }
+.panel-title {
+  font-family: var(--title-font);
+  margin: 10px 0 6px;
+  font-size: 22px;
+}
 
-label.file { background: #eee; padding: 6px; text-align: center; cursor: pointer; margin-bottom: 8px; }
+.panel-subtitle {
+  margin: 0 0 12px;
+  color: rgba(44, 43, 58, 0.8);
+  line-height: 1.35;
+}
+
+.control-group {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  background: rgba(243, 234, 207, 0.55); /* paper tint */
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.field > span {
+  font-size: 13px;
+  color: rgba(44, 43, 58, 0.85);
+}
+
+.field input[type="text"],
+.field input[type="email"] {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 10px;
+  font-size: 14px;
+  outline: none;
+  background: #fff;
+}
+
+.field input[type="text"]:focus,
+.field input[type="email"]:focus {
+  border-color: rgba(34, 76, 143, 0.45);
+  box-shadow: 0 0 0 4px rgba(34, 76, 143, 0.12);
+}
+
+.field input[type="range"] {
+  width: 100%;
+}
+
+/* “Upload” label that looks like a button */
+label.file {
+  display: block;
+  margin-top: 10px;
+  border: 1px dashed rgba(44, 43, 58, 0.35);
+  border-radius: 12px;
+  padding: 10px;
+  cursor: pointer;
+  background: rgba(236, 216, 191, 0.35);
+  text-align: center;
+  font-weight: 650;
+}
+
 label.file input { display: none; }
 
-main { flex: 1; display: flex; justify-content: center; align-items: center; position: relative; }
-canvas { border: 2px solid #333; background: white; touch-action: none; display: none; }
-#bodyCanvas { display: block; }
-#wheelCanvas { border: 2px dashed #888; background: #ddd; }
+.tip {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.35;
+  padding: 10px;
+  border-left: 4px solid rgba(34, 76, 143, 0.45);
+  background: rgba(34, 76, 143, 0.06);
+  border-radius: 10px;
+}
+
+/* Divider inside panels */
+.divider {
+  border: none;
+  height: 1px;
+  background: var(--border);
+  margin: 12px 0;
+}
+
+.pill-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.pill {
+  border: 1px solid var(--border);
+  background: #fff;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+.pill.emphasis {
+  border-color: rgba(237, 77, 46, 0.35);
+  background: rgba(237, 77, 46, 0.08);
+}
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+.btn {
+  width: 100%;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--ink);
+  border-radius: 12px;
+  padding: 10px 10px;
+  cursor: pointer;
+  font-weight: 700;
+  transition: transform 0.05s ease, box-shadow 0.12s ease, background 0.12s ease;
+}
+
+.btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(44,43,58,0.10); }
+
+.btn.primary {
+  background: rgba(34, 76, 143, 0.12);
+  border-color: rgba(34, 76, 143, 0.35);
+}
+
+.btn.danger {
+  background: rgba(237, 77, 46, 0.10);
+  border-color: rgba(237, 77, 46, 0.35);
+}
+
+.btn.small {
+  width: auto;
+  padding: 8px 10px;
+  border-radius: 999px;
+  font-weight: 650;
+  font-size: 13px;
+}
+
+/* =========================================================
+   WORKSPACE CARDS + CANVASES
+   ========================================================= */
+.canvas-card,
+.preview-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.canvas-header {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(236, 216, 191, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.canvas-title {
+  font-family: var(--title-font);
+  font-size: 18px;
+}
+
+.canvas-subtitle {
+  font-size: 13px;
+  color: rgba(44, 43, 58, 0.8);
+  margin-top: 2px;
+}
+
+.canvas-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.canvas-wrap {
+  padding: 14px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+/* Main body canvas is visible in most tabs */
+#bodyCanvas {
+  border: 2px solid rgba(44, 43, 58, 0.25);
+  border-radius: 12px;
+  background: #fff;
+  width: min(1024px, 100%);
+  height: auto;
+  touch-action: none; /* IMPORTANT: allows pointer events without scrolling */
+}
+
+/* Wheel canvas is only shown in wheel tab (JS toggles display) */
+#wheelCanvas {
+  border: 2px dashed rgba(44, 43, 58, 0.35);
+  border-radius: 12px;
+  background: #fff;
+  width: min(256px, 50vw);
+  height: auto;
+  display: none; /* default off; JS turns on in wheel tab */
+  touch-action: none;
+}
+
+.preview-wrap {
+  padding: 14px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#previewCanvas {
+  border: 2px solid rgba(44, 43, 58, 0.18);
+  border-radius: 12px;
+  background: #fff;
+  width: min(512px, 100%);
+  height: auto;
+}
+
+/* Submit status text */
+.submit-status {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: rgba(44, 43, 58, 0.85);
+}

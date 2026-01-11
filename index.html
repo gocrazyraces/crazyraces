@@ -1,73 +1,377 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CrazyRaces Editor</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!--
+    CRAZY RACES (temporary name)
+    Car Designer UI
+
+    This page is intentionally "single purpose":
+    - Header (brand / logo)
+    - Left panel: step-by-step editor controls
+    - Main: canvas workspace + preview
+
+    The real logic lives in editor.js.
+  -->
+  <title>Crazy Races — Car Designer</title>
+
+  <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
-<header>
-  <h1>CrazyRaces Car Editor</h1>
-</header>
+  <!--
+    TOP HEADER BAR
+    Requirements:
+    - Background: #ECD8BF
+    - Top-left: assets/title_full.png
+    - Requested size: 670 x 142
+      (We set explicit width/height attributes, and also allow responsive scaling via CSS.)
+  -->
+  <header class="topbar" role="banner">
+    <div class="topbar-inner">
+      <img
+        class="brand-logo"
+        src="assets/title_full.png"
+        alt="Crazy Races"
+        width="670"
+        height="142"
+      />
 
-<div id="app">
-  <aside id="toolbar">
-    <div id="tab-buttons">
-      <button id="bodyTab" class="active">Body</button>
-      <button id="wheelTab">Wheel</button>
-      <button id="placementTab">Placement</button>
-      <button id="propertiesTab">Properties</button>
-      <button id="submitTab">Submit</button>
+      <!-- Optional right side area (kept minimal + professional) -->
+      <div class="topbar-right">
+        <div class="status-pill" id="uiStatusPill" aria-live="polite">
+          Editor ready
+        </div>
+      </div>
     </div>
+  </header>
 
-    <div id="bodyControls" class="tab-content active">
-      <button id="drawBodyBtn">Pen Tool</button>
-      <input type="color" id="bodyColor" value="#000000">
-      <label class="file">Upload Body Image<input type="file" id="uploadBody" accept="image/*"></label>
-      <button id="clearBodyBtn">Clear Body</button>
-      <button id="undoBodyBtn">Undo</button>
-    </div>
+  <!--
+    APP LAYOUT
+    - Left: controls
+    - Right: canvas workspace
+  -->
+  <div id="app">
+    <aside id="toolbar" aria-label="Car designer controls">
+      <!--
+        Tabs:
+        We keep these as "steps" so it feels guided.
+        (The UI is still very fast: you can jump between tabs anytime.)
+      -->
+      <div class="tabs" role="tablist" aria-label="Editor steps">
+        <button id="bodyTab" class="tab active" role="tab" aria-selected="true">
+          1) Body
+        </button>
+        <button id="wheelTab" class="tab" role="tab" aria-selected="false">
+          2) Wheel
+        </button>
+        <button id="placementTab" class="tab" role="tab" aria-selected="false">
+          3) Wheels on car
+        </button>
+        <button id="propertiesTab" class="tab" role="tab" aria-selected="false">
+          4) Performance
+        </button>
+        <button id="submitTab" class="tab" role="tab" aria-selected="false">
+          5) Submit
+        </button>
+      </div>
 
-    <div id="wheelControls" class="tab-content">
-      <button id="drawWheelBtn">Pen Tool</button>
-      <input type="color" id="wheelColor" value="#000000">
-      <label class="file">Upload Wheel Image<input type="file" id="uploadWheel" accept="image/*"></label>
-      <button id="clearWheelBtn">Clear Wheel</button>
-      <button id="undoWheelBtn">Undo</button>
-    </div>
+      <!-- =======================
+           BODY CONTROLS
+           ======================= -->
+      <section id="bodyControls" class="tab-content active" role="tabpanel">
+        <h2 class="panel-title">Car body</h2>
+        <p class="panel-subtitle">
+          Draw the body or upload an image, then position it on the canvas.
+        </p>
 
-    <div id="placementControls" class="tab-content">
-      <button id="addWheelBtn">Add Wheel to Body</button>
-      <p>Drag, scale, rotate wheels on body canvas. Click wheel to select.</p>
-      <button id="deleteWheelBtn">Delete Selected Wheel</button>
-    </div>
+        <div class="control-group">
+          <div class="row">
+            <button id="bodyPenBtn" class="btn primary">
+              ✏️ Draw body
+            </button>
 
-    <div id="propertiesControls" class="tab-content">
-      <label>Acceleration <span id="accVal">50</span>
-        <input type="range" id="acceleration" min="1" max="50" value="50">
-      </label>
-      <label>Top Speed <span id="speedVal">50</span>
-        <input type="range" id="topSpeed" min="10" max="80" value="50">
-      </label>
-      <p>Points remaining: <span id="pointsRemaining">0</span></p>
-    </div>
+            <button id="bodyMoveBtn" class="btn">
+              🖐️ Move/inspect
+            </button>
+          </div>
 
-    <div id="submitControls" class="tab-content">
-      <label>Car Name <input type="text" id="carName"></label>
-      <label>Team Name <input type="text" id="teamName"></label>
-      <label>Email <input type="email" id="email"></label>
-      <button id="submitBtn">Submit Car</button>
-      <p id="submitStatus"></p>
-    </div>
-  </aside>
+          <label class="field">
+            <span>Pen colour</span>
+            <input type="color" id="bodyColor" value="#2C2B3A" />
+          </label>
 
-  <main>
-    <canvas id="bodyCanvas" width="1024" height="512"></canvas>
-    <canvas id="wheelCanvas" width="256" height="256"></canvas>
-  </main>
-</div>
+          <label class="file">
+            Upload body image
+            <input type="file" id="uploadBody" accept="image/*" />
+          </label>
 
-<script src="editor.js"></script>
+          <div class="row">
+            <button id="bodyUndoBtn" class="btn">Undo</button>
+            <button id="bodyRedoBtn" class="btn">Redo</button>
+          </div>
+
+          <button id="bodyClearBtn" class="btn danger">
+            Clear body
+          </button>
+        </div>
+
+        <div class="tip">
+          <strong>Tip:</strong> upload a PNG with transparency for best results.
+        </div>
+      </section>
+
+      <!-- =======================
+           WHEEL CONTROLS
+           ======================= -->
+      <section id="wheelControls" class="tab-content" role="tabpanel">
+        <h2 class="panel-title">Wheel</h2>
+        <p class="panel-subtitle">
+          Draw or upload a wheel. This becomes the “master wheel” you can place multiple times.
+        </p>
+
+        <div class="control-group">
+          <div class="row">
+            <button id="wheelPenBtn" class="btn primary">
+              ✏️ Draw wheel
+            </button>
+
+            <button id="wheelMoveBtn" class="btn">
+              🖐️ Move/inspect
+            </button>
+          </div>
+
+          <label class="field">
+            <span>Pen colour</span>
+            <input type="color" id="wheelColor" value="#2C2B3A" />
+          </label>
+
+          <label class="file">
+            Upload wheel image (square)
+            <input type="file" id="uploadWheel" accept="image/*" />
+          </label>
+
+          <div class="row">
+            <button id="wheelUndoBtn" class="btn">Undo</button>
+            <button id="wheelRedoBtn" class="btn">Redo</button>
+          </div>
+
+          <button id="wheelClearBtn" class="btn danger">
+            Clear wheel
+          </button>
+        </div>
+
+        <div class="tip">
+          <strong>Tip:</strong> keep wheels fairly simple — they’re small on screen.
+        </div>
+      </section>
+
+      <!-- =======================
+           PLACEMENT CONTROLS
+           ======================= -->
+      <section id="placementControls" class="tab-content" role="tabpanel">
+        <h2 class="panel-title">Place wheels</h2>
+        <p class="panel-subtitle">
+          Click a wheel to select it. Drag to move. Use the controls below to scale/rotate.
+        </p>
+
+        <div class="control-group">
+          <button id="addWheelBtn" class="btn primary">
+            ➕ Add wheel to car
+          </button>
+
+          <div class="row">
+            <button id="duplicateWheelBtn" class="btn">
+              Duplicate selected
+            </button>
+            <button id="deleteWheelBtn" class="btn danger">
+              Delete selected
+            </button>
+          </div>
+
+          <hr class="divider" />
+
+          <label class="field">
+            <span>Selected wheel scale</span>
+            <input
+              type="range"
+              id="wheelScale"
+              min="0.2"
+              max="3"
+              step="0.05"
+              value="1"
+            />
+          </label>
+
+          <label class="field">
+            <span>Selected wheel rotation</span>
+            <input
+              type="range"
+              id="wheelRotation"
+              min="-180"
+              max="180"
+              step="1"
+              value="0"
+            />
+          </label>
+
+          <div class="pill-row">
+            <span class="pill" id="selectedWheelLabel">No wheel selected</span>
+            <span class="pill" id="wheelCountLabel">Wheels: 0</span>
+          </div>
+        </div>
+
+        <div class="tip">
+          <strong>Tip:</strong> most cars look right with 2 wheels, but you can go wild.
+        </div>
+      </section>
+
+      <!-- =======================
+           PROPERTIES CONTROLS
+           ======================= -->
+      <section id="propertiesControls" class="tab-content" role="tabpanel">
+        <h2 class="panel-title">Performance (100 credits)</h2>
+        <p class="panel-subtitle">
+          Allocate exactly <strong>100</strong> credits between acceleration and top speed.
+        </p>
+
+        <div class="control-group">
+          <label class="field">
+            <span>Acceleration: <strong id="accVal">50</strong></span>
+            <input
+              type="range"
+              id="acceleration"
+              min="0"
+              max="100"
+              step="1"
+              value="50"
+            />
+          </label>
+
+          <label class="field">
+            <span>Top speed: <strong id="speedVal">50</strong></span>
+            <input
+              type="range"
+              id="topSpeed"
+              min="0"
+              max="100"
+              step="1"
+              value="50"
+            />
+          </label>
+
+          <div class="pill-row">
+            <span class="pill emphasis">
+              Remaining: <strong id="pointsRemaining">0</strong>
+            </span>
+            <span class="pill" id="creditsHelp">
+              Must be 0 to submit
+            </span>
+          </div>
+
+          <div class="row">
+            <button id="presetBalancedBtn" class="btn">Balanced (50/50)</button>
+            <button id="presetSpeedBtn" class="btn">Speedster (30/70)</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- =======================
+           SUBMIT CONTROLS
+           ======================= -->
+      <section id="submitControls" class="tab-content" role="tabpanel">
+        <h2 class="panel-title">Submit</h2>
+        <p class="panel-subtitle">
+          When you submit, we send:
+          body image, wheel image, wheel positions, and your performance credits.
+        </p>
+
+        <div class="control-group">
+          <label class="field">
+            <span>Team name</span>
+            <input type="text" id="teamName" placeholder="e.g., The Acton Aces" />
+          </label>
+
+          <label class="field">
+            <span>Car name</span>
+            <input type="text" id="carName" placeholder="e.g., Biscuit Rocket" />
+          </label>
+
+          <label class="field">
+            <span>Email</span>
+            <input type="email" id="email" placeholder="you@example.com" />
+          </label>
+
+          <button id="submitBtn" class="btn primary">
+            🚀 Submit car
+          </button>
+
+          <p id="submitStatus" class="submit-status" aria-live="polite"></p>
+        </div>
+
+        <div class="tip">
+          <strong>Note:</strong> the endpoint is configured in <code>script.js</code>.
+        </div>
+      </section>
+    </aside>
+
+    <main id="workspace" aria-label="Canvas workspace">
+      <!--
+        Workspace layout:
+        - Main canvas: body + (optionally) wheels overlay
+        - Wheel canvas: visible only in wheel tab
+        - Preview panel: always visible (composite preview)
+      -->
+      <div class="workspace-inner">
+        <div class="canvas-card">
+          <div class="canvas-header">
+            <div>
+              <div class="canvas-title" id="canvasTitle">Body canvas</div>
+              <div class="canvas-subtitle" id="canvasSubtitle">
+                Draw the car body here
+              </div>
+            </div>
+
+            <div class="canvas-actions">
+              <button id="centerBodyBtn" class="btn small">
+                Center body
+              </button>
+              <button id="exportPreviewBtn" class="btn small">
+                Export preview PNG
+              </button>
+            </div>
+          </div>
+
+          <div class="canvas-wrap">
+            <canvas id="bodyCanvas" width="1024" height="512"></canvas>
+            <canvas id="wheelCanvas" width="256" height="256"></canvas>
+          </div>
+        </div>
+
+        <div class="preview-card">
+          <div class="canvas-header">
+            <div>
+              <div class="canvas-title">Live preview</div>
+              <div class="canvas-subtitle">
+                This is what the race engine will effectively see.
+              </div>
+            </div>
+          </div>
+
+          <div class="preview-wrap">
+            <canvas id="previewCanvas" width="512" height="256"></canvas>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Shared configuration / constants -->
+  <script src="script.js"></script>
+
+  <!-- Main editor logic -->
+  <script src="editor.js"></script>
 </body>
 </html>

@@ -4,48 +4,38 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!--
-    1) Page title updated (requested)
-  -->
-  <title>Doodle Derby 2D — Where doodles come to race</title>
+  <!-- Page title updated -->
+  <title>Rapid Racers 2D — Draw, Win, or Lose</title>
 
   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
-  <!--
-    HEADER
-    2) Header height constrained ~150px max
-    3) Tagline on right
-    4) Navigation bar added (Home / Results / About)
-  -->
+  <!-- =========================================================
+       HEADER (flush-left logo, no centered max-width container)
+       - Header image will be changed by you later (kept as assets/title_full.png for now)
+       - Tagline text updated, and styling no longer "button-like"
+       ========================================================= -->
   <header class="topbar" role="banner">
     <div class="topbar-inner">
       <div class="brand">
-        <!--
-          NOTE: previously you requested 670x142.
-          We keep the intrinsic attributes, but CSS now scales it down
-          so the overall header stays <= ~150px.
-        -->
         <img
           class="brand-logo"
           src="assets/title_full.png"
-          alt="Doodle Derby 2D"
+          alt="Rapid Racers 2D"
           width="670"
           height="142"
         />
       </div>
 
       <div class="header-right">
-        <!-- Tagline (nice clean sans-serif; not in header font serif) -->
-        <div class="tagline">Where doodles come to race</div>
+        <div class="tagline">Draw, Win, or Lose</div>
       </div>
     </div>
 
-    <!-- Navigation row (anticipating future pages) -->
+    <!-- Top navigation (provision for future pages) -->
     <nav class="topnav" aria-label="Primary navigation">
       <div class="topnav-inner">
-        <!-- For now these are placeholders. You can swap hrefs later. -->
         <a class="navlink active" href="index.html">Home</a>
         <a class="navlink" href="results.html">Results</a>
         <a class="navlink" href="about.html">About</a>
@@ -53,18 +43,13 @@
     </nav>
   </header>
 
-  <!--
-    APP LAYOUT
-    6) Status pill moved OUT of header and into the page (workspace top)
-  -->
+  <!-- =========================================================
+       APP
+       ========================================================= -->
   <div id="app">
+    <!-- LEFT TOOLBAR -->
     <aside id="toolbar" aria-label="Car designer controls">
-
-      <!--
-        Tabs / Steps
-        9) Numbers now appear as circles for a nicer look.
-        Also: removed the "1)" "2)" style.
-      -->
+      <!-- Step tabs -->
       <div class="tabs" role="tablist" aria-label="Editor steps">
         <button id="bodyTab" class="tab active" role="tab" aria-selected="true">
           <span class="step">1</span> Body
@@ -89,7 +74,7 @@
       <section id="bodyControls" class="tab-content active" role="tabpanel">
         <h2 class="panel-title">Car body</h2>
         <p class="panel-subtitle">
-          Draw the body or upload an image. Use <strong>Move</strong> to drag the body around the canvas.
+          Draw the body or upload an image. Use <strong>Move body</strong> to drag it around.
         </p>
 
         <div class="control-group">
@@ -100,10 +85,9 @@
 
           <label class="field">
             <span>Pen colour</span>
-            <input type="color" id="bodyColor" value="#2C2B3A" />
+            <input type="color" id="bodyColor" value="#262622" />
           </label>
 
-          <!-- 8) Spacing improvement: each "cluster" separated by .stack -->
           <div class="stack">
             <label class="file">
               Upload body image
@@ -139,7 +123,7 @@
 
           <label class="field">
             <span>Pen colour</span>
-            <input type="color" id="wheelColor" value="#2C2B3A" />
+            <input type="color" id="wheelColor" value="#262622" />
           </label>
 
           <div class="stack">
@@ -166,8 +150,8 @@
       <section id="placementControls" class="tab-content" role="tabpanel">
         <h2 class="panel-title">Place wheels</h2>
         <p class="panel-subtitle">
-          Click a wheel to select it, then drag it. Scale/rotate using the sliders.
-          (Wheels are positioned relative to the body — if you move the body later, wheels come with it.)
+          Click a wheel to select it, drag it, then scale/rotate using the sliders.
+          Wheels are placed relative to the body (so moving the body moves wheels too).
         </p>
 
         <div class="control-group">
@@ -243,7 +227,8 @@
         <div class="control-group">
           <label class="field">
             <span>Team name</span>
-            <input type="text" id="teamName" placeholder="e.g., The Acton Aces" />
+            <!-- Example requested: Team Turbo -->
+            <input type="text" id="teamName" placeholder="e.g., Team Turbo" />
           </label>
 
           <label class="field">
@@ -269,68 +254,39 @@
       </section>
     </aside>
 
+    <!-- MAIN WORKSPACE -->
     <main id="workspace" aria-label="Canvas workspace">
       <div class="workspace-inner">
 
-        <!-- 6) Status moved into page (looks “app-like” now) -->
-        <div class="workspace-topbar">
-          <div class="workspace-title">
-            Car Designer
-            <span class="workspace-subtitle">Build your racer for the weekly YouTube showdown.</span>
-          </div>
-
-          <div class="status-pill" id="uiStatusPill" aria-live="polite">
-            Editor ready
-          </div>
+        <!-- Full-width page banner (demarcates this page strongly) -->
+        <div class="page-banner" role="heading" aria-level="1">
+          <div class="page-banner-title">Car Designer</div>
         </div>
 
-        <div class="workspace-grid">
-          <div class="canvas-card">
-            <div class="canvas-header">
-              <div>
-                <div class="canvas-title" id="canvasTitle">Body canvas</div>
-                <div class="canvas-subtitle" id="canvasSubtitle">Draw the car body here</div>
-              </div>
-
-              <div class="canvas-actions">
-                <button id="centerBodyBtn" class="btn small">Center body</button>
-                <button id="exportPreviewBtn" class="btn small">Export preview PNG</button>
-              </div>
+        <!-- Only ONE main card now (live preview removed as requested) -->
+        <div class="canvas-card">
+          <div class="canvas-header">
+            <div>
+              <div class="canvas-title" id="canvasTitle">Body canvas</div>
+              <div class="canvas-subtitle" id="canvasSubtitle">Draw the car body here</div>
             </div>
 
-            <div class="canvas-wrap">
-              <canvas id="bodyCanvas" width="1024" height="512"></canvas>
-              <canvas id="wheelCanvas" width="256" height="256"></canvas>
-            </div>
-
-            <!--
-              7) Tips moved underneath drawing area
-              This is dynamic: editor.js updates it per tab.
-            -->
-            <div class="workspace-tips" aria-label="Tips">
-              <div class="tips-title">Tips</div>
-              <div class="tips-text" id="tipsText">
-                Draw the car body or upload a PNG with transparency.
-              </div>
+            <div class="canvas-actions">
+              <button id="centerBodyBtn" class="btn small">Center body</button>
+              <button id="exportPreviewBtn" class="btn small">Export PNG</button>
             </div>
           </div>
 
-          <div class="preview-card">
-            <div class="canvas-header">
-              <div>
-                <div class="canvas-title">Live preview</div>
-                <div class="canvas-subtitle">
-                  This is what the race engine will effectively see.
-                </div>
-              </div>
-            </div>
+          <div class="canvas-wrap">
+            <canvas id="bodyCanvas" width="1024" height="512"></canvas>
+            <canvas id="wheelCanvas" width="256" height="256"></canvas>
+          </div>
 
-            <div class="preview-wrap">
-              <canvas id="previewCanvas" width="512" height="256"></canvas>
-            </div>
-
-            <div class="note">
-              Preview includes the body position + wheels.
+          <!-- Tips moved under drawing area -->
+          <div class="workspace-tips" aria-label="Tips">
+            <div class="tips-title">Tips</div>
+            <div class="tips-text" id="tipsText">
+              Draw the car body or upload a PNG with transparency.
             </div>
           </div>
         </div>

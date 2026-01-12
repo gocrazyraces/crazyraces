@@ -4,17 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Page title updated -->
-  <title>Rapid Racers 2D — Draw, Win, or Lose</title>
+  <title>Rapid Racers 2D</title>
 
   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
   <!-- =========================================================
-       HEADER (flush-left logo, no centered max-width container)
-       - Header image will be changed by you later (kept as assets/title_full.png for now)
-       - Tagline text updated, and styling no longer "button-like"
+       HEADER
+       - Tagline removed (now in your header image)
+       - Added "Next race" block on top-right (date set by script.js)
        ========================================================= -->
   <header class="topbar" role="banner">
     <div class="topbar-inner">
@@ -28,20 +27,33 @@
         />
       </div>
 
-      <div class="header-right">
-        <div class="tagline">Draw, Win, or Lose</div>
+      <!-- Separate coloured area on the top-right -->
+      <div class="next-race" aria-label="Next race date">
+        <span class="next-race-label">Next race:</span>
+        <span id="nextRaceDate" class="next-race-date">—</span>
       </div>
     </div>
 
-    <!-- Top navigation (provision for future pages) -->
+    <!-- Navigation row (About removed) -->
     <nav class="topnav" aria-label="Primary navigation">
       <div class="topnav-inner">
         <a class="navlink active" href="index.html">Home</a>
         <a class="navlink" href="results.html">Results</a>
-        <a class="navlink" href="about.html">About</a>
       </div>
     </nav>
   </header>
+
+  <!-- =========================================================
+       FULL-WIDTH PAGE BAR ABOVE THE TABS
+       (Requested: bar across the width of the page and above 1/2/3 buttons)
+       - "Car Designer" becomes this bar
+       - Text changed per request
+       ========================================================= -->
+  <div class="pagebar" role="heading" aria-level="1">
+    <div class="pagebar-inner">
+      <div class="pagebar-title">Design your car for the next race</div>
+    </div>
+  </div>
 
   <!-- =========================================================
        APP
@@ -49,6 +61,7 @@
   <div id="app">
     <!-- LEFT TOOLBAR -->
     <aside id="toolbar" aria-label="Car designer controls">
+
       <!-- Step tabs -->
       <div class="tabs" role="tablist" aria-label="Editor steps">
         <button id="bodyTab" class="tab active" role="tab" aria-selected="true">
@@ -79,13 +92,13 @@
 
         <div class="control-group">
           <div class="row">
-            <button id="bodyPenBtn" class="btn primary">✏️ Draw body</button>
-            <button id="bodyMoveBtn" class="btn">🖐️ Move body</button>
+            <button id="bodyPenBtn" class="btn primary">Draw body</button>
+            <button id="bodyMoveBtn" class="btn">Move body</button>
           </div>
 
           <label class="field">
             <span>Pen colour</span>
-            <input type="color" id="bodyColor" value="#262622" />
+            <input type="color" id="bodyColor" value="#3B0273" />
           </label>
 
           <div class="stack">
@@ -117,13 +130,13 @@
 
         <div class="control-group">
           <div class="row">
-            <button id="wheelPenBtn" class="btn primary">✏️ Draw wheel</button>
-            <button id="wheelMoveBtn" class="btn">🖐️ Inspect</button>
+            <button id="wheelPenBtn" class="btn primary">Draw wheel</button>
+            <button id="wheelMoveBtn" class="btn">Inspect</button>
           </div>
 
           <label class="field">
             <span>Pen colour</span>
-            <input type="color" id="wheelColor" value="#262622" />
+            <input type="color" id="wheelColor" value="#3B0273" />
           </label>
 
           <div class="stack">
@@ -151,11 +164,11 @@
         <h2 class="panel-title">Place wheels</h2>
         <p class="panel-subtitle">
           Click a wheel to select it, drag it, then scale/rotate using the sliders.
-          Wheels are placed relative to the body (so moving the body moves wheels too).
+          Wheels are placed relative to the body.
         </p>
 
         <div class="control-group">
-          <button id="addWheelBtn" class="btn primary">➕ Add wheel to car</button>
+          <button id="addWheelBtn" class="btn primary">Add wheel to car</button>
 
           <div class="row">
             <button id="duplicateWheelBtn" class="btn">Duplicate selected</button>
@@ -227,7 +240,6 @@
         <div class="control-group">
           <label class="field">
             <span>Team name</span>
-            <!-- Example requested: Team Turbo -->
             <input type="text" id="teamName" placeholder="e.g., Team Turbo" />
           </label>
 
@@ -242,7 +254,7 @@
           </label>
 
           <div class="stack">
-            <button id="submitBtn" class="btn primary">🚀 Submit car</button>
+            <button id="submitBtn" class="btn primary">Submit car</button>
           </div>
 
           <p id="submitStatus" class="submit-status" aria-live="polite"></p>
@@ -257,13 +269,6 @@
     <!-- MAIN WORKSPACE -->
     <main id="workspace" aria-label="Canvas workspace">
       <div class="workspace-inner">
-
-        <!-- Full-width page banner (demarcates this page strongly) -->
-        <div class="page-banner" role="heading" aria-level="1">
-          <div class="page-banner-title">Car Designer</div>
-        </div>
-
-        <!-- Only ONE main card now (live preview removed as requested) -->
         <div class="canvas-card">
           <div class="canvas-header">
             <div>
@@ -282,7 +287,6 @@
             <canvas id="wheelCanvas" width="256" height="256"></canvas>
           </div>
 
-          <!-- Tips moved under drawing area -->
           <div class="workspace-tips" aria-label="Tips">
             <div class="tips-title">Tips</div>
             <div class="tips-text" id="tipsText">
@@ -293,6 +297,24 @@
       </div>
     </main>
   </div>
+
+  <!-- =========================================================
+       FOOTER (standard linked area at bottom)
+       ========================================================= -->
+  <footer class="site-footer" role="contentinfo">
+    <div class="footer-inner">
+      <div class="footer-links">
+        <a href="index.html">Home</a>
+        <a href="results.html">Results</a>
+        <a href="faq.html">FAQ</a>
+        <a href="contact.html">Contact</a>
+      </div>
+
+      <div class="footer-meta">
+        © <span id="footerYear"></span> Rapid Racers 2D
+      </div>
+    </div>
+  </footer>
 
   <script src="script.js"></script>
   <script src="editor.js"></script>

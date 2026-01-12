@@ -1,58 +1,63 @@
 /* =========================================================
-   RAPID RACERS 2D — DESIGN SYSTEM
-   Colour system (requested):
-     #262622
-     #3F403B
-     #8C8C88
-     #BFBFBD
-     #F2F2EB
+   RAPID RACERS 2D — COLOUR SYSTEM (from screenshot)
+   ---------------------------------------------------------
+   #3B0273 (purple)
+   #3C36D9 (blue)
+   #D7F205 (lime)
+   #F2CB05 (yellow)
+   #F28066 (coral)
    ========================================================= */
 
 :root {
-  --c0: #262622; /* near-black */
-  --c1: #3F403B; /* dark grey */
-  --c2: #8C8C88; /* mid grey */
-  --c3: #BFBFBD; /* light grey */
-  --c4: #F2F2EB; /* off-white / paper */
+  --purple: #3B0273;
+  --blue:   #3C36D9;
+  --lime:   #D7F205;
+  --yellow: #F2CB05;
+  --coral:  #F28066;
 
-  --panel: #ffffff;
-  --border: rgba(38, 38, 34, 0.18);
-  --shadow: 0 10px 30px rgba(38, 38, 34, 0.10);
+  --ink: rgba(10, 10, 10, 0.90);
+  --paper: #ffffff;
+  --bg: #f6f6fb;
 
-  /* Serif (subtle, not “fancy”): leans “editorial”, but modern */
-  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, ui-serif, serif;
+  --border: rgba(59, 2, 115, 0.18);
+  --shadow: 0 12px 32px rgba(10, 10, 10, 0.10);
 
-  --radius: 14px;
+  /* Requested: sans-serif, but different from the earlier stack.
+     This leans modern/neutral without importing web fonts. */
+  --ui-font: "Aptos", "Avenir Next", "Segoe UI", "Noto Sans", Roboto, Helvetica, Arial, sans-serif;
+
+  /* Avoid “round button style”: keep corners modest, not pill */
+  --radius: 10px;
+  --radius-sm: 8px;
 }
 
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
-  font-family: var(--serif);
-  color: var(--c0);
-  background: var(--c4);
+  font-family: var(--ui-font);
+  color: var(--ink);
+  background: var(--bg);
 }
 
 /* =========================================================
-   HEADER (logo flush-left, not constrained by max-width)
+   HEADER (logo flush-left)
    ========================================================= */
 
 .topbar {
-  background: var(--c4);
-  border-bottom: 1px solid var(--border);
+  background: var(--purple);
+  color: #fff;
 }
 
-/* IMPORTANT: no max-width / no centering, so logo stays flush-left */
 .topbar-inner {
   width: 100%;
-  padding: 10px 16px 6px;
+  padding: 10px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
+  gap: 16px;
 
-  /* keep the header compact */
+  /* keep compact */
   max-height: 120px;
   overflow: hidden;
 }
@@ -62,31 +67,39 @@ body {
   align-items: center;
 }
 
+/* Keep the logo flush-left and stable */
 .brand-logo {
   display: block;
   max-height: 95px;
   width: auto;
 }
 
-/* Tagline: no border, no pill background, just clean text */
-.header-right {
+/* Next race badge (top-right coloured area) */
+.next-race {
+  background: var(--yellow);
+  color: #1a1a1a;
+  border: 2px solid rgba(0,0,0,0.12);
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-weight: 800;
   display: flex;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-.tagline {
-  font-family: var(--serif);
-  font-weight: 650;
-  font-size: 16px;
-  color: rgba(38, 38, 34, 0.82);
+  align-items: baseline;
+  gap: 8px;
   white-space: nowrap;
 }
 
-/* Navigation */
+.next-race-label {
+  opacity: 0.9;
+}
+
+.next-race-date {
+  font-weight: 900;
+}
+
+/* Nav row */
 .topnav {
-  border-top: 1px solid rgba(38, 38, 34, 0.10);
-  background: rgba(191, 191, 189, 0.30);
+  background: var(--blue);
+  border-top: 1px solid rgba(255,255,255,0.18);
 }
 
 .topnav-inner {
@@ -94,27 +107,50 @@ body {
   padding: 8px 16px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .navlink {
+  color: #fff;
   text-decoration: none;
-  color: var(--c0);
-  font-weight: 750;
+  font-weight: 800;
   font-size: 14px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  border: 1px solid transparent;
+  padding: 8px 10px;
+
+  /* NOT pill */
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255,255,255,0.22);
 }
 
 .navlink:hover {
-  border-color: rgba(38, 38, 34, 0.22);
-  background: rgba(191, 191, 189, 0.25);
+  background: rgba(255,255,255,0.10);
 }
 
 .navlink.active {
-  border-color: rgba(38, 38, 34, 0.28);
-  background: rgba(191, 191, 189, 0.35);
+  background: var(--lime);
+  color: #1a1a1a;
+  border-color: rgba(0,0,0,0.15);
+}
+
+/* =========================================================
+   FULL-WIDTH PAGE BAR ABOVE TABS
+   ========================================================= */
+
+.pagebar {
+  width: 100%;
+  background: var(--yellow);
+  border-bottom: 1px solid rgba(0,0,0,0.12);
+}
+
+.pagebar-inner {
+  width: 100%;
+  padding: 12px 16px;
+}
+
+.pagebar-title {
+  font-size: 18px;
+  font-weight: 900;
+  color: #1a1a1a;
 }
 
 /* =========================================================
@@ -123,14 +159,14 @@ body {
 
 #app {
   display: flex;
-  min-height: calc(100vh - 150px);
+  min-height: calc(100vh - 220px); /* header+nav+pagebar+footer-ish */
 }
 
 /* Left panel */
 #toolbar {
   width: 360px;
   max-width: 92vw;
-  background: var(--panel);
+  background: var(--paper);
   border-right: 1px solid var(--border);
   padding: 14px;
   overflow-y: auto;
@@ -143,32 +179,12 @@ body {
 }
 
 .workspace-inner {
-  /* still allow a comfortable reading width within workspace,
-     but the header and nav are not constrained */
   max-width: 1320px;
+  margin: 0 auto;
 }
 
 /* =========================================================
-   Full-width page banner (Car Designer demarcation)
-   ========================================================= */
-
-.page-banner {
-  width: 100%;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: rgba(191, 191, 189, 0.28);
-  padding: 14px 16px;
-  margin: 0 0 14px;
-}
-
-.page-banner-title {
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: 0.2px;
-}
-
-/* =========================================================
-   TABS / STEPS
+   TABS / STEPS (no pill style)
    ========================================================= */
 
 .tabs {
@@ -179,13 +195,13 @@ body {
 }
 
 .tab {
-  border: 1px solid var(--border);
-  background: rgba(242, 242, 235, 0.55);
-  color: var(--c0);
-  border-radius: 999px;
-  padding: 10px 12px;
+  border: 1px solid rgba(59, 2, 115, 0.18);
+  background: #fff;
+  color: #1a1a1a;
+  border-radius: var(--radius-sm);
+  padding: 10px 10px;
   cursor: pointer;
-  font-weight: 800;
+  font-weight: 850;
   font-size: 14px;
 
   display: flex;
@@ -198,14 +214,15 @@ body {
 .tab:hover { transform: translateY(-1px); }
 
 .tab.active {
-  background: rgba(191, 191, 189, 0.45);
-  border-color: rgba(38, 38, 34, 0.28);
+  border-color: rgba(59, 2, 115, 0.28);
+  background: rgba(60, 54, 217, 0.08);
 }
 
 .step {
-  width: 24px;
-  height: 24px;
-  border-radius: 999px;
+  /* Not round; small "badge" */
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -213,8 +230,8 @@ body {
   font-size: 13px;
   font-weight: 900;
 
-  background: rgba(191, 191, 189, 0.45);
-  border: 1px solid rgba(38, 38, 34, 0.22);
+  background: rgba(60, 54, 217, 0.12);
+  border: 1px solid rgba(60, 54, 217, 0.25);
 }
 
 /* =========================================================
@@ -226,21 +243,21 @@ body {
 
 .panel-title {
   margin: 10px 0 6px;
-  font-size: 22px;
-  font-weight: 850;
+  font-size: 20px;
+  font-weight: 900;
 }
 
 .panel-subtitle {
   margin: 0 0 12px;
-  color: rgba(38, 38, 34, 0.78);
+  color: rgba(10, 10, 10, 0.70);
   line-height: 1.35;
 }
 
 .control-group {
-  border: 1px solid var(--border);
+  border: 1px solid rgba(59, 2, 115, 0.16);
   border-radius: var(--radius);
   padding: 12px;
-  background: rgba(242, 242, 235, 0.65);
+  background: rgba(60, 54, 217, 0.04);
 }
 
 .row {
@@ -262,38 +279,38 @@ body {
 
 .field > span {
   font-size: 13px;
-  color: rgba(38, 38, 34, 0.80);
+  color: rgba(10, 10, 10, 0.70);
 }
 
 .field input[type="text"],
 .field input[type="email"] {
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  border: 1px solid rgba(59, 2, 115, 0.18);
+  border-radius: var(--radius-sm);
   padding: 10px 10px;
   font-size: 14px;
   outline: none;
   background: #fff;
-  color: var(--c0);
-  font-family: var(--serif);
+  color: #1a1a1a;
+  font-family: var(--ui-font);
 }
 
 .field input[type="text"]:focus,
 .field input[type="email"]:focus {
-  border-color: rgba(38, 38, 34, 0.35);
-  box-shadow: 0 0 0 4px rgba(191, 191, 189, 0.35);
+  border-color: rgba(60, 54, 217, 0.55);
+  box-shadow: 0 0 0 4px rgba(60, 54, 217, 0.16);
 }
 
 .field input[type="range"] { width: 100%; }
 
 label.file {
   display: block;
-  border: 1px dashed rgba(38, 38, 34, 0.35);
-  border-radius: 12px;
+  border: 2px dashed rgba(59, 2, 115, 0.25);
+  border-radius: var(--radius-sm);
   padding: 10px;
   cursor: pointer;
-  background: rgba(191, 191, 189, 0.25);
+  background: rgba(242, 203, 5, 0.18);
   text-align: center;
-  font-weight: 800;
+  font-weight: 900;
 }
 
 label.file input { display: none; }
@@ -301,7 +318,7 @@ label.file input { display: none; }
 .divider {
   border: none;
   height: 1px;
-  background: var(--border);
+  background: rgba(59, 2, 115, 0.14);
   margin: 14px 0;
 }
 
@@ -312,17 +329,19 @@ label.file input { display: none; }
   flex-wrap: wrap;
 }
 
+/* These were “pills”; now they’re simple rectangles */
 .pill {
-  border: 1px solid var(--border);
+  border: 1px solid rgba(59, 2, 115, 0.18);
   background: #fff;
   padding: 7px 10px;
-  border-radius: 999px;
+  border-radius: var(--radius-sm);
   font-size: 13px;
+  font-weight: 800;
 }
 
 .pill.emphasis {
-  border-color: rgba(63, 64, 59, 0.35);
-  background: rgba(191, 191, 189, 0.35);
+  background: rgba(215, 242, 5, 0.25);
+  border-color: rgba(0,0,0,0.15);
 }
 
 .note {
@@ -330,62 +349,62 @@ label.file input { display: none; }
   font-size: 13px;
   line-height: 1.35;
   padding: 10px;
-  border-left: 4px solid rgba(63, 64, 59, 0.6);
-  background: rgba(191, 191, 189, 0.25);
-  border-radius: 10px;
+  border-left: 6px solid var(--blue);
+  background: rgba(60, 54, 217, 0.06);
+  border-radius: var(--radius-sm);
 }
 
 /* =========================================================
-   BUTTONS (recoloured to match the new palette)
+   BUTTONS (no pill)
    ========================================================= */
 
 .btn {
   width: 100%;
-  border: 1px solid rgba(38, 38, 34, 0.25);
+  border: 1px solid rgba(0,0,0,0.18);
   background: #fff;
-  color: var(--c0);
-  border-radius: 12px;
+  color: #1a1a1a;
+  border-radius: var(--radius-sm);
   padding: 10px 10px;
   cursor: pointer;
   font-weight: 900;
-  font-family: var(--serif);
+  font-family: var(--ui-font);
 
   transition: transform 0.05s ease, box-shadow 0.12s ease, background 0.12s ease;
 }
 
 .btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 8px 18px rgba(38, 38, 34, 0.10);
-  background: rgba(242, 242, 235, 0.75);
+  box-shadow: 0 10px 22px rgba(10, 10, 10, 0.10);
+  background: rgba(60, 54, 217, 0.04);
 }
 
-/* Primary: dark background, light text */
+/* Primary: lime with dark text */
 .btn.primary {
-  background: var(--c0);
-  color: var(--c4);
-  border-color: rgba(38, 38, 34, 0.35);
+  background: var(--lime);
+  color: #1a1a1a;
+  border-color: rgba(0,0,0,0.16);
 }
 
 .btn.primary:hover {
-  background: var(--c1);
+  background: rgba(215, 242, 5, 0.85);
 }
 
-/* Danger: use dark-grey instead of bright red (fits your monochrome palette) */
+/* Danger: coral */
 .btn.danger {
-  background: var(--c1);
-  color: var(--c4);
-  border-color: rgba(38, 38, 34, 0.35);
+  background: var(--coral);
+  color: #1a1a1a;
+  border-color: rgba(0,0,0,0.16);
 }
 
 .btn.danger:hover {
-  background: rgba(38, 38, 34, 0.92);
+  background: rgba(242, 128, 102, 0.88);
 }
 
 .btn.small {
   width: auto;
   padding: 8px 10px;
-  border-radius: 999px;
-  font-weight: 850;
+  border-radius: var(--radius-sm);
+  font-weight: 900;
   font-size: 13px;
 }
 
@@ -394,8 +413,8 @@ label.file input { display: none; }
    ========================================================= */
 
 .canvas-card {
-  background: var(--panel);
-  border: 1px solid var(--border);
+  background: var(--paper);
+  border: 1px solid rgba(59, 2, 115, 0.18);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   overflow: hidden;
@@ -403,8 +422,8 @@ label.file input { display: none; }
 
 .canvas-header {
   padding: 12px 14px;
-  border-bottom: 1px solid var(--border);
-  background: rgba(191, 191, 189, 0.22);
+  border-bottom: 1px solid rgba(59, 2, 115, 0.14);
+  background: rgba(60, 54, 217, 0.05);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -412,13 +431,13 @@ label.file input { display: none; }
 }
 
 .canvas-title {
-  font-size: 18px;
-  font-weight: 850;
+  font-size: 16px;
+  font-weight: 900;
 }
 
 .canvas-subtitle {
   font-size: 13px;
-  color: rgba(38, 38, 34, 0.75);
+  color: rgba(10,10,10,0.70);
   margin-top: 2px;
 }
 
@@ -438,8 +457,8 @@ label.file input { display: none; }
 }
 
 #bodyCanvas {
-  border: 2px solid rgba(38, 38, 34, 0.25);
-  border-radius: 12px;
+  border: 2px solid rgba(59, 2, 115, 0.22);
+  border-radius: var(--radius-sm);
   background: #fff;
   width: min(1024px, 100%);
   height: auto;
@@ -447,8 +466,8 @@ label.file input { display: none; }
 }
 
 #wheelCanvas {
-  border: 2px dashed rgba(38, 38, 34, 0.30);
-  border-radius: 12px;
+  border: 2px dashed rgba(59, 2, 115, 0.25);
+  border-radius: var(--radius-sm);
   background: #fff;
   width: min(256px, 50vw);
   height: auto;
@@ -459,26 +478,70 @@ label.file input { display: none; }
 .submit-status {
   margin: 10px 0 0;
   font-size: 13px;
-  color: rgba(38, 38, 34, 0.85);
+  color: rgba(10,10,10,0.80);
 }
 
 /* Tips beneath drawing area */
 .workspace-tips {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid rgba(59, 2, 115, 0.14);
   padding: 12px 14px;
-  background: rgba(242, 242, 235, 0.70);
+  background: rgba(242, 203, 5, 0.10);
 }
 
 .tips-title {
-  font-size: 16px;
-  font-weight: 850;
+  font-size: 14px;
+  font-weight: 900;
   margin-bottom: 6px;
 }
 
 .tips-text {
   font-size: 13px;
-  color: rgba(38, 38, 34, 0.85);
+  color: rgba(10,10,10,0.78);
   line-height: 1.4;
+}
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+
+.site-footer {
+  background: var(--purple);
+  color: #fff;
+  margin-top: 18px;
+}
+
+.footer-inner {
+  width: 100%;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.footer-links {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.footer-links a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 850;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255,255,255,0.18);
+}
+
+.footer-links a:hover {
+  background: rgba(255,255,255,0.10);
+}
+
+.footer-meta {
+  font-size: 13px;
+  opacity: 0.9;
 }
 
 /* Responsive */
@@ -489,5 +552,5 @@ label.file input { display: none; }
     border-right: none;
     border-bottom: 1px solid var(--border);
   }
-  .tagline { display: none; } /* keep header minimal on small screens */
+  .next-race { font-size: 13px; padding: 8px 10px; }
 }

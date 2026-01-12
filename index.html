@@ -12,8 +12,9 @@
 <body>
   <!-- =========================================================
        HEADER
-       - Tagline removed (now in your header image)
-       - Added "Next race" block on top-right (date set by script.js)
+       - Header background changed to match upload button background
+       - Tagline removed (in your header image)
+       - Next race box now includes time (20:00 GMT)
        ========================================================= -->
   <header class="topbar" role="banner">
     <div class="topbar-inner">
@@ -27,14 +28,13 @@
         />
       </div>
 
-      <!-- Separate coloured area on the top-right -->
       <div class="next-race" aria-label="Next race date">
         <span class="next-race-label">Next race:</span>
         <span id="nextRaceDate" class="next-race-date">—</span>
       </div>
     </div>
 
-    <!-- Navigation row (About removed) -->
+    <!-- Navigation row (About removed already) -->
     <nav class="topnav" aria-label="Primary navigation">
       <div class="topnav-inner">
         <a class="navlink active" href="index.html">Home</a>
@@ -44,14 +44,15 @@
   </header>
 
   <!-- =========================================================
-       FULL-WIDTH PAGE BAR ABOVE THE TABS
-       (Requested: bar across the width of the page and above 1/2/3 buttons)
-       - "Car Designer" becomes this bar
-       - Text changed per request
+       FULL-WIDTH PAGE BAR ABOVE TABS
+       - Now includes live countdown: (Xd Ym Zs to go)
        ========================================================= -->
   <div class="pagebar" role="heading" aria-level="1">
     <div class="pagebar-inner">
-      <div class="pagebar-title">Design your car for the next race</div>
+      <div class="pagebar-title">
+        Design your car for the next race
+        <span id="nextRaceCountdown" class="pagebar-countdown">(…)</span>
+      </div>
     </div>
   </div>
 
@@ -83,27 +84,36 @@
 
       <!-- =======================
            BODY CONTROLS
+           Buttons simplified: Draw / Move / Upload image / Clear
+           Added Pen thickness next to pen colour
            ======================= -->
       <section id="bodyControls" class="tab-content active" role="tabpanel">
         <h2 class="panel-title">Car body</h2>
         <p class="panel-subtitle">
-          Draw the body or upload an image. Use <strong>Move body</strong> to drag it around.
+          Draw the body or upload an image. Use <strong>Move</strong> to drag it around.
         </p>
 
         <div class="control-group">
           <div class="row">
-            <button id="bodyPenBtn" class="btn primary">Draw body</button>
-            <button id="bodyMoveBtn" class="btn">Move body</button>
+            <button id="bodyPenBtn" class="btn primary">Draw</button>
+            <button id="bodyMoveBtn" class="btn">Move</button>
           </div>
 
-          <label class="field">
-            <span>Pen colour</span>
-            <input type="color" id="bodyColor" value="#3B0273" />
-          </label>
+          <div class="row-tight">
+            <label class="field compact">
+              <span>Pen colour</span>
+              <input type="color" id="bodyColor" value="#3B0273" />
+            </label>
+
+            <label class="field compact">
+              <span>Thickness</span>
+              <input type="range" id="bodyThickness" min="1" max="20" step="1" value="4" />
+            </label>
+          </div>
 
           <div class="stack">
             <label class="file">
-              Upload body image
+              Upload image
               <input type="file" id="uploadBody" accept="image/*" />
             </label>
           </div>
@@ -114,34 +124,43 @@
           </div>
 
           <div class="stack">
-            <button id="bodyClearBtn" class="btn danger">Clear body</button>
+            <button id="bodyClearBtn" class="btn danger">Clear</button>
           </div>
         </div>
       </section>
 
       <!-- =======================
            WHEEL CONTROLS
+           Buttons simplified: Draw / Move / Upload image (square) / Clear
+           Added Pen thickness next to pen colour
            ======================= -->
       <section id="wheelControls" class="tab-content" role="tabpanel">
         <h2 class="panel-title">Wheel</h2>
         <p class="panel-subtitle">
-          Draw or upload a wheel. This becomes the “master wheel” you can place multiple times.
+          Draw or upload a wheel. This becomes the “master wheel” you place multiple times.
         </p>
 
         <div class="control-group">
           <div class="row">
-            <button id="wheelPenBtn" class="btn primary">Draw wheel</button>
-            <button id="wheelMoveBtn" class="btn">Inspect</button>
+            <button id="wheelPenBtn" class="btn primary">Draw</button>
+            <button id="wheelMoveBtn" class="btn">Move</button>
           </div>
 
-          <label class="field">
-            <span>Pen colour</span>
-            <input type="color" id="wheelColor" value="#3B0273" />
-          </label>
+          <div class="row-tight">
+            <label class="field compact">
+              <span>Pen colour</span>
+              <input type="color" id="wheelColor" value="#3B0273" />
+            </label>
+
+            <label class="field compact">
+              <span>Thickness</span>
+              <input type="range" id="wheelThickness" min="1" max="20" step="1" value="4" />
+            </label>
+          </div>
 
           <div class="stack">
             <label class="file">
-              Upload wheel image (square)
+              Upload image (square)
               <input type="file" id="uploadWheel" accept="image/*" />
             </label>
           </div>
@@ -152,7 +171,7 @@
           </div>
 
           <div class="stack">
-            <button id="wheelClearBtn" class="btn danger">Clear wheel</button>
+            <button id="wheelClearBtn" class="btn danger">Clear</button>
           </div>
         </div>
       </section>
@@ -164,7 +183,6 @@
         <h2 class="panel-title">Place wheels</h2>
         <p class="panel-subtitle">
           Click a wheel to select it, drag it, then scale/rotate using the sliders.
-          Wheels are placed relative to the body.
         </p>
 
         <div class="control-group">
@@ -196,6 +214,7 @@
 
       <!-- =======================
            PROPERTIES CONTROLS
+           - Removed Balanced + Speedster buttons
            ======================= -->
       <section id="propertiesControls" class="tab-content" role="tabpanel">
         <h2 class="panel-title">Performance (100 credits)</h2>
@@ -219,11 +238,6 @@
               Remaining: <strong id="pointsRemaining">0</strong>
             </span>
             <span class="pill" id="creditsHelp">Must be 0 to submit</span>
-          </div>
-
-          <div class="row">
-            <button id="presetBalancedBtn" class="btn">Balanced (50/50)</button>
-            <button id="presetSpeedBtn" class="btn">Speedster (30/70)</button>
           </div>
         </div>
       </section>
@@ -278,7 +292,7 @@
 
             <div class="canvas-actions">
               <button id="centerBodyBtn" class="btn small">Center body</button>
-              <button id="exportPreviewBtn" class="btn small">Export PNG</button>
+              <button id="exportPreviewBtn" class="btn small">Export as PNG</button>
             </div>
           </div>
 
@@ -298,9 +312,7 @@
     </main>
   </div>
 
-  <!-- =========================================================
-       FOOTER (standard linked area at bottom)
-       ========================================================= -->
+  <!-- FOOTER -->
   <footer class="site-footer" role="contentinfo">
     <div class="footer-inner">
       <div class="footer-links">

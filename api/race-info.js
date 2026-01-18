@@ -1,5 +1,5 @@
 // API endpoint to get race information from Google Sheets
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
@@ -11,6 +11,6 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Error fetching race info:', error);
-    return res.status(500).json({ message: 'Failed to fetch race information' });
+    return res.status(500).json({ message: `Failed to fetch race information: ${error.message}` });
   }
 }

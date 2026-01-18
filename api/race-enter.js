@@ -8,7 +8,7 @@ import { BODY_W, BODY_H, WHEEL_W, WHEEL_H } from '../lib/constants.js';
 // ============================
 export { getRaceInfo, validateActiveRace } from '../lib/race-utils.js';
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }

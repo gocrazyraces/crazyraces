@@ -79,6 +79,6 @@ window.CRAZY_RACES_WHEEL_H = 256;
     const hours = String(now.getHours()).padStart(2, '0');
     const minutes = String(now.getMinutes()).padStart(2, '0');
     const suffix = day === 1 || day === 21 || day === 31 ? 'st' : day === 2 || day === 22 ? 'nd' : day === 3 || day === 23 ? 'rd' : 'th';
-    versionEl.textContent = `Version 0.1 (${day}${suffix} ${month} ${year} ${hours}:${minutes})`;
+    versionEl.textContent = `Version 0.57 (${day}${suffix} ${month} ${year} ${hours}:${minutes})`;
   }
 })();

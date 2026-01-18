@@ -34,6 +34,8 @@ export async function getRaceInfo() {
     });
 
     const rows = response.data.values || [];
+    console.log('Spreadsheet rows:', rows); // Debug log
+
     const races = rows.slice(1).map(row => ({
       season: row[0],
       racenumber: row[1],
@@ -44,12 +46,15 @@ export async function getRaceInfo() {
       racestatus: row[6]
     }));
 
+    console.log('Parsed races:', races); // Debug log
+
     // Find next active race
     const now = new Date();
     const nextRace = races
       .filter(race => race.racestatus === 'active' && new Date(race.racedeadline) > now)
       .sort((a, b) => new Date(a.racedeadline) - new Date(b.racedeadline))[0];
 
+    console.log('Next race found:', nextRace); // Debug log
     const result = nextRace || null;
 
     // Cache for 1 hour

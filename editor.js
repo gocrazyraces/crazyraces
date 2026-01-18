@@ -47,6 +47,7 @@ const ui = {
   bodyColor: document.getElementById("bodyColor"),
   bodyThickness: document.getElementById("bodyThickness"),
   uploadBody: document.getElementById("uploadBody"),
+  generateBodyBtn: document.getElementById("generateBodyBtn"),
   bodyUndoBtn: document.getElementById("bodyUndoBtn"),
   bodyRedoBtn: document.getElementById("bodyRedoBtn"),
   bodyClearBtn: document.getElementById("bodyClearBtn"),
@@ -57,6 +58,7 @@ const ui = {
   wheelColor: document.getElementById("wheelColor"),
   wheelThickness: document.getElementById("wheelThickness"),
   uploadWheel: document.getElementById("uploadWheel"),
+  generateWheelBtn: document.getElementById("generateWheelBtn"),
   wheelUndoBtn: document.getElementById("wheelUndoBtn"),
   wheelRedoBtn: document.getElementById("wheelRedoBtn"),
   wheelClearBtn: document.getElementById("wheelClearBtn"),
@@ -540,6 +542,30 @@ ui.uploadBody.onchange = (e) => {
   e.target.value = "";
 };
 
+// Generate body button
+ui.generateBodyBtn.onclick = async () => {
+  try {
+    const response = await fetch('/api/car-gen?type=body');
+    if (!response.ok) {
+      throw new Error('Failed to generate body image');
+    }
+
+    const blob = await response.blob();
+    const img = new Image();
+    img.onload = () => {
+      drawUploadedImageToArt(img, bodyArtCtx, BODY_W, BODY_H);
+      pushBodyUndoSnapshot();
+      bodyOffsetX = 0;
+      bodyOffsetY = 0;
+      renderAll();
+    };
+    img.src = URL.createObjectURL(blob);
+  } catch (error) {
+    console.error('Error generating body:', error);
+    alert('Failed to generate body image. Please try again.');
+  }
+};
+
 ui.uploadWheel.onchange = (e) => {
   const file = e.target.files?.[0];
   if (!file) return;
@@ -557,6 +583,29 @@ ui.uploadWheel.onchange = (e) => {
   };
   reader.readAsDataURL(file);
   e.target.value = "";
+};
+
+// Generate wheel button
+ui.generateWheelBtn.onclick = async () => {
+  try {
+    const response = await fetch('/api/car-gen?type=wheel');
+    if (!response.ok) {
+      throw new Error('Failed to generate wheel image');
+    }
+
+    const blob = await response.blob();
+    const img = new Image();
+    img.onload = () => {
+      drawUploadedImageToArt(img, wheelArtCtx, WHEEL_W, WHEEL_H);
+      hasWheelArt = true;
+      pushWheelUndoSnapshot();
+      renderAll();
+    };
+    img.src = URL.createObjectURL(blob);
+  } catch (error) {
+    console.error('Error generating wheel:', error);
+    alert('Failed to generate wheel image. Please try again.');
+  }
 };
 
 // ============================

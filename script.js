@@ -4,13 +4,16 @@
  * =========================================================
  */
 
-window.CRAZY_RACES_SUBMIT_ENDPOINT = "/api/race-enter";
-window.CRAZY_RACES_TOTAL_CREDITS = 100;
+// Import shared constants (client-side compatible)
+import { BODY_W, BODY_H, WHEEL_W, WHEEL_H, TOTAL_CREDITS, CRAZY_RACES_SUBMIT_ENDPOINT } from './lib/constants.js';
 
-window.CRAZY_RACES_BODY_W = 1024;
-window.CRAZY_RACES_BODY_H = 512;
-window.CRAZY_RACES_WHEEL_W = 256;
-window.CRAZY_RACES_WHEEL_H = 256;
+window.CRAZY_RACES_SUBMIT_ENDPOINT = CRAZY_RACES_SUBMIT_ENDPOINT;
+window.CRAZY_RACES_TOTAL_CREDITS = TOTAL_CREDITS;
+
+window.CRAZY_RACES_BODY_W = BODY_W;
+window.CRAZY_RACES_BODY_H = BODY_H;
+window.CRAZY_RACES_WHEEL_W = WHEEL_W;
+window.CRAZY_RACES_WHEEL_H = WHEEL_H;
 
 /**
  * Race information from Google Sheets:

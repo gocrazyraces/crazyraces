@@ -1,10 +1,7 @@
 // Use dynamic imports to avoid authentication issues on module load
 import { JWT } from 'google-auth-library';
 import { google } from 'googleapis';
-
-// Canvas dimensions (matching client-side constants)
-const BODY_W = 1024;
-const BODY_H = 512;
+import { BODY_W, BODY_H, WHEEL_W, WHEEL_H } from '../lib/constants.js';
 
 // ============================
 // RACE INFO API (shared)

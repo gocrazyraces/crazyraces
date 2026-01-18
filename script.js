@@ -67,4 +67,18 @@ window.CRAZY_RACES_WHEEL_H = 256;
   // Footer year
   const yearEl = document.getElementById("footerYear");
   if (yearEl) yearEl.textContent = String(new Date().getFullYear());
+
+  // Version info
+  const versionEl = document.getElementById("versionInfo");
+  if (versionEl) {
+    const now = new Date();
+    const day = now.getDate();
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const month = monthNames[now.getMonth()];
+    const year = now.getFullYear();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const suffix = day === 1 || day === 21 || day === 31 ? 'st' : day === 2 || day === 22 ? 'nd' : day === 3 || day === 23 ? 'rd' : 'th';
+    versionEl.textContent = `Version 0.1 (${day}${suffix} ${month} ${year} ${hours}:${minutes})`;
+  }
 })();

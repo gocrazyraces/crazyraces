@@ -53,8 +53,6 @@ const ui = {
   wheelCanvas: document.getElementById("wheelCanvas"),
 
   // Workspace labels/buttons
-  canvasTitle: document.getElementById("canvasTitle"),
-  canvasSubtitle: document.getElementById("canvasSubtitle"),
   centerBodyBtn: document.getElementById("centerBodyBtn"),
   exportPreviewBtn: document.getElementById("exportPreviewBtn"),
 
@@ -416,21 +414,13 @@ function setTab(tabName) {
   ui.propertiesContent.classList.toggle("active", tabName === "properties");
   ui.submitContent.classList.toggle("active", tabName === "submit");
 
-  ui.wheelCanvas.style.display = (tabName === "wheel") ? "block" : "none";
-
+  // Show appropriate canvas based on tab
   if (tabName === "wheel") {
-    ui.canvasTitle.textContent = "Wheel canvas";
-    ui.canvasSubtitle.textContent = "Draw or upload a wheel (square)";
-  } else if (tabName === "placement") {
-    ui.canvasTitle.textContent = "Body canvas";
-    ui.canvasSubtitle.textContent = "Click a wheel to select it; drag to move";
-  } else if (tabName === "body") {
-    ui.canvasTitle.textContent = "Body canvas";
-    ui.canvasSubtitle.textContent = "Draw the body or drag it with Move";
-  } else if (tabName === "properties") {
-    // Properties content is shown in workspace, no canvas
+    ui.bodyCanvas.style.display = "none";
+    ui.wheelCanvas.style.display = "block";
   } else {
-    // Submit content is shown in workspace, no canvas
+    ui.bodyCanvas.style.display = "block";
+    ui.wheelCanvas.style.display = "none";
   }
 
   setTips(tabName);

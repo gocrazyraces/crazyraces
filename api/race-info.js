@@ -5,8 +5,14 @@ module.exports = async function handler(req, res) {
   }
 
   try {
+    console.log('Race-info API called');
+    console.log('GOOGLE_SHEETS_SPREADSHEET_ID:', process.env.GOOGLE_SHEETS_SPREADSHEET_ID);
+    console.log('GOOGLE_SERVICE_ACCOUNT_KEY exists:', !!process.env.GOOGLE_SERVICE_ACCOUNT_KEY);
+
     const { getRaceInfo } = await import('../lib/race-utils.js');
     const raceInfo = await getRaceInfo();
+
+    console.log('Race-info API result:', raceInfo);
     return res.status(200).json({ raceInfo });
 
   } catch (error) {

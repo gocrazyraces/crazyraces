@@ -41,14 +41,14 @@ export default async function handler(req, res) {
     const season = 'season1';
     const race = 'race1';
 
-    // Use the specified root folder (must be shared with service account)
-    const rootFolderId = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID;
-    if (!rootFolderId) {
-      throw new Error('GOOGLE_DRIVE_ROOT_FOLDER_ID environment variable not set');
+    // Use shared drive (service accounts can upload to shared drives)
+    const sharedDriveId = process.env.GOOGLE_SHARED_DRIVE_ID;
+    if (!sharedDriveId) {
+      throw new Error('GOOGLE_SHARED_DRIVE_ID environment variable not set');
     }
 
-    // Find or create assets folder
-    let assetsFolderId = await findOrCreateFolder(drive, 'assets', rootFolderId);
+    // Find or create assets folder in shared drive
+    let assetsFolderId = await findOrCreateFolderInSharedDrive(drive, 'assets', sharedDriveId);
 
     // Find or create season folder
     let seasonFolderId = await findOrCreateFolder(drive, season, assetsFolderId);
@@ -99,6 +99,8 @@ async function findOrCreateFolder(drive, name, parentId) {
   const query = `name='${name}' and mimeType='application/vnd.google-apps.folder' and '${parentId}' in parents and trashed=false`;
   const response = await drive.files.list({
     q: query,
+    supportsAllDrives: true,
+    includeItemsFromAllDrives: true,
     fields: 'files(id, name)'
   });
 
@@ -115,6 +117,38 @@ async function findOrCreateFolder(drive, name, parentId) {
 
   const folder = await drive.files.create({
     resource: folderMetadata,
+    supportsAllDrives: true,
+    fields: 'id'
+  });
+
+  return folder.data.id;
+}
+
+async function findOrCreateFolderInSharedDrive(drive, name, driveId) {
+  // Search for existing folder in shared drive
+  const query = `name='${name}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+  const response = await drive.files.list({
+    q: query,
+    driveId: driveId,
+    corpora: 'drive',
+    supportsAllDrives: true,
+    includeItemsFromAllDrives: true,
+    fields: 'files(id, name)'
+  });
+
+  if (response.data.files.length > 0) {
+    return response.data.files[0].id;
+  }
+
+  // Create new folder in shared drive
+  const folderMetadata = {
+    name: name,
+    mimeType: 'application/vnd.google-apps.folder'
+  };
+
+  const folder = await drive.files.create({
+    resource: folderMetadata,
+    supportsAllDrives: true,
     fields: 'id'
   });
 

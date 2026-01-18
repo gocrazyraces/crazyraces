@@ -18,11 +18,11 @@ export default async function handler(req, res) {
       acceleration,
       topSpeed,
       wheelPositions,
-      carImageData,
+      bodyImageData,
       wheelImageData
     } = req.body.carData;
 
-    if (!email || !carImageData || !wheelImageData) {
+    if (!email || !bodyImageData || !wheelImageData) {
       console.error('Missing required fields');
       return res.status(400).json({ message: 'Missing required fields' });
     }
@@ -63,7 +63,7 @@ export default async function handler(req, res) {
     }, null, 2);
 
     const jsonFile = await uploadFile(drive, 'car.json', jsonData, 'application/json', emailFolderId);
-    const bodyPngFile = await uploadFile(drive, 'body.png', Buffer.from(carImageData.split('base64,')[1], 'base64'), 'image/png', emailFolderId);
+    const bodyPngFile = await uploadFile(drive, 'body.png', Buffer.from(bodyImageData.split('base64,')[1], 'base64'), 'image/png', emailFolderId);
     const wheelPngFile = await uploadFile(drive, 'wheel.png', Buffer.from(wheelImageData.split('base64,')[1], 'base64'), 'image/png', emailFolderId);
 
     // Update spreadsheet
@@ -83,7 +83,7 @@ export default async function handler(req, res) {
 
   } catch (err) {
     console.error('Submission error:', err);
-    return res.status(500).json({ message: 'Submission failed' });
+    return res.status(500).json({ message: `Submission failed: ${err.message}` });
   }
 }
 

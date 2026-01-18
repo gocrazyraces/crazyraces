@@ -31,7 +31,6 @@ export default async function handler(req, res) {
 
     // Dynamically import Google APIs to avoid auth issues on module load
     const { google } = await import('googleapis');
-    const { Storage } = await import('@google-cloud/storage');
 
     // Authenticate with Google
     const serviceAccountKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
@@ -72,11 +71,11 @@ export default async function handler(req, res) {
     const auth = new JWT({
       email: credentials.client_email,
       key: credentials.private_key,
-      scopes: ['https://www.googleapis.com/auth/cloud-platform', 'https://www.googleapis.com/auth/spreadsheets']
+      scopes: ['https://www.googleapis.com/auth/cloud-platform', 'https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/devstorage.full_control']
     });
 
-    // For testing - just update the spreadsheet without storage
     const sheets = google.sheets({ version: 'v4', auth });
+    const storage = google.storage({ version: 'v1', auth });
 
     // Hardcoded for now - can be made configurable
     const season = 'season1';

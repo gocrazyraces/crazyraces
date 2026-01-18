@@ -31,6 +31,7 @@ export default async function handler(req, res) {
 
     // Dynamically import Google APIs to avoid auth issues on module load
     const { google } = await import('googleapis');
+    const { Storage } = await import('@google-cloud/storage');
 
     // Authenticate with Google
     const serviceAccountKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
@@ -77,6 +78,12 @@ export default async function handler(req, res) {
     const sheets = google.sheets({ version: 'v4', auth });
     const storage = google.storage({ version: 'v1', auth });
 
+    // Create separate auth for @google-cloud/storage signed URLs
+    const storageAuth = new Storage({
+      credentials: credentials,
+      projectId: credentials.project_id
+    });
+
     // Hardcoded for now - can be made configurable
     const season = 'season1';
     const race = 'race1';
@@ -106,13 +113,12 @@ export default async function handler(req, res) {
     await uploadToGCS(storage, bucketName, bodyFileName, Buffer.from(bodyImageData.split('base64,')[1], 'base64'), 'image/png');
     await uploadToGCS(storage, bucketName, wheelFileName, Buffer.from(wheelImageData.split('base64,')[1], 'base64'), 'image/png');
 
-    // Note: Files are uploaded but not made public due to uniform bucket-level access
-    // You'll need to either:
-    // 1. Make the bucket public, or
-    // 2. Disable uniform bucket-level access, or
-    // 3. Use signed URLs (more complex)
+    // Generate signed URLs for secure access (valid for 1 year)
+    const jsonSignedUrl = await generateSignedUrl(storageAuth, bucketName, jsonFileName);
+    const bodySignedUrl = await generateSignedUrl(storageAuth, bucketName, bodyFileName);
+    const wheelSignedUrl = await generateSignedUrl(storageAuth, bucketName, wheelFileName);
 
-    // Update spreadsheet
+    // Update spreadsheet with signed URLs
     const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
     if (!spreadsheetId) {
       throw new Error('GOOGLE_SHEETS_SPREADSHEET_ID environment variable not set');
@@ -124,9 +130,9 @@ export default async function handler(req, res) {
       email,
       teamName,
       carName,
-      `https://storage.googleapis.com/${bucketName}/${bodyFileName}`,
-      `https://storage.googleapis.com/${bucketName}/${wheelFileName}`,
-      `https://storage.googleapis.com/${bucketName}/${jsonFileName}`
+      bodySignedUrl,
+      wheelSignedUrl,
+      jsonSignedUrl
     ]);
 
     return res.status(200).json({ message: 'Submission successful' });
@@ -148,6 +154,20 @@ async function uploadToGCS(storage, bucketName, fileName, buffer, contentType) {
   };
 
   await storage.objects.insert(request);
+}
+
+async function generateSignedUrl(storageAuth, bucketName, fileName) {
+  const bucket = storageAuth.bucket(bucketName);
+  const file = bucket.file(fileName);
+
+  // Generate signed URL valid for 1 year
+  const [url] = await file.getSignedUrl({
+    version: 'v4',
+    action: 'read',
+    expires: Date.now() + 365 * 24 * 60 * 60 * 1000, // 1 year
+  });
+
+  return url;
 }
 
 async function makeFilePublic(storage, bucketName, fileName) {

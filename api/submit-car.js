@@ -1,4 +1,5 @@
 import { google } from 'googleapis';
+import { Readable } from 'stream';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -120,9 +121,12 @@ async function uploadFile(drive, name, content, mimeType, parentId) {
     parents: [parentId]
   };
 
+  const buffer = typeof content === 'string' ? Buffer.from(content) : content;
+  const stream = Readable.from(buffer);
+
   const media = {
     mimeType: mimeType,
-    body: typeof content === 'string' ? Buffer.from(content) : content
+    body: stream
   };
 
   return await drive.files.create({

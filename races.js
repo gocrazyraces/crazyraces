@@ -195,8 +195,115 @@
     versionEl.textContent = `Version 0.57 (${day}${suffix} ${month} ${year} ${hours}:${minutes})`;
   }
 
+  // Load historical race results
+  async function loadHistoricalResults() {
+    try {
+      const response = await fetch('/api/race-results?season=1');
+      const data = await response.json();
+
+      if (data.results && data.results.length > 0) {
+        displayHistoricalResults(data.results);
+      } else {
+        showNoHistoricalResults();
+      }
+    } catch (error) {
+      console.error('Failed to load historical results:', error);
+      showNoHistoricalResults();
+    }
+  }
+
+  function displayHistoricalResults(results) {
+    const container = document.getElementById('historicalResultsContainer');
+
+    if (!container) return;
+
+    // Group results by race
+    const racesMap = new Map();
+
+    results.forEach(result => {
+      const raceKey = `Race ${result.racenumber}`;
+      if (!racesMap.has(raceKey)) {
+        racesMap.set(raceKey, []);
+      }
+      racesMap.get(raceKey).push(result);
+    });
+
+    // Create HTML for each race
+    const racesHtml = Array.from(racesMap.entries())
+      .sort(([a], [b]) => parseInt(a.split(' ')[1]) - parseInt(b.split(' ')[1]))
+      .map(([raceName, raceResults]) => createHistoricalRaceSection(raceName, raceResults))
+      .join('');
+
+    container.innerHTML = racesHtml;
+  }
+
+  function createHistoricalRaceSection(raceName, results) {
+    const tableRows = results.map(result => `
+      <tr>
+        <td>${result.position}</td>
+        <td>${formatTime(result.time)}</td>
+        <td>${result.status}</td>
+        <td>${result.racerteamname}</td>
+        <td>${result.racercarname}</td>
+        <td>${result.notes || ''}</td>
+      </tr>
+    `).join('');
+
+    return `
+      <section class="historical-race-section">
+        <h3>${raceName} Results</h3>
+        <div class="results-table-container">
+          <table class="results-table">
+            <thead>
+              <tr>
+                <th>Position</th>
+                <th>Time</th>
+                <th>Status</th>
+                <th>Team Name</th>
+                <th>Car Name</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tableRows}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    `;
+  }
+
+  function formatTime(timeStr) {
+    // Handle different time formats
+    if (!timeStr) return '-';
+
+    // If it's already in MM:SS.mmm format, return as is
+    if (timeStr.includes(':')) {
+      return timeStr;
+    }
+
+    // If it's a number (milliseconds), format it
+    const ms = parseInt(timeStr);
+    if (!isNaN(ms)) {
+      const minutes = Math.floor(ms / 60000);
+      const seconds = Math.floor((ms % 60000) / 1000);
+      const milliseconds = ms % 1000;
+      return `${minutes}:${String(seconds).padStart(2, '0')}.${String(milliseconds).padStart(3, '0')}`;
+    }
+
+    return timeStr;
+  }
+
+  function showNoHistoricalResults() {
+    const container = document.getElementById('historicalResultsContainer');
+    if (container) {
+      container.innerHTML = '<div class="no-results">No historical race results available yet.</div>';
+    }
+  }
+
   // Load data on page load
   loadRaceData();
+  loadHistoricalResults();
 
   // Update countdown every second
   setInterval(updateCountdown, 1000);

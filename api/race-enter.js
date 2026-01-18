@@ -2,6 +2,10 @@
 import { JWT } from 'google-auth-library';
 import { google } from 'googleapis';
 
+// Canvas dimensions (matching client-side constants)
+const BODY_W = 1024;
+const BODY_H = 512;
+
 // ============================
 // RACE INFO API (shared)
 // ============================
@@ -116,6 +120,9 @@ export default async function handler(req, res) {
     // Create folder-like structure in GCS (using prefixes)
     const basePath = `${season}/${race}/${email}/`;
 
+    // Generate composite preview image
+    const previewBuffer = await generateCompositePreview(bodyImageData, wheelImageData, wheelPositions);
+
     // Upload files
     const jsonData = JSON.stringify({
       carName,
@@ -129,10 +136,12 @@ export default async function handler(req, res) {
     const jsonFileName = `${basePath}car.json`;
     const bodyFileName = `${basePath}body.png`;
     const wheelFileName = `${basePath}wheel.png`;
+    const previewFileName = `${basePath}preview.png`;
 
     await uploadToGCS(storage, bucketName, jsonFileName, Buffer.from(jsonData), 'application/json');
     await uploadToGCS(storage, bucketName, bodyFileName, Buffer.from(bodyImageData.split('base64,')[1], 'base64'), 'image/png');
     await uploadToGCS(storage, bucketName, wheelFileName, Buffer.from(wheelImageData.split('base64,')[1], 'base64'), 'image/png');
+    await uploadToGCS(storage, bucketName, previewFileName, previewBuffer, 'image/png');
 
     // Files remain private - access controlled by bucket IAM permissions
     // Only users granted Storage Object Viewer role can access them
@@ -156,7 +165,7 @@ export default async function handler(req, res) {
       teamName,                                  // D: racerteamname
       carName,                                   // E: racercarname
       'submitted',                               // F: racerstatus (default to submitted)
-      `https://storage.googleapis.com/${bucketName}/${bodyFileName}`,    // G: racerimagepath (body image)
+      `https://storage.googleapis.com/${bucketName}/${previewFileName}`, // G: racerimagepath (composite preview)
       `https://storage.googleapis.com/${bucketName}/${jsonFileName}`,    // H: racerjsonpath
       `https://storage.googleapis.com/${bucketName}/${bodyFileName}`,    // I: racerbodyimagepath
       `https://storage.googleapis.com/${bucketName}/${wheelFileName}`    // J: racerwheelimagepath
@@ -195,6 +204,48 @@ async function generateSignedUrl(storageAuth, bucketName, fileName) {
   });
 
   return url;
+}
+
+// Generate composite preview image server-side using Sharp
+async function generateCompositePreview(bodyImageData, wheelImageData, wheelPositions) {
+  const sharp = (await import('sharp')).default;
+
+  // Decode base64 images
+  const bodyBuffer = Buffer.from(bodyImageData.split('base64,')[1], 'base64');
+  const wheelBuffer = Buffer.from(wheelImageData.split('base64,')[1], 'base64');
+
+  // Start with body image
+  let composite = sharp(bodyBuffer).png();
+
+  // Add wheels as overlays
+  const overlays = [];
+
+  for (const wheel of wheelPositions || []) {
+    // Create wheel overlay with transformations
+    const transformedWheel = await sharp(wheelBuffer)
+      .png()
+      .resize({
+        width: Math.round(256 * (wheel.scale || 1)), // 256 is wheel canvas width
+        height: Math.round(256 * (wheel.scale || 1)), // 256 is wheel canvas height
+        withoutEnlargement: false
+      })
+      .rotate(wheel.rotationDegrees || 0)
+      .toBuffer();
+
+    overlays.push({
+      input: transformedWheel,
+      top: Math.round(wheel.y - (128 * (wheel.scale || 1))), // Center on wheel position
+      left: Math.round(wheel.x - (128 * (wheel.scale || 1)))
+    });
+  }
+
+  // Apply all overlays
+  if (overlays.length > 0) {
+    composite = composite.composite(overlays);
+  }
+
+  // Return buffer for upload
+  return await composite.toBuffer();
 }
 
 async function makeFilePublic(storage, bucketName, fileName) {

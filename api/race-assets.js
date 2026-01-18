@@ -103,6 +103,7 @@ export default async function handler(req, res) {
 
       // Download and add files from GCS
       const filesToDownload = [
+        { gcsPath: entry.racerimagepath, localName: 'preview.png', isText: false }, // Composite preview
         { gcsPath: entry.racerjsonpath, localName: 'car.json', isText: true },
         { gcsPath: entry.racerbodyimagepath, localName: 'body.png', isText: false },
         { gcsPath: entry.racerwheelimagepath, localName: 'wheel.png', isText: false }

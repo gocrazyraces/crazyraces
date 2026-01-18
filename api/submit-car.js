@@ -61,6 +61,15 @@ export default async function handler(req, res) {
       scopes: ['https://www.googleapis.com/auth/cloud-platform', 'https://www.googleapis.com/auth/spreadsheets']
     });
 
+    // Test authentication
+    try {
+      const authClient = await auth.getClient();
+      const projectId = await auth.getProjectId();
+      console.log('Authentication successful, project ID:', projectId);
+    } catch (authError) {
+      throw new Error(`Authentication failed: ${authError.message}`);
+    }
+
     const storage = new Storage({ auth });
     const sheets = google.sheets({ version: 'v4', auth });
 

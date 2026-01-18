@@ -1,5 +1,4 @@
-// Temporarily disabled Google APIs for debugging
-
+// Use dynamic imports to avoid authentication issues on module load
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method Not Allowed' });
@@ -27,10 +26,57 @@ export default async function handler(req, res) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    // For debugging - try a simpler approach
-    // Temporarily disable Google APIs and just log success
-    console.log('Submission received for:', email, carName);
-    return res.status(200).json({ message: 'Submission successful (debug mode)' });
+    // Dynamically import Google APIs to avoid auth issues on module load
+    const { google } = await import('googleapis');
+    const { Storage } = await import('@google-cloud/storage');
+
+    // Authenticate with Google
+    const serviceAccountKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+    if (!serviceAccountKey) {
+      throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY environment variable is not set');
+    }
+
+    let credentials;
+    try {
+      // Try parsing as plain JSON first
+      credentials = JSON.parse(serviceAccountKey);
+    } catch (parseError) {
+      try {
+        // If that fails, try decoding from base64
+        const decoded = Buffer.from(serviceAccountKey, 'base64').toString('utf8');
+        credentials = JSON.parse(decoded);
+      } catch (base64Error) {
+        throw new Error(`Invalid JSON in GOOGLE_SERVICE_ACCOUNT_KEY: ${parseError.message}. Also tried base64 decoding: ${base64Error.message}`);
+      }
+    }
+
+    // Validate credentials object
+    if (!credentials.type || credentials.type !== 'service_account') {
+      throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY is not a valid service account key (missing or wrong type)');
+    }
+    if (!credentials.project_id) {
+      throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY is missing project_id');
+    }
+    if (!credentials.private_key) {
+      throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY is missing private_key');
+    }
+    if (!credentials.client_email) {
+      throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY is missing client_email');
+    }
+
+    const auth = new google.auth.GoogleAuth({
+      credentials: credentials,
+      scopes: ['https://www.googleapis.com/auth/cloud-platform', 'https://www.googleapis.com/auth/spreadsheets']
+    });
+
+    // Test authentication
+    try {
+      const authClient = await auth.getClient();
+      const projectId = await auth.getProjectId();
+      console.log('Authentication successful, project ID:', projectId);
+    } catch (authError) {
+      throw new Error(`Authentication failed: ${authError.message}`);
+    }
 
     const storage = new Storage({ auth });
     const sheets = google.sheets({ version: 'v4', auth });

@@ -2,6 +2,12 @@
 import { JWT } from 'google-auth-library';
 import { google } from 'googleapis';
 
+// Canvas dimensions (matching client-side constants)
+const BODY_W = 1024;
+const BODY_H = 512;
+const WHEEL_W = 256;
+const WHEEL_H = 256;
+
 // ============================
 // RACE INFO API (shared)
 // ============================
@@ -116,6 +122,9 @@ export default async function handler(req, res) {
     // Create folder-like structure in GCS (using prefixes)
     const basePath = `${season}/${race}/${email}/`;
 
+    // Generate composite preview image
+    const compositePreviewDataURL = await generateCompositePreview(bodyImageData, wheelImageData, wheelPositions);
+
     // Upload files
     const jsonData = JSON.stringify({
       carName,
@@ -129,10 +138,12 @@ export default async function handler(req, res) {
     const jsonFileName = `${basePath}car.json`;
     const bodyFileName = `${basePath}body.png`;
     const wheelFileName = `${basePath}wheel.png`;
+    const previewFileName = `${basePath}preview.png`;
 
     await uploadToGCS(storage, bucketName, jsonFileName, Buffer.from(jsonData), 'application/json');
     await uploadToGCS(storage, bucketName, bodyFileName, Buffer.from(bodyImageData.split('base64,')[1], 'base64'), 'image/png');
     await uploadToGCS(storage, bucketName, wheelFileName, Buffer.from(wheelImageData.split('base64,')[1], 'base64'), 'image/png');
+    await uploadToGCS(storage, bucketName, previewFileName, Buffer.from(compositePreviewDataURL.split('base64,')[1], 'base64'), 'image/png');
 
     // Files remain private - access controlled by bucket IAM permissions
     // Only users granted Storage Object Viewer role can access them
@@ -156,10 +167,10 @@ export default async function handler(req, res) {
       teamName,                                  // D: racerteamname
       carName,                                   // E: racercarname
       'submitted',                               // F: racerstatus (default to submitted)
-      `https://storage.googleapis.com/${bucketName}/${bodyFileName}`,  // G: racerimagepath (legacy)
-      `https://storage.googleapis.com/${bucketName}/${jsonFileName}`,  // H: racerjsonpath
-      `https://storage.googleapis.com/${bucketName}/${bodyFileName}`,  // I: racerbodyimagepath
-      `https://storage.googleapis.com/${bucketName}/${wheelFileName}`  // J: racerwheelimagepath
+      `https://storage.googleapis.com/${bucketName}/${previewFileName}`, // G: racerimagepath (composite preview)
+      `https://storage.googleapis.com/${bucketName}/${jsonFileName}`,    // H: racerjsonpath
+      `https://storage.googleapis.com/${bucketName}/${bodyFileName}`,    // I: racerbodyimagepath
+      `https://storage.googleapis.com/${bucketName}/${wheelFileName}`    // J: racerwheelimagepath
     ]);
 
     return res.status(200).json({ message: 'Submission successful' });
@@ -208,6 +219,61 @@ async function makeFilePublic(storage, bucketName, fileName) {
   };
 
   await storage.objectAccessControls.insert(request);
+}
+
+// Generate composite preview image server-side
+async function generateCompositePreview(bodyImageData, wheelImageData, wheelPositions) {
+  const { createCanvas, loadImage } = await import('canvas');
+
+  // Create canvas with body dimensions
+  const canvas = createCanvas(BODY_W, BODY_H);
+  const ctx = canvas.getContext('2d');
+
+  // Draw subtle grid background (matching client-side)
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, BODY_W, BODY_H);
+
+  const step = 32;
+  ctx.globalAlpha = 0.08;
+  ctx.strokeStyle = '#3C36D9';
+  ctx.lineWidth = 1;
+
+  for (let x = 0; x <= BODY_W; x += step) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, BODY_H);
+    ctx.stroke();
+  }
+  for (let y = 0; y <= BODY_H; y += step) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(BODY_W, y);
+    ctx.stroke();
+  }
+
+  ctx.globalAlpha = 1.0;
+
+  // Load and draw body image
+  const bodyBuffer = Buffer.from(bodyImageData.split('base64,')[1], 'base64');
+  const bodyImage = await loadImage(bodyBuffer);
+  ctx.drawImage(bodyImage, 0, 0);
+
+  // Load wheel image
+  const wheelBuffer = Buffer.from(wheelImageData.split('base64,')[1], 'base64');
+  const wheelImage = await loadImage(wheelBuffer);
+
+  // Draw wheels in their positions
+  for (const wheel of wheelPositions || []) {
+    ctx.save();
+    ctx.translate(wheel.x, wheel.y);
+    ctx.rotate((wheel.rotationDegrees || 0) * Math.PI / 180);
+    ctx.scale(wheel.scale || 1, wheel.scale || 1);
+    ctx.drawImage(wheelImage, -WHEEL_W / 2, -WHEEL_H / 2);
+    ctx.restore();
+  }
+
+  // Return as base64 data URL (matching client-side format)
+  return canvas.toDataURL('image/png');
 }
 
 async function appendToSheet(sheets, spreadsheetId, range, values) {

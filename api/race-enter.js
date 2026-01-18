@@ -120,6 +120,12 @@ export default async function handler(req, res) {
     // Create folder-like structure in GCS (using prefixes)
     const basePath = `${season}/${race}/${email}/`;
 
+    // Define file names first
+    const jsonFileName = `${basePath}car.json`;
+    const bodyFileName = `${basePath}body.png`;
+    const wheelFileName = `${basePath}wheel.png`;
+    const previewFileName = `${basePath}preview.png`;
+
     // Generate composite preview image
     const previewBuffer = await generateCompositePreview(bodyImageData, wheelImageData, wheelPositions);
 
@@ -145,11 +151,6 @@ export default async function handler(req, res) {
         preview: `https://storage.googleapis.com/${bucketName}/${previewFileName}`
       }
     }, null, 2);
-
-    const jsonFileName = `${basePath}car.json`;
-    const bodyFileName = `${basePath}body.png`;
-    const wheelFileName = `${basePath}wheel.png`;
-    const previewFileName = `${basePath}preview.png`;
 
     await uploadToGCS(storage, bucketName, jsonFileName, Buffer.from(jsonData), 'application/json');
     await uploadToGCS(storage, bucketName, bodyFileName, Buffer.from(bodyImageData.split('base64,')[1], 'base64'), 'image/png');

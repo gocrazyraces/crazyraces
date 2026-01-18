@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>FAQ - Rapid Racers 2D</title>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <!-- HEADER -->
+  <header class="topbar" role="banner">
+    <div class="topbar-inner">
+      <div class="brand">
+        <img
+          class="brand-logo"
+          src="assets/title_full.png"
+          alt="Rapid Racers 2D"
+          width="670"
+          height="142"
+        />
+      </div>
+
+      <div class="next-race" aria-label="Next race date">
+        <span class="next-race-label">Next race:</span>
+        <span id="nextRaceDate" class="next-race-date">—</span>
+      </div>
+    </div>
+
+    <!-- Navigation row -->
+    <nav class="topnav" aria-label="Primary navigation">
+      <div class="topnav-inner">
+        <a class="navlink" href="index.html">Home</a>
+        <a class="navlink" href="results.html">Results</a>
+        <a class="navlink active" href="faq.html">FAQ</a>
+        <a class="navlink" href="contact.html">Contact</a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- PAGE CONTENT -->
+  <main class="page-content">
+    <div class="container">
+      <h1>Frequently Asked Questions</h1>
+
+      <div class="faq-section">
+        <h2>How do I design my car?</h2>
+        <p>Use the car designer tool on the home page. You can draw the body and wheels, upload images, and adjust performance settings.</p>
+      </div>
+
+      <div class="faq-section">
+        <h2>When is the next race?</h2>
+        <p>Races occur weekly. Check the countdown on the home page for the exact time remaining.</p>
+      </div>
+
+      <div class="faq-section">
+        <h2>How are winners determined?</h2>
+        <p>Winners are based on a combination of design creativity and allocated performance credits.</p>
+      </div>
+
+      <div class="faq-section">
+        <h2>Can I submit multiple cars?</h2>
+        <p>Each team can submit one car per race. Use unique team and car names.</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="site-footer" role="contentinfo">
+    <div class="footer-inner">
+      <div class="footer-links">
+        <a href="index.html">Home</a>
+        <a href="results.html">Results</a>
+        <a href="faq.html">FAQ</a>
+        <a href="contact.html">Contact</a>
+      </div>
+
+      <div class="footer-meta">
+        © <span id="footerYear"></span> Rapid Racers 2D
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -47,17 +47,17 @@ window.CRAZY_RACES_WHEEL_H = 256;
     const diff = race.getTime() - Date.now();
 
     if (diff <= 0) {
-      countdownEl.textContent = "(Race time!)";
+      countdownEl.textContent = "Race time!";
       return;
     }
 
-    // Requested explicitly: days, minutes, seconds
-    // minutes are the remaining minutes after removing whole days (0..1439)
-    const days = Math.floor(diff / 86400000);
-    const minutes = Math.floor((diff % 86400000) / 60000);
-    const seconds = Math.floor((diff % 60000) / 1000);
+    const totalSeconds = Math.floor(diff / 1000);
+    const days = Math.floor(totalSeconds / (24 * 3600));
+    const hours = Math.floor((totalSeconds % (24 * 3600)) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
 
-    countdownEl.textContent = `(${days}d ${minutes}m ${seconds}s to go)`;
+    countdownEl.textContent = `${days} days, ${hours} hours, ${minutes} minutes, ${seconds} seconds!`;
   }
 
   updateHeader();

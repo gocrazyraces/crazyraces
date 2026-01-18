@@ -65,7 +65,7 @@ body {
 /* Keep logo flush-left and stable */
 .brand-logo {
   display: block;
-  max-height: 95px;
+  max-height: 128px;
   width: auto;
 }
 
@@ -541,6 +541,67 @@ label.file input { display: none; }
   opacity: 0.95;
 }
 
+/* =========================================================
+   PAGE CONTENT (for FAQ and Contact pages)
+   ========================================================= */
+
+.page-content {
+  padding: 40px 20px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.container {
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 30px;
+  box-shadow: var(--shadow);
+}
+
+.page-content h1 {
+  font-size: 32px;
+  font-weight: 950;
+  margin-bottom: 20px;
+  color: var(--ink);
+}
+
+.faq-section, .contact-section {
+  margin-bottom: 30px;
+}
+
+.faq-section h2, .contact-section h2 {
+  font-size: 24px;
+  font-weight: 950;
+  margin-bottom: 10px;
+  color: var(--purple);
+}
+
+.faq-section p, .contact-section p {
+  line-height: 1.6;
+  margin-bottom: 15px;
+  color: var(--ink);
+}
+
+.contact-section ul {
+  list-style: none;
+  padding: 0;
+}
+
+.contact-section li {
+  margin-bottom: 8px;
+}
+
+.contact-section a {
+  color: var(--blue);
+  text-decoration: none;
+  font-weight: 900;
+}
+
+.contact-section a:hover {
+  text-decoration: underline;
+}
+
 /* Responsive */
 @media (max-width: 1100px) {
   #app { flex-direction: column; }
@@ -550,4 +611,16 @@ label.file input { display: none; }
     border-bottom: 1px solid var(--border);
   }
   .next-race { font-size: 13px; padding: 8px 10px; }
+
+  .page-content {
+    padding: 20px 10px;
+  }
+
+  .container {
+    padding: 20px;
+  }
+
+  .page-content h1 {
+    font-size: 28px;
+  }
 }

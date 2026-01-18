@@ -41,8 +41,14 @@ export default async function handler(req, res) {
     const season = 'season1';
     const race = 'race1';
 
+    // Use the specified root folder (must be shared with service account)
+    const rootFolderId = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID;
+    if (!rootFolderId) {
+      throw new Error('GOOGLE_DRIVE_ROOT_FOLDER_ID environment variable not set');
+    }
+
     // Find or create assets folder
-    let assetsFolderId = await findOrCreateFolder(drive, 'assets', 'root');
+    let assetsFolderId = await findOrCreateFolder(drive, 'assets', rootFolderId);
 
     // Find or create season folder
     let seasonFolderId = await findOrCreateFolder(drive, season, assetsFolderId);

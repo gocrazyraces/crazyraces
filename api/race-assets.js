@@ -122,9 +122,9 @@ export default async function handler(req, res) {
 
       // Download and add files from GCS
       const filesToDownload = [
-        { gcsPath: entry.racerjsonpath, localName: 'car.json' },
-        { gcsPath: entry.racerbodyimagepath, localName: 'body.png' },
-        { gcsPath: entry.racerwheelimagepath, localName: 'wheel.png' }
+        { gcsPath: entry.racerjsonpath, localName: 'car.json', isText: true },
+        { gcsPath: entry.racerbodyimagepath, localName: 'body.png', isText: false },
+        { gcsPath: entry.racerwheelimagepath, localName: 'wheel.png', isText: false }
       ];
 
       for (const file of filesToDownload) {
@@ -133,8 +133,16 @@ export default async function handler(req, res) {
           const bucket = storage.bucket(bucketName);
           const fileObj = bucket.file(filePath);
 
-          const [buffer] = await fileObj.download();
-          zip.file(`${emailFolder}/${file.localName}`, buffer);
+          if (file.isText) {
+            // Download text files as UTF-8 strings
+            const [contents] = await fileObj.download();
+            const textContent = contents.toString('utf8');
+            zip.file(`${emailFolder}/${file.localName}`, textContent);
+          } else {
+            // Download binary files as buffers
+            const [buffer] = await fileObj.download();
+            zip.file(`${emailFolder}/${file.localName}`, buffer);
+          }
         } catch (error) {
           console.error(`Failed to download ${file.gcsPath}:`, error);
           // Continue with other files

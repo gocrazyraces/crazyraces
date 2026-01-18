@@ -14,5 +14,5 @@ export default async function handler(req, res) {
   }
 }
 
-// Import the shared function from submit-car.js
-import { getRaceInfo } from './submit-car.js';
+// Import the shared function from race-enter.js
+import { getRaceInfo } from './race-enter.js';

@@ -61,6 +61,9 @@ const ui = {
   // Body controls
   bodyPenBtn: document.getElementById("bodyPenBtn"),
   bodyMoveBtn: document.getElementById("bodyMoveBtn"),
+  bodyCircleBtn: document.getElementById("bodyCircleBtn"),
+  bodySquareBtn: document.getElementById("bodySquareBtn"),
+  bodyFillBtn: document.getElementById("bodyFillBtn"),
   bodyColor: document.getElementById("bodyColor"),
   bodyThickness: document.getElementById("bodyThickness"),
   uploadBody: document.getElementById("uploadBody"),
@@ -145,12 +148,17 @@ const wheelArtCtx = wheelArtCanvas.getContext("2d");
 // ============================
 // STATE
 // ============================
+// ============================
+// STATE
+// ============================
 let currentTab = "body";
 let currentTool = "pen";
 let currentPenColor = ui.bodyColor.value || "#3B0273";
+let fillShapes = false; // Toggle between filled and outline shapes
 
 let isDrawing = false;
 let strokePoints = [];
+let shapeStartPos = null; // For click-and-drag shapes
 
 // Body movement
 let bodyOffsetX = 0;
@@ -327,6 +335,153 @@ function drawUploadedImageToArt(img, targetCtx, w, h) {
 
   targetCtx.drawImage(img, x, y, drawW, drawH);
   targetCtx.restore();
+}
+
+// ============================
+// SHAPE DRAWING
+// ============================
+function drawShapePreview(ctx, startPos, currentPos, shape, color, width, filled) {
+  const dx = currentPos.x - startPos.x;
+  const dy = currentPos.y - startPos.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+
+  if (shape === "circle") {
+    const radius = distance / 2;
+    const centerX = startPos.x;
+    const centerY = startPos.y;
+
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+    if (filled) {
+      ctx.fillStyle = color;
+      ctx.fill();
+    } else {
+      ctx.stroke();
+    }
+  } else if (shape === "square") {
+    const size = Math.max(Math.abs(dx), Math.abs(dy));
+    const x = startPos.x - size / 2;
+    const y = startPos.y - size / 2;
+
+    if (filled) {
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y, size, size);
+    } else {
+      ctx.strokeRect(x, y, size, size);
+    }
+  }
+
+  ctx.restore();
+}
+
+function commitShape(targetCtx, startPos, endPos, shape, color, width, filled) {
+  const dx = endPos.x - startPos.x;
+  const dy = endPos.y - startPos.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+
+  targetCtx.save();
+  targetCtx.strokeStyle = color;
+  targetCtx.lineWidth = width;
+
+  if (shape === "circle") {
+    const radius = Math.max(distance / 2, width); // Minimum size
+    const centerX = startPos.x;
+    const centerY = startPos.y;
+
+    targetCtx.beginPath();
+    targetCtx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+    if (filled) {
+      targetCtx.fillStyle = color;
+      targetCtx.fill();
+    } else {
+      targetCtx.stroke();
+    }
+  } else if (shape === "square") {
+    const size = Math.max(Math.abs(dx), Math.abs(dy), width * 2); // Minimum size
+    const x = startPos.x - size / 2;
+    const y = startPos.y - size / 2;
+
+    if (filled) {
+      targetCtx.fillStyle = color;
+      targetCtx.fillRect(x, y, size, size);
+    } else {
+      targetCtx.strokeRect(x, y, size, size);
+    }
+  }
+
+  targetCtx.restore();
+}
+
+// ============================
+// FLOOD FILL (PAINT BUCKET)
+// ============================
+function floodFill(ctx, startX, startY, fillColor, tolerance = 0) {
+  const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+  const data = imageData.data;
+  const width = ctx.canvas.width;
+  const height = ctx.canvas.height;
+
+  const startIdx = (startY * width + startX) * 4;
+  const startR = data[startIdx];
+  const startG = data[startIdx + 1];
+  const startB = data[startIdx + 2];
+  const startA = data[startIdx + 3];
+
+  // Parse fill color
+  const fillR = parseInt(fillColor.slice(1, 3), 16);
+  const fillG = parseInt(fillColor.slice(3, 5), 16);
+  const fillB = parseInt(fillColor.slice(5, 7), 16);
+  const fillA = 255;
+
+  // Check if already the same color
+  if (Math.abs(startR - fillR) <= tolerance &&
+      Math.abs(startG - fillG) <= tolerance &&
+      Math.abs(startB - fillB) <= tolerance &&
+      startA === fillA) {
+    return;
+  }
+
+  const stack = [[startX, startY]];
+  const visited = new Set();
+
+  while (stack.length > 0) {
+    const [x, y] = stack.pop();
+    const key = `${x},${y}`;
+
+    if (visited.has(key)) continue;
+    visited.add(key);
+
+    const idx = (y * width + x) * 4;
+    const r = data[idx];
+    const g = data[idx + 1];
+    const b = data[idx + 2];
+    const a = data[idx + 3];
+
+    // Check if this pixel matches the start color (within tolerance)
+    if (Math.abs(r - startR) <= tolerance &&
+        Math.abs(g - startG) <= tolerance &&
+        Math.abs(b - startB) <= tolerance &&
+        a === startA) {
+
+      // Fill this pixel
+      data[idx] = fillR;
+      data[idx + 1] = fillG;
+      data[idx + 2] = fillB;
+      data[idx + 3] = fillA;
+
+      // Add adjacent pixels to stack
+      if (x > 0) stack.push([x - 1, y]);
+      if (x < width - 1) stack.push([x + 1, y]);
+      if (y > 0) stack.push([x, y - 1]);
+      if (y < height - 1) stack.push([x, y + 1]);
+    }
+  }
+
+  ctx.putImageData(imageData, 0, 0);
 }
 
 // ============================
@@ -532,6 +687,18 @@ ui.bodyPenBtn.onclick = () => {
   currentPenColor = ui.bodyColor.value;
 };
 ui.bodyMoveBtn.onclick = () => { currentTool = "move"; };
+ui.bodyCircleBtn.onclick = () => {
+  currentTool = "circle";
+  currentPenColor = ui.bodyColor.value;
+};
+ui.bodySquareBtn.onclick = () => {
+  currentTool = "square";
+  currentPenColor = ui.bodyColor.value;
+};
+ui.bodyFillBtn.onclick = () => {
+  currentTool = "fill";
+  currentPenColor = ui.bodyColor.value;
+};
 
 ui.wheelPenBtn.onclick = () => {
   currentTool = "pen";
@@ -658,6 +825,24 @@ ui.bodyCanvas.onpointerdown = (e) => {
     return;
   }
 
+  // Body shape tools (circle, square)
+  if (currentTab === "body" && (currentTool === "circle" || currentTool === "square")) {
+    isDrawing = true;
+    currentPenColor = ui.bodyColor.value;
+    shapeStartPos = toBodyLocal(globalPos);
+    ui.bodyCanvas.setPointerCapture(e.pointerId);
+    return;
+  }
+
+  // Body fill tool
+  if (currentTab === "body" && currentTool === "fill") {
+    const localPos = toBodyLocal(globalPos);
+    floodFill(bodyArtCtx, Math.floor(localPos.x), Math.floor(localPos.y), currentPenColor);
+    pushBodyUndoSnapshot();
+    renderAll();
+    return;
+  }
+
   // Body pen tool
   if (currentTab === "body" && currentTool === "pen") {
     isDrawing = true;
@@ -699,6 +884,17 @@ ui.bodyCanvas.onpointermove = (e) => {
     return;
   }
 
+  // Body shape preview (circle, square)
+  if (currentTab === "body" && (currentTool === "circle" || currentTool === "square") && isDrawing && shapeStartPos) {
+    renderBodyComposite();
+
+    const currentLocalPos = toBodyLocal(globalPos);
+    const globalStartPos = toGlobalFromBodyLocal(shapeStartPos);
+    const globalCurrentPos = { x: currentLocalPos.x + bodyOffsetX, y: currentLocalPos.y + bodyOffsetY };
+
+    drawShapePreview(bodyCtx, globalStartPos, globalCurrentPos, currentTool, currentPenColor, bodyPenWidth, fillShapes);
+  }
+
   // Body pen preview
   if (currentTab === "body" && currentTool === "pen" && isDrawing) {
     strokePoints.push(toBodyLocal(globalPos));
@@ -720,6 +916,16 @@ ui.bodyCanvas.onpointerup = (e) => {
   if (currentTab === "body" && currentTool === "move" && isBodyDragging) {
     isBodyDragging = false;
     return;
+  }
+
+  // Body shape commit (circle, square)
+  if (currentTab === "body" && (currentTool === "circle" || currentTool === "square") && isDrawing && shapeStartPos) {
+    isDrawing = false;
+    const endPos = toBodyLocal(globalPos);
+    commitShape(bodyArtCtx, shapeStartPos, endPos, currentTool, currentPenColor, bodyPenWidth, fillShapes);
+    pushBodyUndoSnapshot();
+    shapeStartPos = null;
+    renderAll();
   }
 
   if (currentTab === "body" && currentTool === "pen" && isDrawing) {

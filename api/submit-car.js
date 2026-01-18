@@ -202,8 +202,8 @@ export default async function handler(req, res) {
     });
 
     // Hardcoded for now - can be made configurable
-    const season = 'season1';
-    const race = 'race1';
+    const season = 1; // Store as integer
+    const race = 1;   // Store as integer
     const bucketName = process.env.GOOGLE_CLOUD_STORAGE_BUCKET;
     if (!bucketName) {
       throw new Error('GOOGLE_CLOUD_STORAGE_BUCKET environment variable not set');

@@ -31,6 +31,8 @@
         // Load approved entries for this race
         await loadApprovedEntries(race.season, race.racenumber);
 
+        console.log('Loading entries for:', { season: race.season, racenumber: race.racenumber });
+
         // Start countdown
         updateCountdown();
       } else {

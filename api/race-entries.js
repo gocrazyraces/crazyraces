@@ -10,6 +10,10 @@ export default async function handler(req, res) {
     return res.status(400).json({ message: 'Missing season or racenumber parameters' });
   }
 
+  // Convert to strings for consistent comparison
+  const seasonStr = String(season);
+  const racenumberStr = String(racenumber);
+
   try {
     console.log('Starting race-entries API call with params:', { season, racenumber });
 
@@ -61,11 +65,11 @@ export default async function handler(req, res) {
     // Parse entries and filter for approved ones in this race
     const entries = rows.slice(1)
       .filter(row => {
-        const rowSeason = row[0];
-        const rowRace = row[1];
-        const rowStatus = row[5];
-        const matches = rowSeason === season && rowRace === racenumber && rowStatus === 'approved';
-        console.log(`Entry check: season=${rowSeason}(${rowSeason === season}), race=${rowRace}(${rowRace === racenumber}), status=${rowStatus}(${rowStatus === 'approved'}) → ${matches}`);
+        const rowSeason = String(row[0]); // Convert to string for comparison
+        const rowRace = String(row[1]);   // Convert to string for comparison
+        const rowStatus = String(row[5]).toLowerCase(); // Case insensitive status
+        const matches = rowSeason === seasonStr && rowRace === racenumberStr && rowStatus === 'approved';
+        console.log(`Entry check: season=${rowSeason}(${rowSeason === seasonStr}), race=${rowRace}(${rowRace === racenumberStr}), status=${rowStatus}(${rowStatus === 'approved'}) → ${matches}`);
         return matches;
       })
       .map(row => ({

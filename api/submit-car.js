@@ -64,8 +64,11 @@ export default async function handler(req, res) {
       throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY is missing client_email');
     }
 
-    const auth = new google.auth.GoogleAuth({
-      credentials: credentials,
+    // Use JWT auth directly to avoid ADC issues
+    const { JWT } = await import('google-auth-library');
+    const auth = new JWT({
+      email: credentials.client_email,
+      key: credentials.private_key,
       scopes: ['https://www.googleapis.com/auth/cloud-platform', 'https://www.googleapis.com/auth/spreadsheets']
     });
 

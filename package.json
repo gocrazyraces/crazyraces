@@ -21,7 +21,6 @@
   "homepage": "https://github.com/gocrazyraces/crazyraces#readme",
   "dependencies": {
     "fabric": "^5.3.0",
-    "googleapis": "^126.0.1",
-    "@google-cloud/storage": "^7.7.0"
+    "googleapis": "^126.0.1"
   }
 }

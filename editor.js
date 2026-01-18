@@ -359,11 +359,10 @@ function getCompositeDataURL() {
   composite.height = BODY_H;
   const cctx = composite.getContext("2d");
 
-  cctx.fillStyle = "#ffffff";
-  cctx.fillRect(0, 0, BODY_W, BODY_H);
-
+  // Draw body image (preserves transparency)
   cctx.drawImage(bodyArtCanvas, bodyOffsetX, bodyOffsetY);
 
+  // Draw wheels on top
   for (const w of placedWheels) {
     const g = toGlobalFromBodyLocal({ x: w.x, y: w.y });
     cctx.save();

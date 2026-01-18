@@ -239,16 +239,18 @@ export default async function handler(req, res) {
       throw new Error('GOOGLE_SHEETS_SUBMISSIONS_SPREADSHEET_ID environment variable not set');
     }
 
-    // Submissions go to Sheet2
-    await appendToSheet(sheets, spreadsheetId, 'Sheet2!A:H', [
-      season,
-      race,
-      email,
-      teamName,
-      carName,
-      `https://storage.googleapis.com/${bucketName}/${bodyFileName}`,
-      `https://storage.googleapis.com/${bucketName}/${wheelFileName}`,
-      `https://storage.googleapis.com/${bucketName}/${jsonFileName}`
+    // Submissions go to Sheet2 with new columns
+    await appendToSheet(sheets, spreadsheetId, 'Sheet2!A:J', [
+      season,                                    // A: season
+      race,                                      // B: racenumber
+      email,                                     // C: raceremail
+      teamName,                                  // D: racerteamname
+      carName,                                   // E: racercarname
+      'submitted',                               // F: racerstatus (default to submitted)
+      `https://storage.googleapis.com/${bucketName}/${bodyFileName}`,  // G: racerimagepath
+      `https://storage.googleapis.com/${bucketName}/${jsonFileName}`,  // H: racerjsonpath
+      `https://storage.googleapis.com/${bucketName}/${bodyFileName}`,  // I: racerbodyimagepath
+      `https://storage.googleapis.com/${bucketName}/${wheelFileName}`  // J: racerwheelimagepath
     ]);
 
     return res.status(200).json({ message: 'Submission successful' });

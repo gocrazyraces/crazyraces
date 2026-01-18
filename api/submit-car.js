@@ -25,7 +25,7 @@ export async function getRaceInfo() {
     });
 
     const sheets = google.sheets({ version: 'v4', auth });
-    const spreadsheetId = process.env.GOOGLE_SHEETS_RACES_SPREADSHEET_ID;
+    const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
 
     // Read race configuration from Sheet1 (race info is in the main sheet)
     const response = await sheets.spreadsheets.values.get({
@@ -199,9 +199,9 @@ export default async function handler(req, res) {
     // Only users granted Storage Object Viewer role can access them
 
     // Update spreadsheet with GCS URLs (accessible only to authorized users)
-    const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
+    const spreadsheetId = process.env.GOOGLE_SHEETS_SUBMISSIONS_SPREADSHEET_ID;
     if (!spreadsheetId) {
-      throw new Error('GOOGLE_SHEETS_SPREADSHEET_ID environment variable not set');
+      throw new Error('GOOGLE_SHEETS_SUBMISSIONS_SPREADSHEET_ID environment variable not set');
     }
 
     // Submissions go to Sheet2

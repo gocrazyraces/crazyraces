@@ -112,7 +112,13 @@ export default async function handler(req, res) {
         try {
           // Use WHATWG URL API instead of url.parse()
           const url = new URL(file.gcsPath);
-          const filePath = url.pathname.startsWith('/') ? url.pathname.slice(1) : url.pathname;
+          let filePath = url.pathname.startsWith('/') ? url.pathname.slice(1) : url.pathname;
+
+          // Remove bucket name from path if present (URLs already include bucket)
+          if (filePath.startsWith(`${bucketName}/`)) {
+            filePath = filePath.slice(bucketName.length + 1);
+          }
+
           const bucket = storage.bucket(bucketName);
           const fileObj = bucket.file(filePath);
 

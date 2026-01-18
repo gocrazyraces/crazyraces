@@ -198,7 +198,19 @@
   // Load historical race results
   async function loadHistoricalResults() {
     try {
-      const response = await fetch('/api/race-results?season=1');
+      // Get current season from race info, fallback to season 1
+      let currentSeason = 1;
+      try {
+        const raceResponse = await fetch('/api/race-info');
+        const raceData = await raceResponse.json();
+        if (raceData.raceInfo && raceData.raceInfo.season) {
+          currentSeason = raceData.raceInfo.season;
+        }
+      } catch (error) {
+        console.log('Could not get current season, using default');
+      }
+
+      const response = await fetch(`/api/race-results?season=${currentSeason}`);
       const data = await response.json();
 
       if (data.results && data.results.length > 0) {

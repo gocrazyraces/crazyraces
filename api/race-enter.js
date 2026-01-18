@@ -121,10 +121,33 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  // Disable Application Default Credentials to prevent auto-loading
-  process.env.GOOGLE_APPLICATION_CREDENTIALS = '';
+  // Extract season and race from request body
+  const { carData } = req.body;
+  if (!carData || !carData.season || !carData.race) {
+    return res.status(400).json({ message: 'Missing season or race in carData' });
+  }
+
+  const { season, race } = carData;
 
   try {
+    // Validate that the season/race corresponds to an active race
+    const raceInfoResponse = await fetch(`${process.env.VERCEL_URL || 'http://localhost:3000'}/api/race-info`);
+    const raceInfoData = await raceInfoResponse.json();
+
+    if (!raceInfoData.raceInfo) {
+      return res.status(400).json({ message: 'No active races available for entry' });
+    }
+
+    const activeRace = raceInfoData.raceInfo;
+    if (activeRace.season !== season || activeRace.racenumber !== race) {
+      return res.status(400).json({
+        message: `Entry not allowed: Only accepting entries for active race (Season ${activeRace.season}, Race ${activeRace.racenumber})`
+      });
+    }
+
+    console.log(`Entry validation passed for Season ${season}, Race ${race}`);
+
+    // Now proceed with the submission
     if (!req.body || !req.body.carData) {
       console.error('Request body missing carData:', req.body);
       return res.status(400).json({ message: 'Missing carData' });
@@ -139,7 +162,7 @@ export default async function handler(req, res) {
       wheelPositions,
       bodyImageData,
       wheelImageData
-    } = req.body.carData;
+    } = carData;
 
     if (!email || !bodyImageData || !wheelImageData) {
       console.error('Missing required fields');

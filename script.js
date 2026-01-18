@@ -4,7 +4,7 @@
  * =========================================================
  */
 
-window.CRAZY_RACES_SUBMIT_ENDPOINT = "/api/submit-car";
+window.CRAZY_RACES_SUBMIT_ENDPOINT = "/api/race-enter";
 window.CRAZY_RACES_TOTAL_CREDITS = 100;
 
 window.CRAZY_RACES_BODY_W = 1024;

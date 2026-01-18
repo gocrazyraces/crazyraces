@@ -877,6 +877,25 @@ async function submitCar() {
     return;
   }
 
+  // Get active race information for validation
+  let activeRace = null;
+  try {
+    const raceResponse = await fetch('/api/race-info');
+    const raceData = await raceResponse.json();
+    if (raceData.raceInfo) {
+      activeRace = raceData.raceInfo;
+    }
+  } catch (error) {
+    console.error('Failed to get race info:', error);
+    alert('Unable to verify active race. Please try again.');
+    return;
+  }
+
+  if (!activeRace) {
+    alert('No active race available for entry at this time.');
+    return;
+  }
+
   const bodyImageData = bodyArtCanvas.toDataURL("image/png");
   const wheelImageData = wheelArtCanvas.toDataURL("image/png");
   const previewComposite = getCompositeDataURL();
@@ -891,6 +910,8 @@ async function submitCar() {
 
   const payload = {
     carData: {
+      season: activeRace.season,
+      race: activeRace.racenumber,
       teamName,
       carName,
       email,

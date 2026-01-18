@@ -4,6 +4,9 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
+  // Disable Application Default Credentials to prevent auto-loading
+  process.env.GOOGLE_APPLICATION_CREDENTIALS = '';
+
   try {
     if (!req.body || !req.body.carData) {
       console.error('Request body missing carData:', req.body);

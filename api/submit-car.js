@@ -50,9 +50,34 @@ export async function getRaceInfo() {
 
     // Find next active race
     const now = new Date();
+
+    // Parse dates - handle both ISO format and DD/MM/YYYY format
+    const parseDate = (dateStr) => {
+      // Try ISO format first (2026-06-26T20:00:00Z)
+      let date = new Date(dateStr);
+      if (!isNaN(date.getTime())) return date;
+
+      // Try DD/MM/YYYY format
+      const parts = dateStr.split('/');
+      if (parts.length === 3) {
+        const [day, month, year] = parts;
+        date = new Date(`${year}-${month}-${day}T20:00:00Z`); // Default to 8 PM UTC
+        if (!isNaN(date.getTime())) return date;
+      }
+
+      console.log('Invalid date format:', dateStr);
+      return new Date('invalid');
+    };
+
     const nextRace = races
-      .filter(race => race.racestatus === 'active' && new Date(race.racedeadline) > now)
-      .sort((a, b) => new Date(a.racedeadline) - new Date(b.racedeadline))[0];
+      .filter(race => {
+        const isActive = race.racestatus === 'active';
+        const raceDate = parseDate(race.racedeadline);
+        const isFuture = raceDate > now;
+        console.log(`Race "${race.racename}": active=${isActive}, date=${raceDate}, future=${isFuture}`);
+        return isActive && isFuture;
+      })
+      .sort((a, b) => parseDate(a.racedeadline) - parseDate(b.racedeadline))[0];
 
     console.log('Next race found:', nextRace); // Debug log
     const result = nextRace || null;

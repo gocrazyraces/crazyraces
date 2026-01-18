@@ -113,12 +113,10 @@ export default async function handler(req, res) {
     await uploadToGCS(storage, bucketName, bodyFileName, Buffer.from(bodyImageData.split('base64,')[1], 'base64'), 'image/png');
     await uploadToGCS(storage, bucketName, wheelFileName, Buffer.from(wheelImageData.split('base64,')[1], 'base64'), 'image/png');
 
-    // Make specific files public using object ACLs (requires uniform bucket-level access disabled)
-    await makeFilePublic(storage, bucketName, jsonFileName);
-    await makeFilePublic(storage, bucketName, bodyFileName);
-    await makeFilePublic(storage, bucketName, wheelFileName);
+    // Files remain private - access controlled by bucket IAM permissions
+    // Only users granted Storage Object Viewer role can access them
 
-    // Update spreadsheet with signed URLs
+    // Update spreadsheet with GCS URLs (accessible only to authorized users)
     const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
     if (!spreadsheetId) {
       throw new Error('GOOGLE_SHEETS_SPREADSHEET_ID environment variable not set');

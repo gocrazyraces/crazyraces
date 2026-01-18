@@ -234,13 +234,13 @@ export default async function handler(req, res) {
     // Only users granted Storage Object Viewer role can access them
 
     // Update spreadsheet with GCS URLs (accessible only to authorized users)
-    const spreadsheetId = process.env.GOOGLE_SHEETS_SUBMISSIONS_SPREADSHEET_ID;
+    const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
     if (!spreadsheetId) {
-      throw new Error('GOOGLE_SHEETS_SUBMISSIONS_SPREADSHEET_ID environment variable not set');
+      throw new Error('GOOGLE_SHEETS_SPREADSHEET_ID environment variable not set');
     }
 
-    // Submissions go to Sheet2 with new columns
-    await appendToSheet(sheets, spreadsheetId, 'Sheet2!A:J', [
+    // Submissions go to Sheet1 (same sheet as race info) starting from row 100
+    await appendToSheet(sheets, spreadsheetId, 'Sheet1!A100:J', [
       season,                                    // A: season
       race,                                      // B: racenumber
       email,                                     // C: raceremail

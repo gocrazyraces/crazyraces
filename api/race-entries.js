@@ -37,18 +37,18 @@ export default async function handler(req, res) {
     });
 
     const sheets = google.sheets({ version: 'v4', auth });
-    const spreadsheetId = process.env.GOOGLE_SHEETS_SUBMISSIONS_SPREADSHEET_ID;
+    const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
     console.log('Target spreadsheet ID:', spreadsheetId);
 
     if (!spreadsheetId) {
-      console.error('GOOGLE_SHEETS_SUBMISSIONS_SPREADSHEET_ID environment variable not set');
-      throw new Error('GOOGLE_SHEETS_SUBMISSIONS_SPREADSHEET_ID not set');
+      console.error('GOOGLE_SHEETS_SPREADSHEET_ID environment variable not set');
+      throw new Error('GOOGLE_SHEETS_SPREADSHEET_ID not set');
     }
 
-    // Read submissions from Sheet2
+    // Read submissions from Sheet1 starting from row 100 (where submissions are stored)
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: spreadsheetId,
-      range: 'Sheet2!A:J', // All columns: season to racerwheelimagepath
+      range: 'Sheet1!A100:J', // Submissions start from row 100: season to racerwheelimagepath
     });
 
     const rows = response.data.values || [];

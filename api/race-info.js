@@ -5,6 +5,7 @@ export default async function handler(req, res) {
   }
 
   try {
+    const { getRaceInfo } = await import('../utils/race-utils.js');
     const raceInfo = await getRaceInfo();
     return res.status(200).json({ raceInfo });
 
@@ -13,6 +14,3 @@ export default async function handler(req, res) {
     return res.status(500).json({ message: 'Failed to fetch race information' });
   }
 }
-
-// Import the shared function from race-enter.js
-import { getRaceInfo } from './race-enter.js';

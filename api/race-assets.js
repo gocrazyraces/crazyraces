@@ -12,27 +12,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    const serviceAccountKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
-    if (!serviceAccountKey) {
-      throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY not set');
-    }
-
-    const credentials = JSON.parse(Buffer.from(serviceAccountKey, 'base64').toString('utf8'));
-    const { JWT } = await import('google-auth-library');
-    const { google } = await import('googleapis');
-    const { Storage } = await import('@google-cloud/storage');
-
-    const auth = new JWT({
-      email: credentials.client_email,
-      key: credentials.private_key,
-      scopes: ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/cloud-platform']
-    });
-
-    const sheets = google.sheets({ version: 'v4', auth });
-    const storage = new Storage({
-      credentials: credentials,
-      projectId: credentials.project_id
-    });
+    const { createGoogleServices } = await import('../utils/google-auth.js');
+    const { sheets, storageClient: storage } = await createGoogleServices(['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/cloud-platform']);
 
     const bucketName = process.env.GOOGLE_CLOUD_STORAGE_BUCKET;
     if (!bucketName) {

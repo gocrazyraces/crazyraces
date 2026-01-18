@@ -1,6 +1,4 @@
-// Use Google Cloud Storage for file storage and Google Sheets for data
-import { google } from 'googleapis';
-import { Storage } from '@google-cloud/storage';
+// Temporarily disabled Google APIs for debugging
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {

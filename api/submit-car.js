@@ -37,9 +37,16 @@ export default async function handler(req, res) {
 
     let credentials;
     try {
+      // Try parsing as plain JSON first
       credentials = JSON.parse(serviceAccountKey);
     } catch (parseError) {
-      throw new Error(`Invalid JSON in GOOGLE_SERVICE_ACCOUNT_KEY: ${parseError.message}`);
+      try {
+        // If that fails, try decoding from base64
+        const decoded = Buffer.from(serviceAccountKey, 'base64').toString('utf8');
+        credentials = JSON.parse(decoded);
+      } catch (base64Error) {
+        throw new Error(`Invalid JSON in GOOGLE_SERVICE_ACCOUNT_KEY: ${parseError.message}. Also tried base64 decoding: ${base64Error.message}`);
+      }
     }
 
     // Validate credentials object

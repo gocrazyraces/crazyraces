@@ -521,7 +521,10 @@ ui.bodyPenBtn.onclick = () => {
   currentTool = "pen";
   currentPenColor = ui.bodyColor.value;
 };
-ui.bodyMoveBtn.onclick = () => { currentTool = "move"; };
+ui.bodyMoveBtn.onclick = () => {
+  currentTool = "move";
+  renderAll(); // Ensure clean canvas when switching to move tool
+};
 
 ui.wheelPenBtn.onclick = () => {
   currentTool = "pen";
@@ -656,6 +659,8 @@ ui.bodyCanvas.onpointerdown = (e) => {
     currentPenColor = ui.bodyColor.value;
     strokePoints = [toBodyLocal(globalPos)];
     ui.bodyCanvas.setPointerCapture(e.pointerId);
+    // Clear any existing preview by redrawing
+    renderBodyComposite(false);
     return;
   }
 };

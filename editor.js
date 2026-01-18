@@ -244,6 +244,82 @@ function drawUploadedImageToArt(img, targetCtx, w, h) {
   targetCtx.restore();
 }
 
+// ============================
+// UTILITY FUNCTIONS
+// ============================
+function drawSubtleGrid(ctx, w, h) {
+  ctx.save();
+  ctx.strokeStyle = "rgba(59, 2, 115, 0.08)";
+  ctx.lineWidth = 1;
+
+  const step = 32;
+
+  for (let x = 0; x <= w; x += step) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, h);
+    ctx.stroke();
+  }
+
+  for (let y = 0; y <= h; y += step) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(w, y);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+function getCanvasPos(canvas, e) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (e.clientX - rect.left) * (canvas.width / rect.width),
+    y: (e.clientY - rect.top) * (canvas.height / rect.height),
+  };
+}
+
+function toBodyLocal(globalPos) {
+  return { x: globalPos.x - bodyOffsetX, y: globalPos.y - bodyOffsetY };
+}
+
+function toGlobalFromBodyLocal(localPos) {
+  return { x: localPos.x + bodyOffsetX, y: localPos.y + bodyOffsetY };
+}
+
+function hitTestWheelGlobal(globalPos, wheel) {
+  const wheelGlobal = toGlobalFromBodyLocal({ x: wheel.x, y: wheel.y });
+  const dx = globalPos.x - wheelGlobal.x;
+  const dy = globalPos.y - wheelGlobal.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+  const scaledRadius = (WHEEL_W / 2) * wheel.scale * WHEEL_HIT_PAD;
+  return distance <= scaledRadius;
+}
+
+function getSelectedWheel() {
+  return selectedWheelIndex >= 0 && selectedWheelIndex < placedWheels.length
+    ? placedWheels[selectedWheelIndex]
+    : null;
+}
+
+function clamp(val, min, max) {
+  return Math.min(Math.max(val, min), max);
+}
+
+function setTips(tabName) {
+  const tipText = TAB_TIPS[tabName] ?? "";
+  if (ui.tipsText) ui.tipsText.textContent = tipText;
+  if (ui.instructionsText) ui.instructionsText.textContent = tipText;
+}
+
+const TAB_TIPS = {
+  body: "Draw the car body or upload a PNG with transparency.",
+  wheel: "Draw or upload a wheel (square).",
+  placement: "Click a wheel to select it; drag to move.",
+  properties: "Adjust performance credits.",
+  submit: "Final checks before submission.",
+};
+
 
 
 // ============================

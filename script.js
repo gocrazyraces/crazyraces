@@ -59,12 +59,12 @@ window.CRAZY_RACES_WHEEL_H = 256;
 
         updateCountdown();
       } else {
-        // Fallback to default if no race info
-        setDefaultRace();
+        // Show "No race data available" if no race info
+        setNoRaceData();
       }
     } catch (error) {
       console.error('Failed to load race info:', error);
-      setDefaultRace();
+      setNoRaceData();
     }
   }
 
@@ -79,6 +79,17 @@ window.CRAZY_RACES_WHEEL_H = 256;
       nextRaceEl.textContent = `Next Race - ${datePart} 20:00 GMT`;
     }
     updateCountdown();
+  }
+
+  function setNoRaceData() {
+    if (nextRaceEl) {
+      nextRaceEl.textContent = "No race data available";
+    }
+    if (countdownEl) {
+      countdownEl.textContent = "Please check back later";
+    }
+    // Reset page title
+    document.title = "Rapid Racers 2D";
   }
 
   function updateCountdown() {

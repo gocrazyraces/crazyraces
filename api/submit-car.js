@@ -75,56 +75,28 @@ export default async function handler(req, res) {
       scopes: ['https://www.googleapis.com/auth/cloud-platform', 'https://www.googleapis.com/auth/spreadsheets']
     });
 
-    const storage = new Storage({ auth, projectId: credentials.project_id });
+    // For testing - just update the spreadsheet without storage
     const sheets = google.sheets({ version: 'v4', auth });
 
     // Hardcoded for now - can be made configurable
     const season = 'season1';
     const race = 'race1';
-    const bucketName = process.env.GOOGLE_CLOUD_STORAGE_BUCKET;
-    if (!bucketName) {
-      throw new Error('GOOGLE_CLOUD_STORAGE_BUCKET environment variable not set');
-    }
-
-    const bucket = storage.bucket(bucketName);
-
-    // Create folder-like structure in GCS (using prefixes)
-    const basePath = `${season}/${race}/${email}/`;
-
-    // Upload files
-    const jsonData = JSON.stringify({
-      carName,
-      teamName,
-      email,
-      acceleration,
-      topSpeed,
-      wheelPositions
-    }, null, 2);
-
-    const jsonFileName = `${basePath}car.json`;
-    const bodyFileName = `${basePath}body.png`;
-    const wheelFileName = `${basePath}wheel.png`;
-
-    await uploadToGCS(bucket, jsonFileName, Buffer.from(jsonData), 'application/json');
-    await uploadToGCS(bucket, bodyFileName, Buffer.from(bodyImageData.split('base64,')[1], 'base64'), 'image/png');
-    await uploadToGCS(bucket, wheelFileName, Buffer.from(wheelImageData.split('base64,')[1], 'base64'), 'image/png');
-
-    // Make files public
-    await bucket.file(jsonFileName).makePublic();
-    await bucket.file(bodyFileName).makePublic();
-    await bucket.file(wheelFileName).makePublic();
 
     // Update spreadsheet
     const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
+    if (!spreadsheetId) {
+      throw new Error('GOOGLE_SHEETS_SPREADSHEET_ID environment variable not set');
+    }
+
     await appendToSheet(sheets, spreadsheetId, [
       season,
       race,
       email,
       teamName,
       carName,
-      `https://storage.googleapis.com/${bucketName}/${bodyFileName}`,
-      `https://storage.googleapis.com/${bucketName}/${wheelFileName}`,
-      `https://storage.googleapis.com/${bucketName}/${jsonFileName}`
+      'body_image_url_placeholder',
+      'wheel_image_url_placeholder',
+      'json_url_placeholder'
     ]);
 
     return res.status(200).json({ message: 'Submission successful' });

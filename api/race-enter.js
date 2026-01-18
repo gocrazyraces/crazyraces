@@ -221,21 +221,41 @@ async function generateCompositePreview(bodyImageData, wheelImageData, wheelPosi
   const overlays = [];
 
   for (const wheel of wheelPositions || []) {
+    const scale = wheel.scale || 1;
+    const rotation = wheel.rotationDegrees || 0;
+
     // Create wheel overlay with transformations
-    const transformedWheel = await sharp(wheelBuffer)
+    const resizedWheel = await sharp(wheelBuffer)
       .png()
       .resize({
-        width: Math.round(256 * (wheel.scale || 1)), // 256 is wheel canvas width
-        height: Math.round(256 * (wheel.scale || 1)), // 256 is wheel canvas height
+        width: Math.round(256 * scale),
+        height: Math.round(256 * scale),
         withoutEnlargement: false
-      })
-      .rotate(wheel.rotationDegrees || 0)
-      .toBuffer();
+      });
+
+    let transformedWheel;
+    if (rotation !== 0) {
+      // Apply rotation with transparent background and no enlargement
+      transformedWheel = await resizedWheel
+        .rotate(rotation, {
+          background: { r: 0, g: 0, b: 0, alpha: 0 }, // Transparent background
+          withoutEnlargement: true // Prevent canvas expansion
+        })
+        .png()
+        .toBuffer();
+    } else {
+      // No rotation needed
+      transformedWheel = await resizedWheel.png().toBuffer();
+    }
+
+    // Calculate position - center the wheel on its target position
+    const halfWidth = Math.round(128 * scale);
+    const halfHeight = Math.round(128 * scale);
 
     overlays.push({
       input: transformedWheel,
-      top: Math.round(wheel.y - (128 * (wheel.scale || 1))), // Center on wheel position
-      left: Math.round(wheel.x - (128 * (wheel.scale || 1)))
+      top: Math.round(wheel.y - halfHeight),
+      left: Math.round(wheel.x - halfWidth)
     });
   }
 

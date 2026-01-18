@@ -15,7 +15,7 @@
 const ui = {
   tipsText: document.getElementById("tipsText"),
 
-  // Tabs
+  // Toolbox tabs (vertical)
   tabs: {
     body: document.getElementById("bodyTab"),
     wheel: document.getElementById("wheelTab"),
@@ -30,6 +30,20 @@ const ui = {
     properties: document.getElementById("propertiesControls"),
     submit: document.getElementById("submitControls"),
   },
+
+  // Workspace tabs (horizontal)
+  workspaceTabs: {
+    body: document.getElementById("bodyTab"),
+    wheel: document.getElementById("wheelTab"),
+    placement: document.getElementById("placementTab"),
+    properties: document.getElementById("propertiesTab"),
+    submit: document.getElementById("submitTab"),
+  },
+
+  // Workspace content areas
+  canvasContent: document.getElementById("canvasContent"),
+  propertiesContent: document.getElementById("propertiesContent"),
+  submitContent: document.getElementById("submitContent"),
 
   // Canvases
   bodyCanvas: document.getElementById("bodyCanvas"),
@@ -458,12 +472,25 @@ function initUndoStacks() {
 function setTab(tabName) {
   currentTab = tabName;
 
+  // Update toolbox tabs
   for (const t of Object.keys(ui.tabs)) {
     const active = t === tabName;
     ui.tabs[t].classList.toggle("active", active);
     ui.tabs[t].setAttribute("aria-selected", String(active));
-    ui.panels[t].classList.toggle("active", active);
+    // Only show toolbox panels for tabs 1-3
+    ui.panels[t].classList.toggle("active", active && (t === "body" || t === "wheel" || t === "placement"));
   }
+
+  // Update workspace tabs
+  for (const t of Object.keys(ui.workspaceTabs)) {
+    const active = t === tabName;
+    ui.workspaceTabs[t].classList.toggle("active", active);
+  }
+
+  // Update workspace content
+  ui.canvasContent.classList.toggle("active", tabName === "body" || tabName === "wheel" || tabName === "placement");
+  ui.propertiesContent.classList.toggle("active", tabName === "properties");
+  ui.submitContent.classList.toggle("active", tabName === "submit");
 
   ui.wheelCanvas.style.display = (tabName === "wheel") ? "block" : "none";
 
@@ -477,11 +504,9 @@ function setTab(tabName) {
     ui.canvasTitle.textContent = "Body canvas";
     ui.canvasSubtitle.textContent = "Draw the body or drag it with Move";
   } else if (tabName === "properties") {
-    ui.canvasTitle.textContent = "Body canvas";
-    ui.canvasSubtitle.textContent = "Adjust performance credits";
+    // Properties content is shown in workspace, no canvas
   } else {
-    ui.canvasTitle.textContent = "Body canvas";
-    ui.canvasSubtitle.textContent = "Final checks before submission";
+    // Submit content is shown in workspace, no canvas
   }
 
   setTips(tabName);

@@ -284,29 +284,117 @@
 
     <!-- MAIN WORKSPACE -->
     <main id="workspace" aria-label="Canvas workspace">
+      <!-- Horizontal step tabs -->
+      <div class="workspace-tabs" role="tablist" aria-label="Editor steps">
+        <button id="bodyTab" class="workspace-tab active" role="tab" aria-selected="true">
+          <span class="step">1</span> Body
+        </button>
+        <button id="wheelTab" class="workspace-tab" role="tab" aria-selected="false">
+          <span class="step">2</span> Wheel
+        </button>
+        <button id="placementTab" class="workspace-tab" role="tab" aria-selected="false">
+          <span class="step">3</span> Wheels
+        </button>
+        <button id="propertiesTab" class="workspace-tab" role="tab" aria-selected="false">
+          <span class="step">4</span> Performance
+        </button>
+        <button id="submitTab" class="workspace-tab" role="tab" aria-selected="false">
+          <span class="step">5</span> Submit
+        </button>
+      </div>
+
       <div class="workspace-inner">
-        <div class="canvas-card">
-          <div class="canvas-header">
-            <div>
-              <div class="canvas-title" id="canvasTitle">Body canvas</div>
-              <div class="canvas-subtitle" id="canvasSubtitle">Draw the car body here</div>
+        <!-- Canvas content (shown for tabs 1,2,3) -->
+        <div id="canvasContent" class="workspace-content active">
+          <div class="canvas-card">
+            <div class="canvas-header">
+              <div>
+                <div class="canvas-title" id="canvasTitle">Body canvas</div>
+                <div class="canvas-subtitle" id="canvasSubtitle">Draw the car body here</div>
+              </div>
+
+              <div class="canvas-actions">
+                <button id="centerBodyBtn" class="btn small">Center body</button>
+                <button id="exportPreviewBtn" class="btn small">Export as PNG</button>
+              </div>
             </div>
 
-            <div class="canvas-actions">
-              <button id="centerBodyBtn" class="btn small">Center body</button>
-              <button id="exportPreviewBtn" class="btn small">Export as PNG</button>
+            <div class="canvas-wrap">
+              <canvas id="bodyCanvas" width="1024" height="512"></canvas>
+              <canvas id="wheelCanvas" width="256" height="256"></canvas>
+            </div>
+
+            <div class="workspace-tips" aria-label="Tips">
+              <div class="tips-title">Tips</div>
+              <div class="tips-text" id="tipsText">
+                Draw the car body or upload a PNG with transparency.
+              </div>
             </div>
           </div>
+        </div>
 
-          <div class="canvas-wrap">
-            <canvas id="bodyCanvas" width="1024" height="512"></canvas>
-            <canvas id="wheelCanvas" width="256" height="256"></canvas>
+        <!-- Properties content (shown for tab 4) -->
+        <div id="propertiesContent" class="workspace-content">
+          <div class="content-card">
+            <h2 class="panel-title">Performance (100 credits)</h2>
+            <p class="panel-subtitle">
+              Allocate exactly <strong>100</strong> credits between acceleration and top speed.
+            </p>
+
+            <div class="control-group">
+              <label class="field">
+                <span>Acceleration: <strong id="accVal">50</strong></span>
+                <input type="range" id="acceleration" min="0" max="100" step="1" value="50" />
+              </label>
+
+              <label class="field">
+                <span>Top speed: <strong id="speedVal">50</strong></span>
+                <input type="range" id="topSpeed" min="0" max="100" step="1" value="50" />
+              </label>
+
+              <div class="pill-row">
+                <span class="pill emphasis">
+                  Remaining: <strong id="pointsRemaining">0</strong>
+                </span>
+                <span class="pill" id="creditsHelp">Must be 0 to submit</span>
+              </div>
+            </div>
           </div>
+        </div>
 
-          <div class="workspace-tips" aria-label="Tips">
-            <div class="tips-title">Tips</div>
-            <div class="tips-text" id="tipsText">
-              Draw the car body or upload a PNG with transparency.
+        <!-- Submit content (shown for tab 5) -->
+        <div id="submitContent" class="workspace-content">
+          <div class="content-card">
+            <h2 class="panel-title">Submit</h2>
+            <p class="panel-subtitle">
+              We’ll send your artwork + wheel layout + performance credits to the server.
+            </p>
+
+            <div class="control-group">
+              <label class="field">
+                <span>Team name</span>
+                <input type="text" id="teamName" placeholder="e.g., Team Turbo" />
+              </label>
+
+              <label class="field">
+                <span>Car name</span>
+                <input type="text" id="carName" placeholder="e.g., Biscuit Rocket" />
+              </label>
+
+              <label class="field">
+                <span>Email</span>
+                <input type="email" id="email" placeholder="you@example.com" />
+              </label>
+
+              <div class="stack">
+                <button id="submitBtn" class="btn primary">Submit car</button>
+              </div>
+
+              <p id="submitStatus" class="submit-status" aria-live="polite"></p>
+            </div>
+
+            <div class="note">
+              Endpoint configured in <code>script.js</code>.
             </div>
           </div>
         </div>

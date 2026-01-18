@@ -1,0 +1,18 @@
+// API endpoint to get race information from Google Sheets
+export default async function handler(req, res) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ message: 'Method Not Allowed' });
+  }
+
+  try {
+    const raceInfo = await getRaceInfo();
+    return res.status(200).json({ raceInfo });
+
+  } catch (error) {
+    console.error('Error fetching race info:', error);
+    return res.status(500).json({ message: 'Failed to fetch race information' });
+  }
+}
+
+// Import the shared function from submit-car.js
+import { getRaceInfo } from './submit-car.js';

@@ -1,4 +1,86 @@
 // Use dynamic imports to avoid authentication issues on module load
+import { JWT } from 'google-auth-library';
+import { google } from 'googleapis';
+
+// ============================
+// RACE INFO API
+// ============================
+export async function getRaceInfo() {
+  // Check cache first (cache for 1 hour)
+  const cacheKey = 'raceInfo';
+  const cached = getCachedData(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const serviceAccountKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+    if (!serviceAccountKey) {
+      throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY not set');
+    }
+
+    const credentials = JSON.parse(Buffer.from(serviceAccountKey, 'base64').toString('utf8'));
+    const auth = new JWT({
+      email: credentials.client_email,
+      key: credentials.private_key,
+      scopes: ['https://www.googleapis.com/auth/spreadsheets']
+    });
+
+    const sheets = google.sheets({ version: 'v4', auth });
+    const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
+
+    // Read race configuration from Sheet2 (assuming race config is in Sheet2)
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: spreadsheetId,
+      range: 'Sheet2!A:G', // Adjust range based on your race config columns
+    });
+
+    const rows = response.data.values || [];
+    const races = rows.slice(1).map(row => ({
+      season: row[0],
+      racenumber: row[1],
+      racename: row[2],
+      racedeadline: row[3],
+      racedescription: row[4],
+      raceimage: row[5],
+      racestatus: row[6]
+    }));
+
+    // Find next active race
+    const now = new Date();
+    const nextRace = races
+      .filter(race => race.racestatus === 'active' && new Date(race.racedeadline) > now)
+      .sort((a, b) => new Date(a.racedeadline) - new Date(b.racedeadline))[0];
+
+    const result = nextRace || null;
+
+    // Cache for 1 hour
+    setCachedData(cacheKey, result, 60 * 60 * 1000);
+    return result;
+
+  } catch (error) {
+    console.error('Error fetching race info:', error);
+    return null;
+  }
+}
+
+// Simple in-memory cache (for serverless environments, consider Redis/external cache)
+const cache = new Map();
+
+function getCachedData(key) {
+  const item = cache.get(key);
+  if (item && Date.now() < item.expires) {
+    return item.data;
+  }
+  cache.delete(key);
+  return null;
+}
+
+function setCachedData(key, data, ttlMs) {
+  cache.set(key, {
+    data,
+    expires: Date.now() + ttlMs
+  });
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method Not Allowed' });

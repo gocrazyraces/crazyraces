@@ -13,19 +13,15 @@ window.CRAZY_RACES_WHEEL_W = 256;
 window.CRAZY_RACES_WHEEL_H = 256;
 
 /**
- * Race time:
- * - "1 week from now" at 20:00 GMT (treated as 20:00 UTC)
- * - Header shows date + "20:00 GMT"
- * - Page bar shows countdown: (Xd Ym Zs to go)
+ * Race information from Google Sheets:
+ * - Dynamically loads race details from Sheet2
+ * - Shows next active race information
+ * - Header shows race name and deadline
+ * - Page bar shows countdown to race deadline
  */
 (function raceTimingUI() {
   const nextRaceEl = document.getElementById("nextRaceDate");
   const countdownEl = document.getElementById("nextRaceCountdown");
-
-  // Build next race datetime: 7 days from today, 20:00 UTC
-  const now = new Date();
-  const race = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-  race.setUTCHours(20, 0, 0, 0);
 
   // Header date format in UTC so "GMT" makes sense
   const fmtDate = new Intl.DateTimeFormat(undefined, {
@@ -35,16 +31,60 @@ window.CRAZY_RACES_WHEEL_H = 256;
     timeZone: "UTC",
   });
 
-  function updateHeader() {
-    if (!nextRaceEl) return;
-    const datePart = fmtDate.format(race);
-    nextRaceEl.textContent = `${datePart} 20:00 GMT`;
+  let raceDeadline = null;
+
+  // Fetch race information from Google Sheets
+  async function loadRaceInfo() {
+    try {
+      const response = await fetch('/api/race-info');
+      const data = await response.json();
+
+      if (data.raceInfo) {
+        const race = data.raceInfo;
+        raceDeadline = new Date(race.racedeadline);
+
+        // Update header with race name and deadline
+        if (nextRaceEl) {
+          const datePart = fmtDate.format(raceDeadline);
+          const timePart = raceDeadline.toLocaleTimeString('en-GB', {
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZone: 'UTC'
+          });
+          nextRaceEl.textContent = `${race.racename} - ${datePart} ${timePart} GMT`;
+        }
+
+        // Update page title with race info
+        document.title = `${race.racename} - Rapid Racers 2D`;
+
+        updateCountdown();
+      } else {
+        // Fallback to default if no race info
+        setDefaultRace();
+      }
+    } catch (error) {
+      console.error('Failed to load race info:', error);
+      setDefaultRace();
+    }
+  }
+
+  function setDefaultRace() {
+    // Build next race datetime: 7 days from today, 20:00 UTC
+    const now = new Date();
+    raceDeadline = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    raceDeadline.setUTCHours(20, 0, 0, 0);
+
+    if (nextRaceEl) {
+      const datePart = fmtDate.format(raceDeadline);
+      nextRaceEl.textContent = `Next Race - ${datePart} 20:00 GMT`;
+    }
+    updateCountdown();
   }
 
   function updateCountdown() {
-    if (!countdownEl) return;
+    if (!countdownEl || !raceDeadline) return;
 
-    const diff = race.getTime() - Date.now();
+    const diff = raceDeadline.getTime() - Date.now();
 
     if (diff <= 0) {
       countdownEl.textContent = "Race time!";
@@ -57,11 +97,12 @@ window.CRAZY_RACES_WHEEL_H = 256;
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
 
-    countdownEl.textContent = `${days} days, ${hours} hours, ${minutes} minutes, ${seconds} seconds!`;
+    countdownEl.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s to go!`;
   }
 
-  updateHeader();
-  updateCountdown();
+  // Load race info on page load
+  loadRaceInfo();
+  // Update countdown every second
   setInterval(updateCountdown, 1000);
 
   // Footer year

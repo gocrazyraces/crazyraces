@@ -336,7 +336,16 @@
     </div>
   </footer>
 
-  <script type="module" src="script.js"></script>
-  <script type="module" src="editor.js"></script>
+  <script>
+    // Inline constants to avoid module issues
+    window.CRAZY_RACES_BODY_W = 1024;
+    window.CRAZY_RACES_BODY_H = 512;
+    window.CRAZY_RACES_WHEEL_W = 256;
+    window.CRAZY_RACES_WHEEL_H = 256;
+    window.CRAZY_RACES_TOTAL_CREDITS = 100;
+    window.CRAZY_RACES_SUBMIT_ENDPOINT = "/api/race-enter";
+  </script>
+  <script src="script.js"></script>
+  <script src="editor.js"></script>
 </body>
 </html>

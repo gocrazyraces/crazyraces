@@ -4,16 +4,7 @@
  * =========================================================
  */
 
-// Import shared constants (client-side compatible)
-import { BODY_W, BODY_H, WHEEL_W, WHEEL_H, TOTAL_CREDITS, CRAZY_RACES_SUBMIT_ENDPOINT } from './lib/constants.js';
-
-window.CRAZY_RACES_SUBMIT_ENDPOINT = CRAZY_RACES_SUBMIT_ENDPOINT;
-window.CRAZY_RACES_TOTAL_CREDITS = TOTAL_CREDITS;
-
-window.CRAZY_RACES_BODY_W = BODY_W;
-window.CRAZY_RACES_BODY_H = BODY_H;
-window.CRAZY_RACES_WHEEL_W = WHEEL_W;
-window.CRAZY_RACES_WHEEL_H = WHEEL_H;
+// Constants are now inlined in index.html to avoid module issues
 
 /**
  * Race information from Google Sheets:

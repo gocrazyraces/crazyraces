@@ -2,7 +2,7 @@
 module.exports = async function handler(req, res) {
   const { type } = req.query;
 
-  if (type === 'spreadsheet') {
+  //if (type === 'spreadsheet') {
     // Test spreadsheet connection
     try {
       const { createGoogleServices } = await import('../lib/google-auth.js');
@@ -59,4 +59,4 @@ module.exports = async function handler(req, res) {
     method: req.method,
     url: req.url
   });
-}
+//}

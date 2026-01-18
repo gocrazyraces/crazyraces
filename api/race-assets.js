@@ -110,7 +110,9 @@ export default async function handler(req, res) {
 
       for (const file of filesToDownload) {
         try {
-          const filePath = file.gcsPath.replace(`https://storage.googleapis.com/${bucketName}/`, '');
+          // Use WHATWG URL API instead of url.parse()
+          const url = new URL(file.gcsPath);
+          const filePath = url.pathname.startsWith('/') ? url.pathname.slice(1) : url.pathname;
           const bucket = storage.bucket(bucketName);
           const fileObj = bucket.file(filePath);
 

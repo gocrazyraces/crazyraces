@@ -9,17 +9,38 @@ module.exports = async function handler(req, res) {
       const { sheets } = await createGoogleServices(['https://www.googleapis.com/auth/spreadsheets']);
       const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
 
-      const response = await sheets.spreadsheets.values.get({
-        spreadsheetId: spreadsheetId,
-        range: 'Sheet1!A:G',
+      // Get spreadsheet metadata to see available sheets
+      const spreadsheetResponse = await sheets.spreadsheets.get({
+        spreadsheetId: spreadsheetId
       });
 
-      const rows = response.data.values || [];
+      const sheetNames = spreadsheetResponse.data.sheets.map(sheet => sheet.properties.title);
+
+      // Test multiple ranges to find where data is
+      const ranges = ['Sheet1!A:G', 'Sheet2!A:G', 'Sheet1!A:Z', 'Sheet2!A:Z'];
+      const rangeResults = {};
+
+      for (const range of ranges) {
+        try {
+          const response = await sheets.spreadsheets.values.get({
+            spreadsheetId: spreadsheetId,
+            range: range,
+          });
+          const rows = response.data.values || [];
+          rangeResults[range] = {
+            rowCount: rows.length,
+            firstFewRows: rows.slice(0, 3)
+          };
+        } catch (rangeError) {
+          rangeResults[range] = { error: rangeError.message };
+        }
+      }
+
       return res.status(200).json({
         message: 'Spreadsheet connection working!',
         spreadsheetId: spreadsheetId,
-        rowCount: rows.length,
-        firstFewRows: rows.slice(0, 5),
+        availableSheets: sheetNames,
+        rangeResults: rangeResults,
         timestamp: new Date().toISOString()
       });
     } catch (error) {

@@ -4,16 +4,28 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
+  const { bypassCache } = req.query;
+
   try {
     console.log('Race-info API called at:', new Date().toISOString());
+    console.log('Query params:', req.query);
     console.log('GOOGLE_SHEETS_SPREADSHEET_ID:', process.env.GOOGLE_SHEETS_SPREADSHEET_ID);
     console.log('GOOGLE_SERVICE_ACCOUNT_KEY exists:', !!process.env.GOOGLE_SERVICE_ACCOUNT_KEY);
 
     // Force fresh data by bypassing cache if requested
     const { getRaceInfo } = await import('../lib/race-utils.js');
-    const raceInfo = await getRaceInfo();
 
-    console.log('Race-info API result:', JSON.stringify(raceInfo, null, 2));
+    let raceInfo;
+    if (bypassCache === 'true') {
+      // Force fresh call by clearing cache first
+      console.log('Bypassing cache for fresh data...');
+      raceInfo = await getRaceInfo();
+      console.log('Fresh race info result:', JSON.stringify(raceInfo, null, 2));
+    } else {
+      raceInfo = await getRaceInfo();
+    }
+
+    console.log('Final race-info API result:', JSON.stringify(raceInfo, null, 2));
 
     // Add cache control headers to prevent caching
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');

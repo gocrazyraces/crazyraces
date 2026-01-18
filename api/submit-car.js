@@ -113,10 +113,10 @@ export default async function handler(req, res) {
     await uploadToGCS(storage, bucketName, bodyFileName, Buffer.from(bodyImageData.split('base64,')[1], 'base64'), 'image/png');
     await uploadToGCS(storage, bucketName, wheelFileName, Buffer.from(wheelImageData.split('base64,')[1], 'base64'), 'image/png');
 
-    // Generate signed URLs for secure access (valid for 1 year)
-    const jsonSignedUrl = await generateSignedUrl(storageAuth, bucketName, jsonFileName);
-    const bodySignedUrl = await generateSignedUrl(storageAuth, bucketName, bodyFileName);
-    const wheelSignedUrl = await generateSignedUrl(storageAuth, bucketName, wheelFileName);
+    // Make specific files public using object ACLs (requires uniform bucket-level access disabled)
+    await makeFilePublic(storage, bucketName, jsonFileName);
+    await makeFilePublic(storage, bucketName, bodyFileName);
+    await makeFilePublic(storage, bucketName, wheelFileName);
 
     // Update spreadsheet with signed URLs
     const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
@@ -130,9 +130,9 @@ export default async function handler(req, res) {
       email,
       teamName,
       carName,
-      bodySignedUrl,
-      wheelSignedUrl,
-      jsonSignedUrl
+      `https://storage.googleapis.com/${bucketName}/${bodyFileName}`,
+      `https://storage.googleapis.com/${bucketName}/${wheelFileName}`,
+      `https://storage.googleapis.com/${bucketName}/${jsonFileName}`
     ]);
 
     return res.status(200).json({ message: 'Submission successful' });

@@ -11,12 +11,18 @@ export default async function handler(req, res) {
   }
 
   try {
+    console.log('Starting race-entries API call with params:', { season, racenumber });
+
     const serviceAccountKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
     if (!serviceAccountKey) {
+      console.error('GOOGLE_SERVICE_ACCOUNT_KEY not set');
       throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY not set');
     }
 
+    console.log('Parsing service account credentials...');
     const credentials = JSON.parse(Buffer.from(serviceAccountKey, 'base64').toString('utf8'));
+    console.log('Service account email:', credentials.client_email);
+
     const { JWT } = await import('google-auth-library');
     const { google } = await import('googleapis');
 
@@ -28,8 +34,10 @@ export default async function handler(req, res) {
 
     const sheets = google.sheets({ version: 'v4', auth });
     const spreadsheetId = process.env.GOOGLE_SHEETS_SUBMISSIONS_SPREADSHEET_ID;
+    console.log('Target spreadsheet ID:', spreadsheetId);
 
     if (!spreadsheetId) {
+      console.error('GOOGLE_SHEETS_SUBMISSIONS_SPREADSHEET_ID environment variable not set');
       throw new Error('GOOGLE_SHEETS_SUBMISSIONS_SPREADSHEET_ID not set');
     }
 

@@ -39,14 +39,18 @@ window.CRAZY_RACES_WHEEL_H = WHEEL_H;
   // Fetch race information from Google Sheets
   async function loadRaceInfo() {
     try {
+      console.log('Loading race info from API...');
       const response = await fetch('/api/race-info');
       const data = await response.json();
+      console.log('Race info API response:', data);
 
       if (data.raceInfo) {
         const race = data.raceInfo;
         raceDeadline = new Date(race.racedeadline);
+        console.log('Parsed race deadline:', raceDeadline);
 
         // Update header with race name and deadline
+        console.log('nextRaceEl element:', nextRaceEl);
         if (nextRaceEl) {
           const datePart = fmtDate.format(raceDeadline);
           const timePart = raceDeadline.toLocaleTimeString('en-GB', {
@@ -54,7 +58,11 @@ window.CRAZY_RACES_WHEEL_H = WHEEL_H;
             minute: '2-digit',
             timeZone: 'UTC'
           });
-          nextRaceEl.textContent = `${race.racename} - ${datePart} ${timePart} GMT`;
+          const newText = `${race.racename} - ${datePart} ${timePart} GMT`;
+          console.log('Setting nextRaceEl text to:', newText);
+          nextRaceEl.textContent = newText;
+        } else {
+          console.error('nextRaceEl not found!');
         }
 
         // Update page title with race info
@@ -62,6 +70,7 @@ window.CRAZY_RACES_WHEEL_H = WHEEL_H;
 
         updateCountdown();
       } else {
+        console.log('No race info in API response');
         // Show "No race data available" if no race info
         setNoRaceData();
       }

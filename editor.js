@@ -325,8 +325,13 @@ const TAB_TIPS = {
 // ============================
 // RENDERING
 // ============================
-function renderBodyComposite() {
-  drawSubtleGrid(bodyCtx, BODY_W, BODY_H);
+function renderBodyComposite(includeGrid = true) {
+  // Clear the canvas first
+  bodyCtx.clearRect(0, 0, BODY_W, BODY_H);
+
+  if (includeGrid) {
+    drawSubtleGrid(bodyCtx, BODY_W, BODY_H);
+  }
 
   bodyCtx.drawImage(bodyArtCanvas, bodyOffsetX, bodyOffsetY);
 
@@ -690,7 +695,7 @@ ui.bodyCanvas.onpointermove = (e) => {
   if (currentTab === "body" && currentTool === "pen" && isDrawing) {
     strokePoints.push(toBodyLocal(globalPos));
 
-    renderBodyComposite();
+    renderBodyComposite(false); // Don't redraw grid during drawing
 
     const previewPoints = strokePoints.map(p => ({ x: p.x + bodyOffsetX, y: p.y + bodyOffsetY }));
     strokePreview(bodyCtx, previewPoints, currentPenColor, bodyPenWidth);

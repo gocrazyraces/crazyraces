@@ -45,10 +45,15 @@ export default async function handler(req, res) {
       throw new Error('GOOGLE_SHEETS_SPREADSHEET_ID not set');
     }
 
-    // Read submissions from Sheet1 starting from row 100 (where submissions are stored)
+    // Read submissions from separate submissions spreadsheet
+    const submissionsSpreadsheetId = process.env.GOOGLE_SHEETS_SUBMISSIONS_SPREADSHEET_ID;
+    if (!submissionsSpreadsheetId) {
+      throw new Error('GOOGLE_SHEETS_SUBMISSIONS_SPREADSHEET_ID not set');
+    }
+
     const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: spreadsheetId,
-      range: 'Sheet1!A100:J', // Submissions start from row 100: season to racerwheelimagepath
+      spreadsheetId: submissionsSpreadsheetId,
+      range: 'Sheet1!A:J', // All submissions in Sheet1
     });
 
     const rows = response.data.values || [];

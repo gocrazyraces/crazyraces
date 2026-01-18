@@ -239,8 +239,13 @@ export default async function handler(req, res) {
       throw new Error('GOOGLE_SHEETS_SPREADSHEET_ID environment variable not set');
     }
 
-    // Submissions go to Sheet1 (same sheet as race info) starting from row 100
-    await appendToSheet(sheets, spreadsheetId, 'Sheet1!A100:J', [
+    // Submissions go to separate submissions spreadsheet
+    const submissionsSpreadsheetId = process.env.GOOGLE_SHEETS_SUBMISSIONS_SPREADSHEET_ID;
+    if (!submissionsSpreadsheetId) {
+      throw new Error('GOOGLE_SHEETS_SUBMISSIONS_SPREADSHEET_ID environment variable not set');
+    }
+
+    await appendToSheet(sheets, submissionsSpreadsheetId, 'Sheet1!A:J', [
       season,                                    // A: season
       race,                                      // B: racenumber
       email,                                     // C: raceremail

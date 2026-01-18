@@ -106,10 +106,11 @@ export default async function handler(req, res) {
     await uploadToGCS(storage, bucketName, bodyFileName, Buffer.from(bodyImageData.split('base64,')[1], 'base64'), 'image/png');
     await uploadToGCS(storage, bucketName, wheelFileName, Buffer.from(wheelImageData.split('base64,')[1], 'base64'), 'image/png');
 
-    // Make files public
-    await makeFilePublic(storage, bucketName, jsonFileName);
-    await makeFilePublic(storage, bucketName, bodyFileName);
-    await makeFilePublic(storage, bucketName, wheelFileName);
+    // Note: Files are uploaded but not made public due to uniform bucket-level access
+    // You'll need to either:
+    // 1. Make the bucket public, or
+    // 2. Disable uniform bucket-level access, or
+    // 3. Use signed URLs (more complex)
 
     // Update spreadsheet
     const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;

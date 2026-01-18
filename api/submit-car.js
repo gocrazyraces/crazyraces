@@ -27,10 +27,10 @@ export async function getRaceInfo() {
     const sheets = google.sheets({ version: 'v4', auth });
     const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
 
-    // Read race configuration from Sheet2 (assuming race config is in Sheet2)
+    // Read race configuration from Sheet1 (race info is in the main sheet)
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: spreadsheetId,
-      range: 'Sheet2!A:G', // Adjust range based on your race config columns
+      range: 'Sheet1!A:G', // Race info columns: season, racenumber, racename, racedeadline, racedescription, raceimage, racestatus
     });
 
     const rows = response.data.values || [];
@@ -204,7 +204,8 @@ export default async function handler(req, res) {
       throw new Error('GOOGLE_SHEETS_SPREADSHEET_ID environment variable not set');
     }
 
-    await appendToSheet(sheets, spreadsheetId, [
+    // Submissions go to Sheet2
+    await appendToSheet(sheets, spreadsheetId, 'Sheet2!A:H', [
       season,
       race,
       email,
@@ -263,9 +264,7 @@ async function makeFilePublic(storage, bucketName, fileName) {
   await storage.objectAccessControls.insert(request);
 }
 
-async function appendToSheet(sheets, spreadsheetId, values) {
-  const range = 'Sheet1!A:H'; // Assuming columns A to H
-
+async function appendToSheet(sheets, spreadsheetId, range, values) {
   await sheets.spreadsheets.values.append({
     spreadsheetId: spreadsheetId,
     range: range,

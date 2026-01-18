@@ -65,25 +65,6 @@
     <!-- LEFT TOOLBAR -->
     <aside id="toolbar" aria-label="Car designer controls">
 
-      <!-- Step tabs -->
-      <div class="tabs" role="tablist" aria-label="Editor steps">
-        <button id="bodyTab" class="tab active" role="tab" aria-selected="true">
-          <span class="step">1</span> Body
-        </button>
-        <button id="wheelTab" class="tab" role="tab" aria-selected="false">
-          <span class="step">2</span> Wheel
-        </button>
-        <button id="placementTab" class="tab" role="tab" aria-selected="false">
-          <span class="step">3</span> Wheels
-        </button>
-        <button id="propertiesTab" class="tab" role="tab" aria-selected="false">
-          <span class="step">4</span> Performance
-        </button>
-        <button id="submitTab" class="tab" role="tab" aria-selected="false">
-          <span class="step">5</span> Submit
-        </button>
-      </div>
-
       <!-- =======================
            BODY CONTROLS
            Buttons simplified: Draw / Move / Upload image / Clear
@@ -303,6 +284,11 @@
         </button>
       </div>
 
+      <!-- Instructions area -->
+      <div id="instructionsArea" class="instructions-area">
+        <p id="instructionsText">Draw the car body or upload a PNG with transparency.</p>
+      </div>
+
       <div class="workspace-inner">
         <!-- Canvas content (shown for tabs 1,2,3) -->
         <div id="canvasContent" class="workspace-content active">
@@ -393,9 +379,7 @@
               <p id="submitStatus" class="submit-status" aria-live="polite"></p>
             </div>
 
-            <div class="note">
-              Endpoint configured in <code>script.js</code>.
-            </div>
+
           </div>
         </div>
       </div>

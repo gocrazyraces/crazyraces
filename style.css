@@ -175,9 +175,9 @@ body {
 
 .workspace-tabs {
   display: flex;
-  gap: 10px;
-  padding: 18px 18px 0 18px;
-  border-bottom: 1px solid var(--border);
+  background: var(--paper);
+  border-bottom: 2px solid var(--border);
+  position: relative;
 }
 
 .workspace-tab {
@@ -185,24 +185,52 @@ body {
   font-family: var(--ui-font);
   font-weight: 900;
   font-size: 14px;
-  border: 1px solid rgba(59, 2, 115, 0.18);
-  background: #fff;
-  color: #1a1a1a;
-  border-radius: var(--radius-sm);
-  padding: 12px 10px;
+  background: transparent;
+  color: #666;
+  border: none;
+  border-bottom: 3px solid transparent;
+  padding: 16px 10px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: transform 0.05s ease, background 0.12s ease;
+  transition: all 0.15s ease;
+  position: relative;
 }
 
-.workspace-tab:hover { transform: translateY(-1px); }
+.workspace-tab:hover {
+  color: #333;
+  background: rgba(60, 54, 217, 0.05);
+}
 
 .workspace-tab.active {
-  border-color: rgba(59, 2, 115, 0.28);
+  color: var(--blue);
+  border-bottom-color: var(--blue);
   background: rgba(60, 54, 217, 0.08);
+}
+
+.workspace-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--blue);
+}
+
+.instructions-area {
+  padding: 12px 18px;
+  background: rgba(60, 54, 217, 0.03);
+  border-bottom: 1px solid var(--border);
+}
+
+.instructions-area p {
+  margin: 0;
+  color: #555;
+  font-size: 14px;
+  line-height: 1.4;
 }
 
 .workspace-inner {

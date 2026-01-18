@@ -45,6 +45,9 @@ const ui = {
   propertiesContent: document.getElementById("propertiesContent"),
   submitContent: document.getElementById("submitContent"),
 
+  // Instructions area
+  instructionsText: document.getElementById("instructionsText"),
+
   // Canvases
   bodyCanvas: document.getElementById("bodyCanvas"),
   wheelCanvas: document.getElementById("wheelCanvas"),
@@ -188,7 +191,9 @@ const TAB_TIPS = {
 };
 
 function setTips(tabName) {
-  if (ui.tipsText) ui.tipsText.textContent = TAB_TIPS[tabName] ?? "";
+  const tipText = TAB_TIPS[tabName] ?? "";
+  if (ui.tipsText) ui.tipsText.textContent = tipText;
+  if (ui.instructionsText) ui.instructionsText.textContent = tipText;
 }
 
 // ============================

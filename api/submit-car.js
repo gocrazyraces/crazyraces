@@ -30,8 +30,20 @@ export default async function handler(req, res) {
     }
 
     // Authenticate with Google
+    const serviceAccountKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+    if (!serviceAccountKey) {
+      throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY environment variable is not set');
+    }
+
+    let credentials;
+    try {
+      credentials = JSON.parse(serviceAccountKey);
+    } catch (parseError) {
+      throw new Error(`Invalid JSON in GOOGLE_SERVICE_ACCOUNT_KEY: ${parseError.message}`);
+    }
+
     const auth = new google.auth.GoogleAuth({
-      credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY),
+      credentials: credentials,
       scopes: ['https://www.googleapis.com/auth/cloud-platform', 'https://www.googleapis.com/auth/spreadsheets']
     });
 

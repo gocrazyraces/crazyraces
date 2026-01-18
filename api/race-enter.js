@@ -108,9 +108,6 @@ export default async function handler(req, res) {
       projectId: credentials.project_id
     });
 
-    // Hardcoded for now - can be made configurable
-    const season = 1; // Store as integer
-    const race = 1;   // Store as integer
     const bucketName = process.env.GOOGLE_CLOUD_STORAGE_BUCKET;
     if (!bucketName) {
       throw new Error('GOOGLE_CLOUD_STORAGE_BUCKET environment variable not set');
@@ -159,7 +156,7 @@ export default async function handler(req, res) {
       teamName,                                  // D: racerteamname
       carName,                                   // E: racercarname
       'submitted',                               // F: racerstatus (default to submitted)
-      `https://storage.googleapis.com/${bucketName}/${bodyFileName}`,  // G: racerimagepath
+      `https://storage.googleapis.com/${bucketName}/${bodyFileName}`,  // G: racerimagepath (legacy)
       `https://storage.googleapis.com/${bucketName}/${jsonFileName}`,  // H: racerjsonpath
       `https://storage.googleapis.com/${bucketName}/${bodyFileName}`,  // I: racerbodyimagepath
       `https://storage.googleapis.com/${bucketName}/${wheelFileName}`  // J: racerwheelimagepath

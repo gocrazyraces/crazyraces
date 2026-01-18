@@ -1,6 +1,6 @@
-// Use Google Drive with shared drives for file storage and Google Sheets for data
+// Use Google Cloud Storage for file storage and Google Sheets for data
 import { google } from 'googleapis';
-import { Readable } from 'stream';
+import { Storage } from '@google-cloud/storage';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -32,33 +32,24 @@ export default async function handler(req, res) {
     // Authenticate with Google
     const auth = new google.auth.GoogleAuth({
       credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY),
-      scopes: ['https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/spreadsheets']
+      scopes: ['https://www.googleapis.com/auth/cloud-platform', 'https://www.googleapis.com/auth/spreadsheets']
     });
 
-    const drive = google.drive({ version: 'v3', auth });
+    const storage = new Storage({ auth });
     const sheets = google.sheets({ version: 'v4', auth });
 
     // Hardcoded for now - can be made configurable
     const season = 'season1';
     const race = 'race1';
-
-    // Use shared drive (service accounts can upload to shared drives)
-    const sharedDriveId = process.env.GOOGLE_SHARED_DRIVE_ID;
-    if (!sharedDriveId) {
-      throw new Error('GOOGLE_SHARED_DRIVE_ID environment variable not set');
+    const bucketName = process.env.GOOGLE_CLOUD_STORAGE_BUCKET;
+    if (!bucketName) {
+      throw new Error('GOOGLE_CLOUD_STORAGE_BUCKET environment variable not set');
     }
 
-    // Find or create assets folder in shared drive
-    let assetsFolderId = await findOrCreateFolderInSharedDrive(drive, 'assets', sharedDriveId);
+    const bucket = storage.bucket(bucketName);
 
-    // Find or create season folder
-    let seasonFolderId = await findOrCreateFolder(drive, season, assetsFolderId);
-
-    // Find or create race folder
-    let raceFolderId = await findOrCreateFolder(drive, race, seasonFolderId);
-
-    // Create email-specific folder
-    let emailFolderId = await findOrCreateFolder(drive, email, raceFolderId);
+    // Create folder-like structure in GCS (using prefixes)
+    const basePath = `${season}/${race}/${email}/`;
 
     // Upload files
     const jsonData = JSON.stringify({
@@ -70,9 +61,18 @@ export default async function handler(req, res) {
       wheelPositions
     }, null, 2);
 
-    const jsonFile = await uploadFile(drive, 'car.json', jsonData, 'application/json', emailFolderId);
-    const bodyPngFile = await uploadFile(drive, 'body.png', Buffer.from(bodyImageData.split('base64,')[1], 'base64'), 'image/png', emailFolderId);
-    const wheelPngFile = await uploadFile(drive, 'wheel.png', Buffer.from(wheelImageData.split('base64,')[1], 'base64'), 'image/png', emailFolderId);
+    const jsonFileName = `${basePath}car.json`;
+    const bodyFileName = `${basePath}body.png`;
+    const wheelFileName = `${basePath}wheel.png`;
+
+    await uploadToGCS(bucket, jsonFileName, Buffer.from(jsonData), 'application/json');
+    await uploadToGCS(bucket, bodyFileName, Buffer.from(bodyImageData.split('base64,')[1], 'base64'), 'image/png');
+    await uploadToGCS(bucket, wheelFileName, Buffer.from(wheelImageData.split('base64,')[1], 'base64'), 'image/png');
+
+    // Make files public
+    await bucket.file(jsonFileName).makePublic();
+    await bucket.file(bodyFileName).makePublic();
+    await bucket.file(wheelFileName).makePublic();
 
     // Update spreadsheet
     const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
@@ -82,9 +82,9 @@ export default async function handler(req, res) {
       email,
       teamName,
       carName,
-      `https://drive.google.com/file/d/${bodyPngFile.data.id}/view`,
-      `https://drive.google.com/file/d/${wheelPngFile.data.id}/view`,
-      `https://drive.google.com/file/d/${jsonFile.data.id}/view`
+      `https://storage.googleapis.com/${bucketName}/${bodyFileName}`,
+      `https://storage.googleapis.com/${bucketName}/${wheelFileName}`,
+      `https://storage.googleapis.com/${bucketName}/${jsonFileName}`
     ]);
 
     return res.status(200).json({ message: 'Submission successful' });
@@ -95,86 +95,14 @@ export default async function handler(req, res) {
   }
 }
 
-async function findOrCreateFolder(drive, name, parentId) {
-  // Search for existing folder
-  const query = `name='${name}' and mimeType='application/vnd.google-apps.folder' and '${parentId}' in parents and trashed=false`;
-  const response = await drive.files.list({
-    q: query,
-    supportsAllDrives: true,
-    includeItemsFromAllDrives: true,
-    fields: 'files(id, name)'
-  });
-
-  if (response.data.files.length > 0) {
-    return response.data.files[0].id;
-  }
-
-  // Create new folder
-  const folderMetadata = {
-    name: name,
-    mimeType: 'application/vnd.google-apps.folder',
-    parents: [parentId]
-  };
-
-  const folder = await drive.files.create({
-    resource: folderMetadata,
-    supportsAllDrives: true,
-    fields: 'id'
-  });
-
-  return folder.data.id;
-}
-
-async function findOrCreateFolderInSharedDrive(drive, name, driveId) {
-  // Search for existing folder in shared drive
-  const query = `name='${name}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
-  const response = await drive.files.list({
-    q: query,
-    driveId: driveId,
-    corpora: 'drive',
-    supportsAllDrives: true,
-    includeItemsFromAllDrives: true,
-    fields: 'files(id, name)'
-  });
-
-  if (response.data.files.length > 0) {
-    return response.data.files[0].id;
-  }
-
-  // Create new folder in shared drive
-  const folderMetadata = {
-    name: name,
-    mimeType: 'application/vnd.google-apps.folder'
-  };
-
-  const folder = await drive.files.create({
-    resource: folderMetadata,
-    supportsAllDrives: true,
-    fields: 'id'
-  });
-
-  return folder.data.id;
-}
-
-async function uploadFile(drive, name, content, mimeType, parentId) {
-  const fileMetadata = {
-    name: name,
-    parents: [parentId]
-  };
-
-  const buffer = typeof content === 'string' ? Buffer.from(content) : content;
-  const stream = Readable.from(buffer);
-
-  const media = {
-    mimeType: mimeType,
-    body: stream
-  };
-
-  return await drive.files.create({
-    resource: fileMetadata,
-    media: media,
-    supportsAllDrives: true,
-    fields: 'id'
+async function uploadToGCS(bucket, fileName, buffer, contentType) {
+  const file = bucket.file(fileName);
+  await file.save(buffer, {
+    contentType: contentType,
+    public: true,
+    metadata: {
+      cacheControl: 'public, max-age=31536000',
+    },
   });
 }
 

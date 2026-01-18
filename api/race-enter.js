@@ -5,7 +5,7 @@ import { google } from 'googleapis';
 // ============================
 // RACE INFO API (shared)
 // ============================
-export { getRaceInfo, validateActiveRace } from '../utils/race-utils.js';
+export { getRaceInfo, validateActiveRace } from '../lib/race-utils.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -22,7 +22,7 @@ export default async function handler(req, res) {
 
   try {
     // Validate that the season/race corresponds to an active race
-    const { validateActiveRace } = await import('../utils/race-utils.js');
+    const { validateActiveRace } = await import('../lib/race-utils.js');
     const validation = await validateActiveRace(season, race);
 
     if (!validation.valid) {

@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { getRaceInfo } = await import('../utils/race-utils.js');
+    const { getRaceInfo } = await import('../lib/race-utils.js');
     const raceInfo = await getRaceInfo();
     return res.status(200).json({ raceInfo });
 

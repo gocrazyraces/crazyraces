@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { createGoogleServices } = await import('../utils/google-auth.js');
+    const { createGoogleServices } = await import('../lib/google-auth.js');
     const { sheets, storageClient: storage } = await createGoogleServices(['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/cloud-platform']);
 
     const bucketName = process.env.GOOGLE_CLOUD_STORAGE_BUCKET;

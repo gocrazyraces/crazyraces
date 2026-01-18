@@ -80,6 +80,36 @@ export default async function handler(req, res) {
     // Hardcoded for now - can be made configurable
     const season = 'season1';
     const race = 'race1';
+    const bucketName = process.env.GOOGLE_CLOUD_STORAGE_BUCKET;
+    if (!bucketName) {
+      throw new Error('GOOGLE_CLOUD_STORAGE_BUCKET environment variable not set');
+    }
+
+    // Create folder-like structure in GCS (using prefixes)
+    const basePath = `${season}/${race}/${email}/`;
+
+    // Upload files
+    const jsonData = JSON.stringify({
+      carName,
+      teamName,
+      email,
+      acceleration,
+      topSpeed,
+      wheelPositions
+    }, null, 2);
+
+    const jsonFileName = `${basePath}car.json`;
+    const bodyFileName = `${basePath}body.png`;
+    const wheelFileName = `${basePath}wheel.png`;
+
+    await uploadToGCS(storage, bucketName, jsonFileName, Buffer.from(jsonData), 'application/json');
+    await uploadToGCS(storage, bucketName, bodyFileName, Buffer.from(bodyImageData.split('base64,')[1], 'base64'), 'image/png');
+    await uploadToGCS(storage, bucketName, wheelFileName, Buffer.from(wheelImageData.split('base64,')[1], 'base64'), 'image/png');
+
+    // Make files public
+    await makeFilePublic(storage, bucketName, jsonFileName);
+    await makeFilePublic(storage, bucketName, bodyFileName);
+    await makeFilePublic(storage, bucketName, wheelFileName);
 
     // Update spreadsheet
     const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
@@ -93,9 +123,9 @@ export default async function handler(req, res) {
       email,
       teamName,
       carName,
-      'body_image_url_placeholder',
-      'wheel_image_url_placeholder',
-      'json_url_placeholder'
+      `https://storage.googleapis.com/${bucketName}/${bodyFileName}`,
+      `https://storage.googleapis.com/${bucketName}/${wheelFileName}`,
+      `https://storage.googleapis.com/${bucketName}/${jsonFileName}`
     ]);
 
     return res.status(200).json({ message: 'Submission successful' });
@@ -106,15 +136,30 @@ export default async function handler(req, res) {
   }
 }
 
-async function uploadToGCS(bucket, fileName, buffer, contentType) {
-  const file = bucket.file(fileName);
-  await file.save(buffer, {
-    contentType: contentType,
-    public: true,
-    metadata: {
-      cacheControl: 'public, max-age=31536000',
-    },
-  });
+async function uploadToGCS(storage, bucketName, fileName, buffer, contentType) {
+  const request = {
+    bucket: bucketName,
+    name: fileName,
+    media: {
+      mimeType: contentType,
+      body: buffer
+    }
+  };
+
+  await storage.objects.insert(request);
+}
+
+async function makeFilePublic(storage, bucketName, fileName) {
+  const request = {
+    bucket: bucketName,
+    object: fileName,
+    resource: {
+      entity: 'allUsers',
+      role: 'READER'
+    }
+  };
+
+  await storage.objectAccessControls.insert(request);
 }
 
 async function appendToSheet(sheets, spreadsheetId, values) {

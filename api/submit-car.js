@@ -79,6 +79,11 @@ export async function getRaceInfo() {
       })
       .sort((a, b) => parseDate(a.racedeadline) - parseDate(b.racedeadline))[0];
 
+    // Convert the deadline to ISO format for frontend
+    if (nextRace) {
+      nextRace.racedeadline = parseDate(nextRace.racedeadline).toISOString();
+    }
+
     console.log('Next race found:', nextRace); // Debug log
     const result = nextRace || null;
 

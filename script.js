@@ -111,10 +111,17 @@ window.CRAZY_RACES_WHEEL_H = 256;
     countdownEl.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s to go!`;
   }
 
-  // Load race info on page load
+  // Load race info on page load (with cache busting)
   loadRaceInfo();
   // Update countdown every second
   setInterval(updateCountdown, 1000);
+
+  // Debug: Check API response directly
+  console.log('Checking race API...');
+  fetch('/api/race-info')
+    .then(r => r.json())
+    .then(data => console.log('API Response:', data))
+    .catch(err => console.error('API Error:', err));
 
   // Footer year
   const yearEl = document.getElementById("footerYear");

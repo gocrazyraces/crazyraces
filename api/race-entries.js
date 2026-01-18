@@ -53,7 +53,7 @@ export default async function handler(req, res) {
 
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: submissionsSpreadsheetId,
-      range: 'Sheet1!A:J', // All submissions in Sheet1
+      range: 'Sheet1!A:H', // All submissions in Sheet1 (8 columns)
     });
 
     const rows = response.data.values || [];

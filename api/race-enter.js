@@ -123,14 +123,27 @@ export default async function handler(req, res) {
     // Generate composite preview image
     const previewBuffer = await generateCompositePreview(bodyImageData, wheelImageData, wheelPositions);
 
-    // Upload files
+    // Create new car.json structure
     const jsonData = JSON.stringify({
+      season,
+      race,
       carName,
       teamName,
       email,
-      acceleration,
-      topSpeed,
-      wheelPositions
+      props: {
+        acceleration,
+        topSpeed
+      },
+      wheels: wheelPositions.map(wheel => ({
+        ...wheel,
+        imagePath: `https://storage.googleapis.com/${bucketName}/${wheelFileName}` // Same path for all wheels for now
+      })),
+      widgets: [], // For future extensibility
+      imagePaths: {
+        body: `https://storage.googleapis.com/${bucketName}/${bodyFileName}`,
+        wheel: `https://storage.googleapis.com/${bucketName}/${wheelFileName}`,
+        preview: `https://storage.googleapis.com/${bucketName}/${previewFileName}`
+      }
     }, null, 2);
 
     const jsonFileName = `${basePath}car.json`;
@@ -158,7 +171,7 @@ export default async function handler(req, res) {
       throw new Error('GOOGLE_SHEETS_SUBMISSIONS_SPREADSHEET_ID environment variable not set');
     }
 
-    await appendToSheet(sheets, submissionsSpreadsheetId, 'Sheet1!A:J', [
+    await appendToSheet(sheets, submissionsSpreadsheetId, 'Sheet1!A:H', [
       season,                                    // A: season
       race,                                      // B: racenumber
       email,                                     // C: raceremail
@@ -166,9 +179,7 @@ export default async function handler(req, res) {
       carName,                                   // E: racercarname
       'submitted',                               // F: racerstatus (default to submitted)
       `https://storage.googleapis.com/${bucketName}/${previewFileName}`, // G: racerimagepath (composite preview)
-      `https://storage.googleapis.com/${bucketName}/${jsonFileName}`,    // H: racerjsonpath
-      `https://storage.googleapis.com/${bucketName}/${bodyFileName}`,    // I: racerbodyimagepath
-      `https://storage.googleapis.com/${bucketName}/${wheelFileName}`    // J: racerwheelimagepath
+      `https://storage.googleapis.com/${bucketName}/${jsonFileName}`     // H: racerjsoncarpath (car.json)
     ]);
 
     return res.status(200).json({ message: 'Submission successful' });

@@ -915,13 +915,14 @@ async function submitCar() {
     });
 
     if (!resp.ok) {
-      ui.submitStatus.textContent = "Submission failed (server returned an error).";
+      const errorText = await resp.text();
+      ui.submitStatus.textContent = `Submission failed: ${errorText}`;
       return;
     }
 
     ui.submitStatus.textContent = "✅ Submission successful!";
   } catch (err) {
-    ui.submitStatus.textContent = "Submission failed (network error).";
+    ui.submitStatus.textContent = `Submission failed (network error): ${err.message}`;
   }
 }
 ui.submitBtn.onclick = submitCar;

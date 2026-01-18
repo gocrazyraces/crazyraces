@@ -72,9 +72,8 @@ export default async function handler(req, res) {
       scopes: ['https://www.googleapis.com/auth/cloud-platform', 'https://www.googleapis.com/auth/spreadsheets']
     });
 
-    // Test authentication
+    // Test authentication by trying to get project ID
     try {
-      const authClient = await auth.getClient();
       const projectId = await auth.getProjectId();
       console.log('Authentication successful, project ID:', projectId);
     } catch (authError) {

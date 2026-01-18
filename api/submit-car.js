@@ -116,21 +116,22 @@ export default async function handler(req, res) {
     // Files remain private - access controlled by bucket IAM permissions
     // Only users granted Storage Object Viewer role can access them
 
-    // Update spreadsheet with GCS URLs (accessible only to authorized users)
+    // Update spreadsheet with car submission data
     const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
     if (!spreadsheetId) {
       throw new Error('GOOGLE_SHEETS_SPREADSHEET_ID environment variable not set');
     }
 
+    // Note: Spreadsheet is now "rapidracers-entries-live" with columns:
+    // season, racenumber, racename, racedeadline, racedescription, raceimage, racestatus
     await appendToSheet(sheets, spreadsheetId, [
       season,
       race,
-      email,
-      teamName,
-      carName,
-      `https://storage.googleapis.com/${bucketName}/${bodyFileName}`,
-      `https://storage.googleapis.com/${bucketName}/${wheelFileName}`,
-      `https://storage.googleapis.com/${bucketName}/${jsonFileName}`
+      'Car Submission', // racename placeholder
+      new Date().toISOString(), // racedeadline placeholder
+      `Car submission: ${carName} by ${teamName} (${email})`, // racedescription
+      `https://storage.googleapis.com/${bucketName}/${bodyFileName}`, // raceimage (using body image)
+      'submitted' // racestatus
     ]);
 
     return res.status(200).json({ message: 'Submission successful' });

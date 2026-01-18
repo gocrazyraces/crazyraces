@@ -40,19 +40,33 @@ export default async function handler(req, res) {
     });
 
     const rows = response.data.values || [];
-    console.log(`Race entries for season ${season}, race ${racenumber}:`, rows.length - 1, 'entries found');
+    console.log(`Race entries for season ${season}, race ${racenumber}:`, rows.length - 1, 'total entries found');
+    console.log('All entries:', rows.slice(1).map(row => ({
+      season: row[0],
+      racenumber: row[1],
+      email: row[2],
+      teamName: row[3],
+      carName: row[4],
+      status: row[5]
+    })));
 
     // Parse entries and filter for approved ones in this race
     const entries = rows.slice(1)
-      .filter(row => row[0] === season && row[1] === racenumber && row[5] === 'approved')
+      .filter(row => {
+        const rowSeason = row[0];
+        const rowRace = row[1];
+        const rowStatus = row[5];
+        const matches = rowSeason === season && rowRace === racenumber && rowStatus === 'approved';
+        console.log(`Entry check: season=${rowSeason}(${rowSeason === season}), race=${rowRace}(${rowRace === racenumber}), status=${rowStatus}(${rowStatus === 'approved'}) → ${matches}`);
+        return matches;
+      })
       .map(row => ({
         teamName: row[3],  // racerteamname
         carName: row[4]    // racercarname
       }));
 
     const entryCount = entries.length;
-
-    console.log(`Approved entries: ${entryCount}`);
+    console.log(`Final approved entries: ${entryCount}`, entries);
 
     return res.status(200).json({
       season,

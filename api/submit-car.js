@@ -42,6 +42,20 @@ export default async function handler(req, res) {
       throw new Error(`Invalid JSON in GOOGLE_SERVICE_ACCOUNT_KEY: ${parseError.message}`);
     }
 
+    // Validate credentials object
+    if (!credentials.type || credentials.type !== 'service_account') {
+      throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY is not a valid service account key (missing or wrong type)');
+    }
+    if (!credentials.project_id) {
+      throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY is missing project_id');
+    }
+    if (!credentials.private_key) {
+      throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY is missing private_key');
+    }
+    if (!credentials.client_email) {
+      throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY is missing client_email');
+    }
+
     const auth = new google.auth.GoogleAuth({
       credentials: credentials,
       scopes: ['https://www.googleapis.com/auth/cloud-platform', 'https://www.googleapis.com/auth/spreadsheets']

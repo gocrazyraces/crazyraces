@@ -2,7 +2,7 @@
 module.exports = async function handler(req, res) {
   const { type } = req.query;
 
-  //if (type === 'spreadsheet') {
+  if (type === 'spreadsheet') {
     // Test spreadsheet connection
     try {
       const { createGoogleServices } = await import('../lib/google-auth.js');
@@ -54,9 +54,8 @@ module.exports = async function handler(req, res) {
   }
 
   return res.status(200).json({
-    message: 'API routes are working testing 123!',
+    message: 'API routes are working - redeploy test!',
     timestamp: new Date().toISOString(),
     method: req.method,
     url: req.url
   });
-//}

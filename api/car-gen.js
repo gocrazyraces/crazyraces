@@ -111,9 +111,9 @@ async function generateCarBody(width, height, random) {
     // Sports car style - low and wide
     svgBody += `
       <!-- Main body - sports car -->
-      <ellipse cx="${centerX}" cy="${bodyY}" rx="${width * (0.4 + random() * 0.1)}" ry="${height * (0.15 + random() * 0.05)}" fill="url(#bodyGradient)" stroke="#333" stroke-width="3"/>
-      <!-- Hood scoop -->
-      <ellipse cx="${centerX}" cy="${bodyY - height * 0.05}" rx="${width * 0.15}" ry="${height * 0.03}" fill="${colors.accent}" opacity="0.8"/>
+      <path d="M ${centerX - width * 0.4} ${bodyY} Q ${centerX - width * 0.2} ${bodyY - height * 0.08} ${centerX} ${bodyY - height * 0.03} Q ${centerX + width * 0.2} ${bodyY - height * 0.08} ${centerX + width * 0.4} ${bodyY} L ${centerX + width * 0.35} ${bodyY + height * 0.02} L ${centerX - width * 0.35} ${bodyY + height * 0.02} Z" fill="url(#bodyGradient)" stroke="#333" stroke-width="3"/>
+      <!-- Hood -->
+      <path d="M ${centerX - width * 0.3} ${bodyY - height * 0.02} Q ${centerX} ${bodyY - height * 0.05} ${centerX + width * 0.3} ${bodyY - height * 0.02} L ${centerX + width * 0.3} ${bodyY} L ${centerX - width * 0.3} ${bodyY} Z" fill="${colors.accent}" opacity="0.8"/>
       <!-- Roof - low profile -->
       <rect x="${centerX - width * 0.2}" y="${bodyY - height * 0.08}" width="${width * 0.4}" height="${height * 0.12}" rx="${width * 0.03}" fill="url(#roofGradient)" stroke="#333" stroke-width="2"/>`;
 
@@ -139,7 +139,7 @@ async function generateCarBody(width, height, random) {
     // Sedan style - classic proportions
     svgBody += `
       <!-- Main body - sedan -->
-      <ellipse cx="${centerX}" cy="${bodyY}" rx="${width * 0.38}" ry="${height * 0.18}" fill="url(#bodyGradient)" stroke="#333" stroke-width="3"/>
+      <path d="M ${centerX - width * 0.38} ${bodyY} L ${centerX - width * 0.38} ${bodyY - height * 0.1} Q ${centerX - width * 0.2} ${bodyY - height * 0.15} ${centerX} ${bodyY - height * 0.12} Q ${centerX + width * 0.2} ${bodyY - height * 0.15} ${centerX + width * 0.38} ${bodyY - height * 0.1} L ${centerX + width * 0.38} ${bodyY} Z" fill="url(#bodyGradient)" stroke="#333" stroke-width="3"/>
       <!-- Trunk -->
       <rect x="${centerX + width * 0.2}" y="${bodyY - height * 0.08}" width="${width * 0.15}" height="${height * 0.12}" rx="${width * 0.02}" fill="${colors.secondary}" stroke="#333" stroke-width="1"/>
       <!-- Roof - standard -->

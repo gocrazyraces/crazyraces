@@ -55,9 +55,11 @@ async function generateCarBody(width, height, random) {
   const sharp = (await import('sharp')).default;
 
   // Randomize car design parameters
-  const bodyStyle = Math.floor(random() * 4); // 0-3 different styles
-  const colorScheme = Math.floor(random() * 5); // 0-4 color schemes
+  const bodyStyle = Math.floor(random() * 6); // 0-5 different styles
+  const colorScheme = Math.floor(random() * 10); // 0-9 color schemes
   const detailLevel = Math.floor(random() * 3); // 0-2 detail levels
+  const pattern = Math.floor(random() * 4); // 0=none, 1=stripes, 2=flames, 3=checker
+  const accessories = Math.floor(random() * 3); // 0=none, 1=spoiler, 2=exhaust
 
   // Color schemes
   const colorSchemes = [
@@ -65,7 +67,12 @@ async function generateCarBody(width, height, random) {
     { primary: '#A8E6CF', secondary: '#FFD3A5', accent: '#FFAAA5' }, // Pastel
     { primary: '#667EEA', secondary: '#764BA2', accent: '#F093FB' }, // Purple gradient
     { primary: '#F093FB', secondary: '#F5576C', accent: '#4ECDC4' }, // Pink to coral
-    { primary: '#4ECDC4', secondary: '#44A08D', accent: '#096D57' }  // Green tones
+    { primary: '#4ECDC4', secondary: '#44A08D', accent: '#096D57' }, // Green tones
+    { primary: '#FF4500', secondary: '#FFD700', accent: '#000000' }, // Orange and gold
+    { primary: '#00FF00', secondary: '#008000', accent: '#FFFF00' }, // Lime green
+    { primary: '#FF1493', secondary: '#8A2BE2', accent: '#00FFFF' }, // Neon pink purple
+    { primary: '#DC143C', secondary: '#B22222', accent: '#F0E68C' }, // Crimson
+    { primary: '#20B2AA', secondary: '#5F9EA0', accent: '#F5DEB3' }  // Teal
   ];
 
   const colors = colorSchemes[colorScheme];
@@ -113,7 +120,7 @@ async function generateCarBody(width, height, random) {
       <!-- Roof - sloping -->
       <path d="M ${centerX - width * 0.25} ${bodyY - height * 0.05} L ${centerX - width * 0.15} ${bodyY - height * 0.15} L ${centerX + width * 0.15} ${bodyY - height * 0.15} L ${centerX + width * 0.25} ${bodyY - height * 0.05} Z" fill="url(#roofGradient)" stroke="#333" stroke-width="2"/>`;
 
-  } else {
+  } else if (bodyStyle === 3) {
     // Sedan style - classic proportions
     svgBody += `
       <!-- Main body - sedan -->
@@ -122,11 +129,52 @@ async function generateCarBody(width, height, random) {
       <rect x="${centerX + width * 0.2}" y="${bodyY - height * 0.08}" width="${width * 0.15}" height="${height * 0.12}" rx="${width * 0.02}" fill="${colors.secondary}" stroke="#333" stroke-width="1"/>
       <!-- Roof - standard -->
       <rect x="${centerX - width * 0.22}" y="${bodyY - height * 0.12}" width="${width * 0.44}" height="${height * 0.14}" rx="${width * 0.03}" fill="url(#roofGradient)" stroke="#333" stroke-width="2"/>`;
+
+  } else if (bodyStyle === 4) {
+    // Truck style - tall cab and long bed
+    svgBody += `
+      <!-- Main body - truck cab -->
+      <rect x="${centerX - width * 0.25}" y="${bodyY - height * 0.2}" width="${width * 0.3}" height="${height * 0.3}" rx="${width * 0.05}" fill="url(#bodyGradient)" stroke="#333" stroke-width="3"/>
+      <!-- Bed -->
+      <rect x="${centerX - width * 0.4}" y="${bodyY - height * 0.05}" width="${width * 0.5}" height="${height * 0.15}" rx="${width * 0.02}" fill="${colors.secondary}" stroke="#333" stroke-width="2"/>
+      <!-- Roof - higher for cab -->
+      <rect x="${centerX - width * 0.2}" y="${bodyY - height * 0.25}" width="${width * 0.4}" height="${height * 0.1}" rx="${width * 0.03}" fill="url(#roofGradient)" stroke="#333" stroke-width="2"/>`;
+
+  } else {
+    // Convertible style - open roof
+    svgBody += `
+      <!-- Main body - convertible -->
+      <ellipse cx="${centerX}" cy="${bodyY}" rx="${width * (0.4 + random() * 0.05)}" ry="${height * (0.16 + random() * 0.04)}" fill="url(#bodyGradient)" stroke="#333" stroke-width="3"/>
+      <!-- Windshield frame -->
+      <rect x="${centerX - width * 0.15}" y="${bodyY - height * 0.08}" width="${width * 0.3}" height="${height * 0.02}" fill="#333"/>
+      <!-- No roof - open top -->`;
+  }
+
+  // Add patterns
+  if (pattern === 1) {
+    // Stripes
+    const stripeCount = 3 + Math.floor(random() * 3);
+    for (let i = 0; i < stripeCount; i++) {
+      const sy = bodyY - height * 0.15 + (i * height * 0.1);
+      svgBody += `<rect x="${centerX - width * 0.4}" y="${sy}" width="${width * 0.8}" height="${height * 0.02}" fill="#FFF" opacity="0.8"/>`;
+    }
+  } else if (pattern === 2) {
+    // Flames
+    svgBody += `<path d="M ${centerX - width * 0.2} ${bodyY} Q ${centerX - width * 0.1} ${bodyY - height * 0.1} ${centerX} ${bodyY - height * 0.2} Q ${centerX + width * 0.1} ${bodyY - height * 0.1} ${centerX + width * 0.2} ${bodyY} Z" fill="#FF4500" opacity="0.7"/>`;
+  } else if (pattern === 3) {
+    // Checkerboard
+    const checkSize = width * 0.05;
+    for (let x = centerX - width * 0.3; x < centerX + width * 0.3; x += checkSize * 2) {
+      for (let y = bodyY - height * 0.15; y < bodyY + height * 0.05; y += checkSize * 2) {
+        svgBody += `<rect x="${x}" y="${y}" width="${checkSize}" height="${checkSize}" fill="#000" opacity="0.6"/>`;
+        svgBody += `<rect x="${x + checkSize}" y="${y + checkSize}" width="${checkSize}" height="${checkSize}" fill="#000" opacity="0.6"/>`;
+      }
+    }
   }
 
   // Add windows based on detail level
   if (detailLevel >= 1) {
-    const windowCount = bodyStyle === 1 ? 4 : 2; // SUVs have more windows
+    const windowCount = (bodyStyle === 1 || bodyStyle === 4) ? (bodyStyle === 4 ? 5 : 4) : (bodyStyle === 5 ? 1 : 2); // SUVs and trucks have more windows, convertibles have fewer
     for (let i = 0; i < windowCount; i++) {
       const wx = centerX - width * 0.15 + (i * width * 0.15);
       const wy = bodyY - height * (0.1 + random() * 0.05);
@@ -146,6 +194,23 @@ async function generateCarBody(width, height, random) {
     const lr = width * (0.015 + random() * 0.01);
     const color = side < 0 ? '#FFFF00' : '#FF0000'; // Yellow headlights, red taillights
     svgBody += `<circle cx="${lx}" cy="${ly}" r="${lr}" fill="${color}"/>`;
+  }
+
+  // Add accessories
+  if (accessories === 1) {
+    // Spoiler
+    let roofTop;
+    if (bodyStyle === 0) roofTop = bodyY - height * 0.08;
+    else if (bodyStyle === 1) roofTop = bodyY - height * 0.2;
+    else if (bodyStyle === 2) roofTop = bodyY - height * 0.15;
+    else if (bodyStyle === 3) roofTop = bodyY - height * 0.12;
+    else if (bodyStyle === 4) roofTop = bodyY - height * 0.25;
+    else roofTop = bodyY - height * 0.08; // convertible
+    svgBody += `<rect x="${centerX - width * 0.25}" y="${roofTop - height * 0.02}" width="${width * 0.5}" height="${height * 0.02}" rx="${width * 0.01}" fill="#333"/>`;
+  } else if (accessories === 2) {
+    // Exhaust pipes
+    svgBody += `<ellipse cx="${centerX - width * 0.35}" cy="${bodyY + height * 0.03}" rx="${width * 0.02}" ry="${height * 0.01}" fill="#666"/>`;
+    svgBody += `<ellipse cx="${centerX + width * 0.35}" cy="${bodyY + height * 0.03}" rx="${width * 0.02}" ry="${height * 0.01}" fill="#666"/>`;
   }
 
   // Add details based on detail level
@@ -168,15 +233,18 @@ async function generateWheel(width, height, random) {
   const sharp = (await import('sharp')).default;
 
   // Randomize wheel design parameters
-  const rimStyle = Math.floor(random() * 4); // 0-3 rim styles
-  const spokePattern = Math.floor(random() * 5); // 0-4 spoke patterns
-  const colorScheme = Math.floor(random() * 3); // 0-2 color schemes
+  const rimStyle = Math.floor(random() * 6); // 0-5 rim styles
+  const spokePattern = Math.floor(random() * 6); // 0-5 spoke patterns
+  const colorScheme = Math.floor(random() * 6); // 0-5 color schemes
 
   // Color schemes for wheels
   const colorSchemes = [
     { rim: '#C0C0C0', tire: '#333', spokes: '#888' }, // Chrome and black
     { rim: '#FFD700', tire: '#222', spokes: '#FFA500' }, // Gold and black
-    { rim: '#B87333', tire: '#666', spokes: '#8B4513' }  // Bronze and dark
+    { rim: '#B87333', tire: '#666', spokes: '#8B4513' }, // Bronze and dark
+    { rim: '#FF1493', tire: '#333', spokes: '#8A2BE2' }, // Neon pink
+    { rim: '#00FF00', tire: '#222', spokes: '#FFFF00' }, // Lime
+    { rim: '#DC143C', tire: '#666', spokes: '#F0E68C' }  // Crimson
   ];
 
   const colors = colorSchemes[colorScheme];
@@ -242,6 +310,29 @@ async function generateWheel(width, height, random) {
     svgWheel += `<path d="M ${centerX + Math.cos(splitAngle) * rimRadius} ${centerY + Math.sin(splitAngle) * rimRadius} A ${rimRadius} ${rimRadius} 0 1 1 ${centerX + Math.cos(splitAngle + Math.PI) * rimRadius} ${centerY + Math.sin(splitAngle + Math.PI) * rimRadius} L ${centerX} ${centerY} Z" fill="url(#rimGradient)" stroke="#888" stroke-width="1"/>`;
     svgWheel += `<path d="M ${centerX + Math.cos(splitAngle + Math.PI) * rimRadius} ${centerY + Math.sin(splitAngle + Math.PI) * rimRadius} A ${rimRadius} ${rimRadius} 0 1 1 ${centerX + Math.cos(splitAngle) * rimRadius} ${centerY + Math.sin(splitAngle) * rimRadius} L ${centerX} ${centerY} Z" fill="${colors.rim}" stroke="#888" stroke-width="1"/>`;
 
+  } else if (rimStyle === 4) {
+    // Hexagonal rim
+    const hexPoints = [];
+    for (let i = 0; i < 6; i++) {
+      const angle = (i / 6) * Math.PI * 2;
+      const x = centerX + Math.cos(angle) * rimRadius;
+      const y = centerY + Math.sin(angle) * rimRadius;
+      hexPoints.push(`${x},${y}`);
+    }
+    svgWheel += `<polygon points="${hexPoints.join(' ')}" fill="url(#rimGradient)" stroke="#888" stroke-width="1"/>`;
+
+  } else if (rimStyle === 5) {
+    // Star-shaped rim
+    const starPoints = [];
+    for (let i = 0; i < 10; i++) {
+      const angle = (i / 10) * Math.PI * 2;
+      const radius = i % 2 === 0 ? rimRadius : rimRadius * 0.5;
+      const x = centerX + Math.cos(angle) * radius;
+      const y = centerY + Math.sin(angle) * radius;
+      starPoints.push(`${x},${y}`);
+    }
+    svgWheel += `<polygon points="${starPoints.join(' ')}" fill="url(#rimGradient)" stroke="#888" stroke-width="1"/>`;
+
   } else {
     // Simple single-piece rim
     svgWheel += `<circle cx="${centerX}" cy="${centerY}" r="${rimRadius}" fill="url(#rimGradient)" stroke="#888" stroke-width="2"/>`;
@@ -302,6 +393,20 @@ async function generateWheel(width, height, random) {
       const cy = centerY + Math.sin(midAngle) * midRadius;
 
       svgWheel += `<path d="M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}" stroke="${colors.spokes}" stroke-width="3" fill="none"/>`;
+    }
+
+  } else if (spokePattern === 5) {
+    // Zigzag pattern
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const x1 = centerX + Math.cos(angle) * (rimRadius * 0.2);
+      const y1 = centerY + Math.sin(angle) * (rimRadius * 0.2);
+      const x2 = centerX + Math.cos(angle + Math.PI/16) * (rimRadius * 0.6);
+      const y2 = centerY + Math.sin(angle + Math.PI/16) * (rimRadius * 0.6);
+      const x3 = centerX + Math.cos(angle - Math.PI/16) * (rimRadius * 0.9);
+      const y3 = centerY + Math.sin(angle - Math.PI/16) * (rimRadius * 0.9);
+      svgWheel += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${colors.spokes}" stroke-width="3"/>`;
+      svgWheel += `<line x1="${x2}" y1="${y2}" x2="${x3}" y2="${y3}" stroke="${colors.spokes}" stroke-width="3"/>`;
     }
 
   } else {

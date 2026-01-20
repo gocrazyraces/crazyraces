@@ -109,13 +109,8 @@ async function generateCarBody(width, height, random) {
 
   if (bodyStyle === 0) {
     // Sports car style - low and wide
-    svgBody += `
-      <!-- Main body - sports car -->
-      <path d="M ${centerX - width * 0.4} ${bodyY} Q ${centerX - width * 0.2} ${bodyY - height * 0.08} ${centerX} ${bodyY - height * 0.03} Q ${centerX + width * 0.2} ${bodyY - height * 0.08} ${centerX + width * 0.4} ${bodyY} L ${centerX + width * 0.35} ${bodyY + height * 0.02} L ${centerX - width * 0.35} ${bodyY + height * 0.02} Z" fill="url(#bodyGradient)" stroke="#333" stroke-width="3"/>
-      <!-- Hood -->
-      <path d="M ${centerX - width * 0.3} ${bodyY - height * 0.02} Q ${centerX} ${bodyY - height * 0.05} ${centerX + width * 0.3} ${bodyY - height * 0.02} L ${centerX + width * 0.3} ${bodyY} L ${centerX - width * 0.3} ${bodyY} Z" fill="${colors.accent}" opacity="0.8"/>
-      <!-- Roof - low profile -->
-      <rect x="${centerX - width * 0.2}" y="${bodyY - height * 0.08}" width="${width * 0.4}" height="${height * 0.12}" rx="${width * 0.03}" fill="url(#roofGradient)" stroke="#333" stroke-width="2"/>`;
+    const bodyPath = `M ${centerX - width * 0.4} ${bodyY} L ${centerX - width * 0.35} ${bodyY - height * 0.05} L ${centerX - width * 0.1} ${bodyY - height * 0.03} L ${centerX + width * 0.1} ${bodyY - height * 0.03} L ${centerX + width * 0.35} ${bodyY - height * 0.05} L ${centerX + width * 0.4} ${bodyY} Z`;
+    svgBody += `<path d="${bodyPath}" fill="url(#bodyGradient)" stroke="#333" stroke-width="3"/>`;
 
   } else if (bodyStyle === 1) {
     // SUV style - taller and boxier

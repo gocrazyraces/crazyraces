@@ -466,6 +466,8 @@ function setTab(tabName) {
     ui.panels[t].classList.toggle("active", active);
   }
 
+  // Hide/show canvases based on tab
+  ui.bodyCanvas.style.display = (tabName === "wheel") ? "none" : "block";
   ui.wheelCanvas.style.display = (tabName === "wheel") ? "block" : "none";
 
   if (tabName === "wheel") {
@@ -545,7 +547,7 @@ ui.uploadBody.onchange = (e) => {
 // Generate body button
 ui.generateBodyBtn.onclick = async () => {
   try {
-    const response = await fetch('/api/car-gen?type=body');
+    const response = await fetch(`/api/car-gen?type=body&t=${Date.now()}`);
     if (!response.ok) {
       throw new Error('Failed to generate body image');
     }
@@ -588,7 +590,7 @@ ui.uploadWheel.onchange = (e) => {
 // Generate wheel button
 ui.generateWheelBtn.onclick = async () => {
   try {
-    const response = await fetch('/api/car-gen?type=wheel');
+    const response = await fetch(`/api/car-gen?type=wheel&t=${Date.now()}`);
     if (!response.ok) {
       throw new Error('Failed to generate wheel image');
     }

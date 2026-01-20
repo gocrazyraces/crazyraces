@@ -79,14 +79,29 @@ async function generateCarBody(width, height, random) {
 
   let svgBody = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
     <defs>
+      <filter id="dropshadow" x="-20%" y="-20%" width="140%" height="140%">
+        <feDropShadow dx="3" dy="3" stdDeviation="3" flood-color="#000" flood-opacity="0.4"/>
+      </filter>
       <linearGradient id="bodyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
         <stop offset="0%" style="stop-color:${colors.primary};stop-opacity:1" />
+        <stop offset="30%" style="stop-color:${colors.primary};stop-opacity:1" />
+        <stop offset="70%" style="stop-color:${colors.secondary};stop-opacity:1" />
         <stop offset="100%" style="stop-color:${colors.secondary};stop-opacity:1" />
       </linearGradient>
+      <radialGradient id="metallicGradient" cx="50%" cy="30%" r="60%">
+        <stop offset="0%" style="stop-color:#FFF;stop-opacity:0.8" />
+        <stop offset="50%" style="stop-color:${colors.primary};stop-opacity:0.6" />
+        <stop offset="100%" style="stop-color:${colors.secondary};stop-opacity:1" />
+      </radialGradient>
       <linearGradient id="roofGradient" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" style="stop-color:${colors.accent};stop-opacity:1" />
-        <stop offset="100%" style="stop-color:${colors.secondary};stop-opacity:1" />
+        <stop offset="50%" style="stop-color:${colors.secondary};stop-opacity:1" />
+        <stop offset="100%" style="stop-color:${colors.primary};stop-opacity:1" />
       </linearGradient>
+      <radialGradient id="highlightGradient" cx="30%" cy="30%" r="50%">
+        <stop offset="0%" style="stop-color:#FFF;stop-opacity:0.6" />
+        <stop offset="100%" style="stop-color:#FFF;stop-opacity:0" />
+      </radialGradient>
     </defs>`;
 
   const centerX = width / 2;
@@ -251,6 +266,9 @@ async function generateWheel(width, height, random) {
 
   let svgWheel = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
     <defs>
+      <filter id="wheelshadow" x="-20%" y="-20%" width="140%" height="140%">
+        <feDropShadow dx="2" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.3"/>
+      </filter>
       <radialGradient id="tireGradient" cx="50%" cy="50%" r="50%">
         <stop offset="0%" style="stop-color:${colors.tire};stop-opacity:1" />
         <stop offset="70%" style="stop-color:#666;stop-opacity:1" />
@@ -258,7 +276,12 @@ async function generateWheel(width, height, random) {
       </radialGradient>
       <radialGradient id="rimGradient" cx="50%" cy="50%" r="50%">
         <stop offset="0%" style="stop-color:#FFF;stop-opacity:1" />
+        <stop offset="30%" style="stop-color:#E0E0E0;stop-opacity:1" />
         <stop offset="100%" style="stop-color:${colors.rim};stop-opacity:1" />
+      </radialGradient>
+      <radialGradient id="rimHighlight" cx="30%" cy="30%" r="50%">
+        <stop offset="0%" style="stop-color:#FFF;stop-opacity:0.8" />
+        <stop offset="100%" style="stop-color:#FFF;stop-opacity:0" />
       </radialGradient>
     </defs>`;
 

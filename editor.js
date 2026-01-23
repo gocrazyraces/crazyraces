@@ -43,6 +43,7 @@ const ui = {
 
   // Body controls
   bodyPenBtn: document.getElementById("bodyPenBtn"),
+  bodyFillBtn: document.getElementById("bodyFillBtn"),
   bodyMoveBtn: document.getElementById("bodyMoveBtn"),
   bodyColor: document.getElementById("bodyColor"),
   bodyThickness: document.getElementById("bodyThickness"),
@@ -312,6 +313,65 @@ function drawUploadedImageToArt(img, targetCtx, w, h) {
   targetCtx.restore();
 }
 
+function hexToRgb(hex) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
+}
+
+function floodFill(ctx, startX, startY, fillColor, w, h) {
+  const imageData = ctx.getImageData(0, 0, w, h);
+  const data = imageData.data;
+
+  const startIdx = (startY * w + startX) * 4;
+  const startR = data[startIdx];
+  const startG = data[startIdx + 1];
+  const startB = data[startIdx + 2];
+  const startA = data[startIdx + 3];
+
+  const fillR = fillColor.r;
+  const fillG = fillColor.g;
+  const fillB = fillColor.b;
+  const fillA = 255; // Assume opaque fill
+
+  // If already the same color, no need to fill
+  if (startR === fillR && startG === fillG && startB === fillB && startA === fillA) return;
+
+  const stack = [[startX, startY]];
+  const visited = new Set();
+
+  while (stack.length > 0) {
+    const [x, y] = stack.pop();
+    const key = `${x},${y}`;
+    if (visited.has(key)) continue;
+    visited.add(key);
+
+    const idx = (y * w + x) * 4;
+    const r = data[idx];
+    const g = data[idx + 1];
+    const b = data[idx + 2];
+    const a = data[idx + 3];
+
+    if (r === startR && g === startG && b === startB && a === startA) {
+      data[idx] = fillR;
+      data[idx + 1] = fillG;
+      data[idx + 2] = fillB;
+      data[idx + 3] = fillA;
+
+      // Add neighbors
+      if (x > 0) stack.push([x - 1, y]);
+      if (x < w - 1) stack.push([x + 1, y]);
+      if (y > 0) stack.push([x, y - 1]);
+      if (y < h - 1) stack.push([x, y + 1]);
+    }
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+}
+
 // ============================
 // RENDERING
 // ============================
@@ -504,6 +564,7 @@ ui.bodyPenBtn.onclick = () => {
   currentTool = "pen";
   currentPenColor = ui.bodyColor.value;
 };
+ui.bodyFillBtn.onclick = () => { currentTool = "fill"; };
 ui.bodyMoveBtn.onclick = () => { currentTool = "move"; };
 
 ui.wheelPenBtn.onclick = () => {
@@ -684,6 +745,22 @@ ui.bodyCanvas.onpointerdown = (e) => {
     currentPenColor = ui.bodyColor.value;
     strokePoints = [toBodyLocal(globalPos)];
     ui.bodyCanvas.setPointerCapture(e.pointerId);
+    return;
+  }
+
+  // Body fill tool
+  if (currentTab === "body" && currentTool === "fill") {
+    const localPos = toBodyLocal(globalPos);
+    const x = Math.floor(localPos.x);
+    const y = Math.floor(localPos.y);
+    if (x >= 0 && x < BODY_W && y >= 0 && y < BODY_H) {
+      const fillColor = hexToRgb(ui.bodyColor.value);
+      if (fillColor) {
+        pushBodyUndoSnapshot();
+        floodFill(bodyArtCtx, x, y, fillColor, BODY_W, BODY_H);
+        renderAll();
+      }
+    }
     return;
   }
 };

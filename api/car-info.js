@@ -29,7 +29,7 @@ export default async function handler(req, res) {
 
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: spreadsheetId,
-      range: 'Sheet1!A:G',
+      range: 'rapidracers-cars!A:H',
     });
 
     const rows = response.data.values || [];
@@ -40,7 +40,8 @@ export default async function handler(req, res) {
       carstatus: row[3],
       carthumbnailpath: row[4],
       carjsonpath: row[5],
-      carstatsjsonpath: row[6]
+      carstatsjsonpath: row[6],
+      carkey: row[7]
     }));
 
     return res.status(200).json({

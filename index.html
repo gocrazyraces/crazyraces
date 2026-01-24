@@ -93,7 +93,7 @@
           <span class="step">5</span> Performance
         </button>
         <button id="submitTab" class="tab" role="tab" aria-selected="false">
-          <span class="step">6</span> Submit
+          <span class="step">6</span> Enter
         </button>
       </div>
 
@@ -292,20 +292,26 @@
            SUBMIT CONTROLS
            ======================= -->
       <section id="submitControls" class="tab-content" role="tabpanel">
-        <h2 class="panel-title">Submit</h2>
+        <h2 class="panel-title">Enter</h2>
         <p class="panel-subtitle">
           We’ll send your artwork + wheel layout + performance credits to the server.
         </p>
 
         <div class="control-group">
           <label class="field">
-            <span>Team name</span>
-            <input type="text" id="teamName" placeholder="e.g., Team Turbo" />
+            <span>Car name</span>
+            <div id="submitCarName" class="readonly-field" aria-live="polite">—</div>
           </label>
 
           <label class="field">
-            <span>Email</span>
-            <input type="email" id="email" placeholder="you@example.com" />
+            <span>Race</span>
+            <select id="raceSelect" class="select-field"></select>
+          </label>
+
+          <label class="field">
+            <span>Car key</span>
+            <div id="carKeyDisplay" class="readonly-field">—</div>
+            <span class="field-hint" id="carKeyHint">Your key will appear after saving to the garage.</span>
           </label>
 
           <div class="stack">
@@ -315,9 +321,6 @@
           <p id="submitStatus" class="submit-status" aria-live="polite"></p>
         </div>
 
-        <div class="note">
-          Endpoint configured in <code>script.js</code>.
-        </div>
       </section>
     </aside>
 
@@ -327,12 +330,11 @@
         <div class="canvas-card">
           <div class="canvas-header">
             <div>
-              <div class="canvas-title" id="canvasTitle">Body canvas</div>
+              <div class="canvas-title" id="canvasTitle">Car designer</div>
               <div class="canvas-subtitle" id="canvasSubtitle">Draw the car body here</div>
             </div>
 
             <div class="canvas-actions">
-              <button id="centerBodyBtn" class="btn small">Center body</button>
               <button id="exportPreviewBtn" class="btn small">Export as PNG</button>
             </div>
           </div>
@@ -410,6 +412,7 @@
     window.CRAZY_RACES_WHEEL_H = 256;
     window.CRAZY_RACES_TOTAL_CREDITS = 100;
     window.CRAZY_RACES_SUBMIT_ENDPOINT = "/api/race-enter";
+    window.CRAZY_RACES_GARAGE_ENDPOINT = "/api/garage-enter";
   </script>
   <script src="script.js"></script>
   <script src="editor.js"></script>

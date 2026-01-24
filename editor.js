@@ -40,7 +40,6 @@ const ui = {
   // Workspace labels/buttons
   canvasTitle: document.getElementById("canvasTitle"),
   canvasSubtitle: document.getElementById("canvasSubtitle"),
-  centerBodyBtn: document.getElementById("centerBodyBtn"),
   exportPreviewBtn: document.getElementById("exportPreviewBtn"),
 
   // Body controls
@@ -84,11 +83,13 @@ const ui = {
   creditsHelp: document.getElementById("creditsHelp"),
 
   // Submit controls
-  teamName: document.getElementById("teamName"),
+  submitCarName: document.getElementById("submitCarName"),
   carName: document.getElementById("carName"),
-  email: document.getElementById("email"),
+  raceSelect: document.getElementById("raceSelect"),
   submitBtn: document.getElementById("submitBtn"),
   submitStatus: document.getElementById("submitStatus"),
+  carKeyDisplay: document.getElementById("carKeyDisplay"),
+  carKeyHint: document.getElementById("carKeyHint"),
   carNameStatus: document.getElementById("carNameStatus"),
   carKeyBtn: document.getElementById("carKeyBtn"),
   carNameTick: document.getElementById("carNameTick"),
@@ -99,6 +100,7 @@ const ui = {
 // ============================
 const TOTAL_CREDITS = window.CRAZY_RACES_TOTAL_CREDITS ?? 100;
 const SUBMIT_ENDPOINT = window.CRAZY_RACES_SUBMIT_ENDPOINT ?? "/api/submit-car";
+const GARAGE_ENDPOINT = window.CRAZY_RACES_GARAGE_ENDPOINT ?? "/api/garage-enter";
 
 const BODY_W = window.CRAZY_RACES_BODY_W ?? 1024;
 const BODY_H = window.CRAZY_RACES_BODY_H ?? 512;
@@ -140,6 +142,7 @@ let currentTab = "body";
 let currentTool = "pen";
 let currentPenColor = ui.bodyColor.value || "#3B0273";
 let carNameList = [];
+let activeRaces = [];
 
 let isDrawing = false;
 let strokePoints = [];
@@ -181,11 +184,74 @@ const TAB_TIPS = {
   properties:
     "Spend exactly 100 credits across Acceleration and Top Speed. Remaining must be 0.",
   submit:
-    "Enter team name, car name, and email, then submit.",
+    "Save your car to the garage to receive a key, then optionally enter a race.",
 };
 
 function setTips(tabName) {
   if (ui.tipsText) ui.tipsText.textContent = TAB_TIPS[tabName] ?? "";
+}
+
+function formatRaceLabel(race) {
+  const raceDate = new Date(race.racedeadline);
+  const datePart = isNaN(raceDate.getTime())
+    ? race.racedeadline
+    : raceDate.toLocaleDateString(undefined, {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      timeZone: "UTC",
+    });
+
+  return `${race.racename} (Race ${race.racenumber}) - ${datePart}`;
+}
+
+function renderActiveRaceOptions() {
+  if (!ui.raceSelect) return;
+
+  ui.raceSelect.innerHTML = "";
+
+  if (!activeRaces.length) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = "No active races available";
+    ui.raceSelect.appendChild(option);
+    ui.raceSelect.disabled = true;
+    if (ui.submitBtn) {
+      ui.submitBtn.textContent = "Send car to Garage only";
+      ui.submitBtn.disabled = false;
+    }
+    return;
+  }
+
+  ui.raceSelect.disabled = false;
+  if (ui.submitBtn) {
+    ui.submitBtn.textContent = "Enter car";
+    ui.submitBtn.disabled = false;
+  }
+
+  activeRaces.forEach((race) => {
+    const option = document.createElement("option");
+    option.value = `${race.season}:${race.racenumber}`;
+    option.textContent = formatRaceLabel(race);
+    ui.raceSelect.appendChild(option);
+  });
+
+  ui.raceSelect.value = `${activeRaces[0].season}:${activeRaces[0].racenumber}`;
+}
+
+async function loadActiveRaces() {
+  if (!ui.raceSelect) return;
+
+  try {
+    const response = await fetch('/api/active-races');
+    const data = await response.json();
+    activeRaces = Array.isArray(data.races) ? data.races : [];
+  } catch (error) {
+    console.error('Failed to load active races:', error);
+    activeRaces = [];
+  }
+
+  renderActiveRaceOptions();
 }
 
 // ============================
@@ -414,8 +480,8 @@ function renderWheelEditor() {
   drawSubtleGrid(wheelCtx, WHEEL_W, WHEEL_H);
 
   wheelCtx.save();
-  wheelCtx.globalAlpha = 0.06;
-  wheelCtx.fillStyle = "#3B0273";
+  wheelCtx.globalAlpha = 0.12;
+  wheelCtx.fillStyle = "#8bdcff";
   wheelCtx.beginPath();
   wheelCtx.arc(WHEEL_W / 2, WHEEL_H / 2, 90, 0, 2 * Math.PI);
   wheelCtx.fill();
@@ -543,16 +609,16 @@ function setTab(tabName) {
     ui.canvasTitle.textContent = "Wheel canvas";
     ui.canvasSubtitle.textContent = "Draw or upload a wheel (square)";
   } else if (tabName === "placement") {
-    ui.canvasTitle.textContent = "Body canvas";
+    ui.canvasTitle.textContent = "Car designer";
     ui.canvasSubtitle.textContent = "Click a wheel to select it; drag to move";
   } else if (tabName === "body") {
-    ui.canvasTitle.textContent = "Body canvas";
+    ui.canvasTitle.textContent = "Car designer";
     ui.canvasSubtitle.textContent = "Draw the body or drag it with Move";
   } else if (tabName === "properties") {
-    ui.canvasTitle.textContent = "Body canvas";
+    ui.canvasTitle.textContent = "Car designer";
     ui.canvasSubtitle.textContent = "Adjust performance credits";
   } else {
-    ui.canvasTitle.textContent = "Body canvas";
+    ui.canvasTitle.textContent = "Car designer";
     ui.canvasSubtitle.textContent = "Final checks before submission";
   }
 
@@ -589,7 +655,6 @@ ui.wheelColor.oninput = () => { if (currentTab === "wheel") currentPenColor = ui
 ui.bodyThickness.oninput = () => { bodyPenWidth = parseInt(ui.bodyThickness.value, 10); };
 ui.wheelThickness.oninput = () => { wheelPenWidth = parseInt(ui.wheelThickness.value, 10); };
 
-ui.centerBodyBtn.onclick = centerBodyArtByOffset;
 ui.exportPreviewBtn.onclick = exportCompositePNG;
 
 // ============================
@@ -992,14 +1057,14 @@ ui.speedSlider.oninput = () => enforceCreditConstraint("speed");
 // SUBMISSION
 // ============================
 async function submitCar() {
-  const teamName = ui.teamName.value.trim();
   const carName = ui.carName.value.trim();
-  const email = ui.email.value.trim();
-
-  if (!teamName || !carName || !email) {
-    alert("Please fill Team name, Car name, and Email.");
+  if (!carName) {
+    alert("Please enter a car name first.");
     return;
   }
+
+  const selectedRace = ui.raceSelect?.value || "";
+  const [season, race] = selectedRace ? selectedRace.split(":") : [null, null];
 
   const acc = parseInt(ui.accSlider.value, 10);
   const spd = parseInt(ui.speedSlider.value, 10);
@@ -1011,25 +1076,6 @@ async function submitCar() {
 
   if (!hasWheelArt) {
     alert("Please create a wheel (Step 2) before submitting.");
-    return;
-  }
-
-  // Get active race information for validation
-  let activeRace = null;
-  try {
-    const raceResponse = await fetch('/api/race-info');
-    const raceData = await raceResponse.json();
-    if (raceData.raceInfo) {
-      activeRace = raceData.raceInfo;
-    }
-  } catch (error) {
-    console.error('Failed to get race info:', error);
-    alert('Unable to verify active race. Please try again.');
-    return;
-  }
-
-  if (!activeRace) {
-    alert('No active race available for entry at this time.');
     return;
   }
 
@@ -1045,13 +1091,10 @@ async function submitCar() {
     rotationDegrees: w.rotationDeg,
   }));
 
-  const payload = {
+  const garagePayload = {
     carData: {
-      season: activeRace.season,
-      race: activeRace.racenumber,
-      teamName,
+      season: season || activeRaces[0]?.season || 1,
       carName,
-      email,
       acceleration: acc,
       topSpeed: spd,
       bodyImageData,
@@ -1063,22 +1106,58 @@ async function submitCar() {
     },
   };
 
-  ui.submitStatus.textContent = "Submitting…";
+  ui.submitStatus.textContent = "Saving to garage…";
 
   try {
-    const resp = await fetch(SUBMIT_ENDPOINT, {
+    const garageResp = await fetch(GARAGE_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(garagePayload),
     });
 
-    if (!resp.ok) {
-      const errorText = await resp.text();
-      ui.submitStatus.textContent = `Submission failed: ${errorText}`;
+    if (!garageResp.ok) {
+      const errorText = await garageResp.text();
+      ui.submitStatus.textContent = `Garage save failed: ${errorText}`;
       return;
     }
 
-    ui.submitStatus.textContent = "✅ Submission successful!";
+    const garageData = await garageResp.json();
+    if (ui.carKeyDisplay) ui.carKeyDisplay.textContent = garageData.carKey || '—';
+    if (ui.carKeyHint) ui.carKeyHint.textContent = garageData.carKey
+      ? "Save this key to retrieve your car from the garage later."
+      : "Your key will appear after saving to the garage.";
+
+    if (!season || !race) {
+      ui.submitStatus.textContent = "Saved to garage. No active races to enter right now.";
+      return;
+    }
+
+    ui.submitStatus.textContent = "Entering race…";
+
+    const racePayload = {
+      carData: {
+        season,
+        race,
+        carName,
+        carKey: garageData.carKey,
+        carJsonPath: garageData.carJsonPath,
+        previewPath: garageData.previewPath,
+      }
+    };
+
+    const raceResp = await fetch(SUBMIT_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(racePayload),
+    });
+
+    if (!raceResp.ok) {
+      const errorText = await raceResp.text();
+      ui.submitStatus.textContent = `Race entry failed: ${errorText}`;
+      return;
+    }
+
+    ui.submitStatus.textContent = "✅ Saved to garage and entered the race!";
   } catch (err) {
     ui.submitStatus.textContent = `Submission failed (network error): ${err.message}`;
   }
@@ -1100,6 +1179,7 @@ function init() {
   currentTool = "pen";
 
   setTab("name");
+  loadActiveRaces();
   renderAll();
 }
 init();
@@ -1123,7 +1203,11 @@ async function loadCarNameList() {
 function updateCarNameStatus(value) {
   if (!ui.carNameStatus) return;
 
-  const trimmed = value.trim().toLowerCase();
+  const trimmedValue = value.trim();
+  const trimmed = trimmedValue.toLowerCase();
+  if (ui.submitCarName) {
+    ui.submitCarName.textContent = trimmedValue || '—';
+  }
   if (!trimmed) {
     ui.carNameStatus.textContent = '';
     ui.carNameStatus.classList.remove('exists');

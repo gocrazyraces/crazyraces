@@ -17,6 +17,7 @@ const ui = {
 
   // Tabs
   tabs: {
+    name: document.getElementById("nameTab"),
     body: document.getElementById("bodyTab"),
     wheel: document.getElementById("wheelTab"),
     placement: document.getElementById("placementTab"),
@@ -24,6 +25,7 @@ const ui = {
     submit: document.getElementById("submitTab"),
   },
   panels: {
+    name: document.getElementById("nameControls"),
     body: document.getElementById("bodyControls"),
     wheel: document.getElementById("wheelControls"),
     placement: document.getElementById("placementControls"),
@@ -87,6 +89,9 @@ const ui = {
   email: document.getElementById("email"),
   submitBtn: document.getElementById("submitBtn"),
   submitStatus: document.getElementById("submitStatus"),
+  carNameStatus: document.getElementById("carNameStatus"),
+  carKeyBtn: document.getElementById("carKeyBtn"),
+  carNameTick: document.getElementById("carNameTick"),
 };
 
 // ============================
@@ -134,6 +139,7 @@ const wheelArtCtx = wheelArtCanvas.getContext("2d");
 let currentTab = "body";
 let currentTool = "pen";
 let currentPenColor = ui.bodyColor.value || "#3B0273";
+let carNameList = [];
 
 let isDrawing = false;
 let strokePoints = [];
@@ -164,6 +170,8 @@ let selectedWheelIndex = -1;
 // TIPS
 // ============================
 const TAB_TIPS = {
+  name:
+    "Enter a name for your new car or search for it in the garage.",
   body:
     "Draw or upload your car body. Use Move to drag the whole body around. PNG transparency works best.",
   wheel:
@@ -557,6 +565,7 @@ ui.tabs.wheel.onclick = () => setTab("wheel");
 ui.tabs.placement.onclick = () => setTab("placement");
 ui.tabs.properties.onclick = () => setTab("properties");
 ui.tabs.submit.onclick = () => setTab("submit");
+ui.tabs.name.onclick = () => setTab("name");
 
 // ============================
 // TOOL BUTTONS
@@ -1090,7 +1099,85 @@ function init() {
   currentPenColor = ui.bodyColor.value;
   currentTool = "pen";
 
-  setTab("body");
+  setTab("name");
   renderAll();
 }
 init();
+
+// ============================
+// CAR NAME LOOKUP
+// ============================
+async function loadCarNameList() {
+  try {
+    const response = await fetch('/api/car-names');
+    const data = await response.json();
+    carNameList = (data.names || [])
+      .map(name => name.trim().toLowerCase())
+      .filter(Boolean);
+  } catch (error) {
+    console.error('Failed to load car name list:', error);
+    carNameList = [];
+  }
+}
+
+function updateCarNameStatus(value) {
+  if (!ui.carNameStatus) return;
+
+  const trimmed = value.trim().toLowerCase();
+  if (!trimmed) {
+    ui.carNameStatus.textContent = '';
+    ui.carNameStatus.classList.remove('exists');
+    ui.carName?.classList.remove('name-available');
+    ui.carNameTick?.classList.remove('visible');
+    if (ui.carKeyBtn) {
+      ui.carKeyBtn.disabled = true;
+      ui.carKeyBtn.textContent = 'Enter car key';
+    }
+    return;
+  }
+
+  const exists = carNameList.includes(trimmed);
+  if (exists) {
+    ui.carNameStatus.textContent = 'Car name exists.';
+    ui.carNameStatus.classList.add('exists');
+    ui.carName?.classList.remove('name-available');
+    ui.carNameTick?.classList.remove('visible');
+    if (ui.carKeyBtn) {
+      ui.carKeyBtn.disabled = false;
+      ui.carKeyBtn.textContent = 'Enter car key';
+    }
+  } else {
+    ui.carNameStatus.textContent = '';
+    ui.carNameStatus.classList.remove('exists');
+    ui.carName?.classList.add('name-available');
+    ui.carNameTick?.classList.add('visible');
+    if (ui.carKeyBtn) {
+      ui.carKeyBtn.disabled = true;
+      ui.carKeyBtn.textContent = 'Enter car key';
+    }
+  }
+}
+
+if (ui.carName) {
+  ui.carName.addEventListener('input', (event) => {
+    updateCarNameStatus(event.target.value);
+  });
+}
+
+if (ui.carKeyBtn) {
+  ui.carKeyBtn.addEventListener('click', () => {
+    if (ui.carKeyBtn.disabled) return;
+
+    const key = window.prompt('Enter the 8-digit car key (two groups of four digits, e.g. 1234-5678):');
+    if (key === null) return;
+
+    const normalized = key.trim();
+    const isValid = /^\d{4}-\d{4}$/.test(normalized) || /^\d{8}$/.test(normalized);
+
+    if (!isValid) {
+      alert('Please enter an 8-digit key in the format 1234-5678.');
+    }
+  });
+}
+
+loadCarNameList();

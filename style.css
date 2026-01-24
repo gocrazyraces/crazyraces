@@ -207,6 +207,16 @@ h1, h2, h3, h4, h5, h6,
   opacity: 0.85;
 }
 
+.pagebar-link {
+  color: var(--light-blue);
+  text-decoration: none;
+  font-weight: 950;
+}
+
+.pagebar-link:hover {
+  text-decoration: underline;
+}
+
 /* =========================================================
    APP LAYOUT
    ========================================================= */
@@ -967,6 +977,56 @@ label.file input { display: none; }
   margin: 0;
   color: rgba(10, 10, 10, 0.7);
   font-weight: 800;
+}
+
+/* =========================================================
+   NAME STEP STATUS
+   ========================================================= */
+
+.name-status {
+  margin: 8px 0 0;
+  font-size: 13px;
+  font-weight: 900;
+  color: rgba(10, 10, 10, 0.6);
+}
+
+.name-status.exists {
+  color: #b00020;
+}
+
+.name-action-row {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.name-action-row .btn[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.name-tick {
+  display: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #1c8f3d;
+  color: #fff;
+  font-weight: 900;
+  font-size: 14px;
+  align-items: center;
+  justify-content: center;
+}
+
+.name-tick.visible {
+  display: inline-flex;
+}
+
+.name-available {
+  border-color: rgba(28, 143, 61, 0.6) !important;
+  box-shadow: 0 0 0 3px rgba(28, 143, 61, 0.2);
 }
 
 /* Historical race sections */

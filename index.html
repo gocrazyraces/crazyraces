@@ -62,7 +62,7 @@
   <div class="pagebar" role="heading" aria-level="1">
     <div class="pagebar-inner">
       <div class="pagebar-title">
-        Design your car for the next race
+        Design your car for the next race or get it back from the <a href="garage.html" class="pagebar-link">Garage</a>
         <span id="nextRaceCountdown" class="pagebar-countdown">(…)</span>
       </div>
     </div>
@@ -77,29 +77,54 @@
 
       <!-- Step tabs -->
       <div class="tabs" role="tablist" aria-label="Editor steps">
-        <button id="bodyTab" class="tab active" role="tab" aria-selected="true">
-          <span class="step">1</span> Body
+        <button id="nameTab" class="tab active" role="tab" aria-selected="true">
+          <span class="step">1</span> Name
+        </button>
+        <button id="bodyTab" class="tab" role="tab" aria-selected="false">
+          <span class="step">2</span> Body
         </button>
         <button id="wheelTab" class="tab" role="tab" aria-selected="false">
-          <span class="step">2</span> Wheel
+          <span class="step">3</span> Wheel
         </button>
         <button id="placementTab" class="tab" role="tab" aria-selected="false">
-          <span class="step">3</span> Wheels
+          <span class="step">4</span> Wheels
         </button>
         <button id="propertiesTab" class="tab" role="tab" aria-selected="false">
-          <span class="step">4</span> Performance
+          <span class="step">5</span> Performance
         </button>
         <button id="submitTab" class="tab" role="tab" aria-selected="false">
-          <span class="step">5</span> Submit
+          <span class="step">6</span> Submit
         </button>
       </div>
+
+      <!-- =======================
+           NAME CONTROLS
+           ======================= -->
+      <section id="nameControls" class="tab-content active" role="tabpanel">
+        <h2 class="panel-title">Car name</h2>
+        <p class="panel-subtitle">
+          Enter a name for your new car or search for it in the garage.
+        </p>
+
+        <div class="control-group">
+          <label class="field">
+            <span>Car name</span>
+            <input type="text" id="carName" placeholder="e.g., Biscuit Rocket" />
+          </label>
+          <p id="carNameStatus" class="name-status" aria-live="polite"></p>
+          <div class="name-action-row">
+            <button id="carKeyBtn" class="btn" type="button" disabled>Enter car key</button>
+            <span id="carNameTick" class="name-tick" aria-hidden="true">✓</span>
+          </div>
+        </div>
+      </section>
 
       <!-- =======================
            BODY CONTROLS
            Buttons simplified: Draw / Move / Upload image / Clear
            Added Pen thickness next to pen colour
            ======================= -->
-      <section id="bodyControls" class="tab-content active" role="tabpanel">
+      <section id="bodyControls" class="tab-content" role="tabpanel">
         <h2 class="panel-title">Car body</h2>
         <p class="panel-subtitle">
           Draw the body or upload an image. Use <strong>Move</strong> to drag it around.
@@ -276,11 +301,6 @@
           <label class="field">
             <span>Team name</span>
             <input type="text" id="teamName" placeholder="e.g., Team Turbo" />
-          </label>
-
-          <label class="field">
-            <span>Car name</span>
-            <input type="text" id="carName" placeholder="e.g., Biscuit Rocket" />
           </label>
 
           <label class="field">

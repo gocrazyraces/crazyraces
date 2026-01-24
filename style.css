@@ -1,30 +1,34 @@
 /* =========================================================
-   RAPID RACERS 2D — COLOUR SYSTEM
+   DOODLE DASH — COLOUR SYSTEM
    ========================================================= */
 
+@import url('https://fonts.googleapis.com/css2?family=ABeeZee:ital@0;1&family=Bubblegum+Sans&display=swap');
+
 :root {
-  --purple: #3B0273;
-  --blue:   #3C36D9;
-  --lime:   #D7F205;
-  --yellow: #F2CB05;
-  --coral:  #F28066;
+  --yellow: #fed83c;
+  --orange: #fe952e;
+  --light-blue: #24bff9;
+  --blue: #6887b6;
 
   --ink: rgba(10, 10, 10, 0.90);
   --paper: #ffffff;
   --bg: #FFFFEE;
 
-  --border: rgba(59, 2, 115, 0.18);
+  --border: rgba(104, 135, 182, 0.18);
   --shadow: 0 12px 32px rgba(10, 10, 10, 0.10);
 
-  /* Sans-serif stack (different from prior one, still native) */
-  --ui-font: "Aptos", "Avenir Next", "Segoe UI", "Noto Sans", Roboto, Helvetica, Arial, sans-serif;
+  /* ABeeZee for body text */
+  --ui-font: "ABeeZee", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 
-  /* Avoid “round button style”: modest radius */
+  /* Bubblegum Sans for headings */
+  --heading-font: "Bubblegum Sans", cursive;
+
+  /* Avoid "round button style": modest radius */
   --radius: 10px;
   --radius-sm: 8px;
 
-  /* This is the exact background used by upload buttons (we reuse it for header) */
-  --upload-bg: rgba(242, 203, 5, 0.18);
+  /* Background for upload buttons and other elements */
+  --upload-bg: rgba(254, 216, 60, 0.18);
 }
 
 * { box-sizing: border-box; }
@@ -36,42 +40,88 @@ body {
   background: var(--bg);
 }
 
+h1, h2, h3, h4, h5, h6,
+.panel-title,
+.canvas-title,
+.footer-brand-title,
+.footer-column-title,
+.pagebar-title,
+.next-race-label,
+.next-race-date,
+.navlink,
+.tab,
+.btn,
+.pill,
+.tips-title {
+  font-family: var(--heading-font);
+}
+
 /* =========================================================
    HEADER (background now matches upload button background)
    ========================================================= */
 
 .topbar {
-  background: var(--upload-bg); /* requested */
+  background-color: #ffffff;
+  background-image: url('assets/backgrounds/background-road.png'), url('assets/backgrounds/background-sky.png');
+  background-repeat: repeat-x, repeat-x;
+  background-position: center calc(2em - 20px), center 0;
+  background-size: auto 171px, auto;
   color: #1a1a1a;
   border-bottom: 1px solid rgba(0,0,0,0.08);
+  padding-top: 0.5em;
 }
 
 .topbar-inner {
   width: 100%;
-  padding: 10px 16px;
+  padding: calc(0.7em - 20px) 16px 0.35em 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  max-height: 120px;
+  max-height: 160px;
   overflow: hidden;
 }
 
 .brand {
   display: flex;
   align-items: center;
+  gap: 16px;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
 /* Keep logo flush-left and stable */
 .brand-logo {
   display: block;
-  max-height: 128px;
+  max-height: 104px;
   width: auto;
+}
+
+.brand-video {
+  width: 220px;
+  max-width: 32vw;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 3px solid rgba(16, 48, 105, 0.5);
+  box-shadow: 0 0 0 4px #ffffff;
+  background: #000;
+}
+
+.brand-video-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
 }
 
 /* Next race badge (top-right coloured area) */
 .next-race {
-  background: var(--lime);
+  background: var(--yellow);
   color: #1a1a1a;
   border: 2px solid rgba(0,0,0,0.12);
   padding: 10px 12px;
@@ -88,34 +138,41 @@ body {
 
 /* Nav row */
 .topnav {
-  background: var(--blue);
-  border-top: 1px solid rgba(0,0,0,0.08);
+  background-color: var(--yellow);
+  background-image: url('assets/backgrounds/background-scribbled.png');
+  background-repeat: repeat;
+  background-size: auto;
+  border-top: none;
+  margin-bottom: 0;
 }
 
 .topnav-inner {
   width: 100%;
-  padding: 8px 16px;
+  padding: 6px 16px 6px 3em;
+  margin-top: 1em;
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
 .navlink {
-  color: #fff;
+  color: #103069;
   text-decoration: none;
   font-weight: 900;
-  font-size: 14px;
+  font-size: 20px;
   padding: 8px 10px;
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(255,255,255,0.22);
+  border: 3px solid rgba(16, 48, 105, 0.5);
+  background: var(--light-blue);
+  box-shadow: 0 0 0 2px #ffffff;
 }
 
-.navlink:hover { background: rgba(255,255,255,0.10); }
+.navlink:hover { background: rgba(255,255,255,0.35); }
 
 .navlink.active {
-  background: var(--yellow);
+  background: var(--orange);
   color: #1a1a1a;
-  border-color: rgba(0,0,0,0.15);
+  border-color: var(--orange);
 }
 
 /* =========================================================
@@ -124,13 +181,13 @@ body {
 
 .pagebar {
   width: 100%;
-  background: var(--yellow);
-  border-bottom: 1px solid rgba(0,0,0,0.12);
+  background: transparent;
+  border-bottom: none;
 }
 
 .pagebar-inner {
   width: 100%;
-  padding: 12px 16px;
+  padding: 18px 16px 12px;
 }
 
 .pagebar-title {
@@ -141,6 +198,7 @@ body {
   flex-wrap: wrap;
   gap: 8px;
   align-items: baseline;
+  margin-top: 0;
 }
 
 .pagebar-countdown {
@@ -162,7 +220,7 @@ body {
   width: 360px;
   max-width: 92vw;
   background: var(--paper);
-  border-right: 1px solid var(--border);
+  border-right: 1px solid rgba(104, 135, 182, 0.18);
   padding: 14px;
   overflow-y: auto;
 }
@@ -194,7 +252,7 @@ body {
   font-weight: 900;
   font-size: 14px;
 
-  border: 1px solid rgba(59, 2, 115, 0.18);
+  border: 1px solid rgba(104, 135, 182, 0.18);
   background: #fff;
   color: #1a1a1a;
   border-radius: var(--radius-sm);
@@ -211,8 +269,8 @@ body {
 .tab:hover { transform: translateY(-1px); }
 
 .tab.active {
-  border-color: rgba(59, 2, 115, 0.28);
-  background: rgba(60, 54, 217, 0.08);
+  border-color: rgba(104, 135, 182, 0.28);
+  background: rgba(36, 191, 249, 0.08);
 }
 
 .step {
@@ -226,8 +284,8 @@ body {
   font-size: 13px;
   font-weight: 950;
 
-  background: rgba(60, 54, 217, 0.12);
-  border: 1px solid rgba(60, 54, 217, 0.25);
+  background: rgba(36, 191, 249, 0.12);
+  border: 1px solid rgba(36, 191, 249, 0.25);
 }
 
 /* =========================================================
@@ -250,10 +308,10 @@ body {
 }
 
 .control-group {
-  border: 1px solid rgba(59, 2, 115, 0.16);
+  border: 1px solid rgba(104, 135, 182, 0.16);
   border-radius: var(--radius);
   padding: 12px;
-  background: rgba(60, 54, 217, 0.04);
+  background: rgba(36, 191, 249, 0.04);
 }
 
 .row {
@@ -289,7 +347,7 @@ body {
 
 .field input[type="text"],
 .field input[type="email"] {
-  border: 1px solid rgba(59, 2, 115, 0.18);
+  border: 1px solid rgba(104, 135, 182, 0.18);
   border-radius: var(--radius-sm);
   padding: 10px 10px;
   font-size: 14px;
@@ -301,15 +359,15 @@ body {
 
 .field input[type="text"]:focus,
 .field input[type="email"]:focus {
-  border-color: rgba(60, 54, 217, 0.55);
-  box-shadow: 0 0 0 4px rgba(60, 54, 217, 0.16);
+  border-color: rgba(36, 191, 249, 0.55);
+  box-shadow: 0 0 0 4px rgba(36, 191, 249, 0.16);
 }
 
 .field input[type="range"] { width: 100%; }
 
 label.file {
   display: block;
-  border: 2px dashed rgba(59, 2, 115, 0.25);
+  border: 2px dashed rgba(104, 135, 182, 0.25);
   border-radius: var(--radius-sm);
   padding: 10px;
   cursor: pointer;
@@ -323,7 +381,7 @@ label.file input { display: none; }
 .divider {
   border: none;
   height: 1px;
-  background: rgba(59, 2, 115, 0.14);
+  background: rgba(104, 135, 182, 0.14);
   margin: 14px 0;
 }
 
@@ -335,7 +393,7 @@ label.file input { display: none; }
 }
 
 .pill {
-  border: 1px solid rgba(59, 2, 115, 0.18);
+  border: 1px solid rgba(104, 135, 182, 0.18);
   background: #fff;
   padding: 7px 10px;
   border-radius: var(--radius-sm);
@@ -344,7 +402,7 @@ label.file input { display: none; }
 }
 
 .pill.emphasis {
-  background: rgba(215, 242, 5, 0.25);
+  background: rgba(254, 216, 60, 0.25);
   border-color: rgba(0,0,0,0.15);
 }
 
@@ -353,8 +411,8 @@ label.file input { display: none; }
   font-size: 13px;
   line-height: 1.35;
   padding: 10px;
-  border-left: 6px solid var(--blue);
-  background: rgba(60, 54, 217, 0.06);
+  border-left: 6px solid var(--light-blue);
+  background: rgba(36, 191, 249, 0.06);
   border-radius: var(--radius-sm);
 }
 
@@ -378,24 +436,24 @@ label.file input { display: none; }
 .btn:hover {
   transform: translateY(-1px);
   box-shadow: 0 10px 22px rgba(10, 10, 10, 0.10);
-  background: rgba(60, 54, 217, 0.04);
+  background: rgba(36, 191, 249, 0.04);
 }
 
 .btn.primary {
-  background: var(--lime);
+  background: var(--yellow);
   color: #1a1a1a;
   border-color: rgba(0,0,0,0.16);
 }
 
-.btn.primary:hover { background: rgba(215, 242, 5, 0.85); }
+.btn.primary:hover { background: rgba(254, 216, 60, 0.85); }
 
 .btn.danger {
-  background: var(--coral);
+  background: var(--orange);
   color: #1a1a1a;
   border-color: rgba(0,0,0,0.16);
 }
 
-.btn.danger:hover { background: rgba(242, 128, 102, 0.88); }
+.btn.danger:hover { background: rgba(254, 149, 46, 0.88); }
 
 .btn.small {
   width: auto;
@@ -411,7 +469,7 @@ label.file input { display: none; }
 
 .canvas-card {
   background: var(--paper);
-  border: 1px solid rgba(59, 2, 115, 0.18);
+  border: 1px solid rgba(104, 135, 182, 0.18);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   overflow: hidden;
@@ -419,8 +477,8 @@ label.file input { display: none; }
 
 .canvas-header {
   padding: 12px 14px;
-  border-bottom: 1px solid rgba(59, 2, 115, 0.14);
-  background: rgba(60, 54, 217, 0.05);
+  border-bottom: 1px solid rgba(104, 135, 182, 0.14);
+  background: rgba(36, 191, 249, 0.05);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -454,7 +512,7 @@ label.file input { display: none; }
 }
 
 #bodyCanvas {
-  border: 2px solid rgba(59, 2, 115, 0.22);
+  border: 2px solid rgba(104, 135, 182, 0.22);
   border-radius: var(--radius-sm);
   background: #fff;
   width: min(1024px, 100%);
@@ -463,7 +521,7 @@ label.file input { display: none; }
 }
 
 #wheelCanvas {
-  border: 2px dashed rgba(59, 2, 115, 0.25);
+  border: 2px dashed rgba(104, 135, 182, 0.25);
   border-radius: var(--radius-sm);
   background: #fff;
   width: min(256px, 50vw);
@@ -498,47 +556,94 @@ label.file input { display: none; }
 }
 
 /* =========================================================
-   FOOTER
-   - Copyright notice now bolder
+   FOOTER - NEW DARK FOOTER WITH BACKGROUND
    ========================================================= */
 
-.site-footer {
-  background: var(--purple);
+.site-footer-new {
+  background-color: rgb(25, 25, 25);
+  background-image: url('assets/backgrounds/background-dark.png');
+  background-size: 100%;
+  background-position: center;
+  background-repeat: no-repeat;
   color: #fff;
-  margin-top: 18px;
-}
-
-.footer-inner {
+  margin-top: 0;
   width: 100%;
-  padding: 14px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  flex-wrap: wrap;
+  min-height: 25vh;
+  position: relative;
 }
 
-.footer-links {
+.footer-new-inner {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 60px 40px 30px;
+}
+
+.footer-columns {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 60px;
+  margin-bottom: 40px;
+}
+
+.footer-column {
   display: flex;
+  flex-direction: column;
+}
+
+.footer-brand-title {
+  font-size: 24px;
+  font-weight: 950;
+  color: #fff;
+  margin: 0;
+}
+
+.footer-column-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 20px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.footer-column-title-secondary {
+  margin-top: 30px;
+}
+
+.footer-links-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
-  flex-wrap: wrap;
 }
 
-.footer-links a {
+.footer-links-list li {
+  margin: 0;
+}
+
+.footer-links-list a {
   color: #fff;
   text-decoration: none;
-  font-weight: 900;
-  padding: 6px 8px;
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(255,255,255,0.18);
+  font-weight: 400;
+  font-size: 16px;
+  transition: color 0.2s ease, transform 0.1s ease;
+  display: inline-block;
 }
 
-.footer-links a:hover { background: rgba(255,255,255,0.10); }
+.footer-links-list a:hover {
+  color: var(--yellow);
+  transform: translateX(4px);
+}
 
-.footer-meta {
-  font-size: 13px;
-  font-weight: 950; /* requested: bolder */
-  opacity: 0.95;
+.footer-copyright {
+  text-align: center;
+  padding-top: 30px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #fff;
 }
 
 /* =========================================================
@@ -553,7 +658,7 @@ label.file input { display: none; }
 
 .container {
   background: var(--paper);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(104, 135, 182, 0.18);
   border-radius: var(--radius);
   padding: 30px;
   box-shadow: var(--shadow);
@@ -574,7 +679,7 @@ label.file input { display: none; }
   font-size: 24px;
   font-weight: 950;
   margin-bottom: 10px;
-  color: var(--purple);
+  color: var(--blue);
 }
 
 .faq-section p, .contact-section p {
@@ -593,7 +698,7 @@ label.file input { display: none; }
 }
 
 .contact-section a {
-  color: var(--blue);
+  color: var(--light-blue);
   text-decoration: none;
   font-weight: 900;
 }
@@ -628,7 +733,7 @@ label.file input { display: none; }
 .page-container h2 {
   font-size: 24px;
   font-weight: 950;
-  color: var(--purple);
+  color: var(--blue);
   margin-bottom: 15px;
 }
 
@@ -639,7 +744,7 @@ label.file input { display: none; }
 
 .race-details-card {
   background: var(--paper);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(104, 135, 182, 0.18);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 30px;
@@ -666,8 +771,8 @@ label.file input { display: none; }
   font-weight: 900;
   color: var(--ink);
   padding: 10px 15px;
-  background: rgba(60, 54, 217, 0.08);
-  border: 1px solid rgba(60, 54, 217, 0.15);
+  background: rgba(36, 191, 249, 0.08);
+  border: 1px solid rgba(36, 191, 249, 0.15);
   border-radius: var(--radius-sm);
 }
 
@@ -684,7 +789,7 @@ label.file input { display: none; }
 
 .entries-container {
   background: var(--paper);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(104, 135, 182, 0.18);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   overflow: hidden;
@@ -699,7 +804,7 @@ label.file input { display: none; }
 }
 
 .entries-table th {
-  background: var(--blue);
+  background: var(--light-blue);
   color: white;
   padding: 15px;
   text-align: left;
@@ -709,15 +814,15 @@ label.file input { display: none; }
 
 .entries-table td {
   padding: 12px 15px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid rgba(104, 135, 182, 0.18);
 }
 
 .entries-table tr:nth-child(even) {
-  background: rgba(60, 54, 217, 0.02);
+  background: rgba(36, 191, 249, 0.02);
 }
 
 .entries-table tr:hover {
-  background: rgba(60, 54, 217, 0.05);
+  background: rgba(36, 191, 249, 0.05);
 }
 
 .loading, .no-entries, .no-race {
@@ -741,14 +846,14 @@ label.file input { display: none; }
 }
 
 .race-results-section h2 {
-  color: var(--purple);
+  color: var(--blue);
   margin-bottom: 20px;
   font-size: 28px;
 }
 
 .results-table-container {
   background: var(--paper);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(104, 135, 182, 0.18);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   overflow-x: auto;
@@ -762,7 +867,7 @@ label.file input { display: none; }
 }
 
 .results-table th {
-  background: var(--blue);
+  background: var(--light-blue);
   color: white;
   padding: 15px 12px;
   text-align: left;
@@ -772,23 +877,23 @@ label.file input { display: none; }
 
 .results-table td {
   padding: 12px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid rgba(104, 135, 182, 0.18);
 }
 
 .results-table tr:nth-child(even) {
-  background: rgba(60, 54, 217, 0.02);
+  background: rgba(36, 191, 249, 0.02);
 }
 
 .results-table tr:hover {
-  background: rgba(60, 54, 217, 0.05);
+  background: rgba(36, 191, 249, 0.05);
 }
 
 .results-table tr:first-child {
-  background: rgba(215, 242, 5, 0.15);
+  background: rgba(254, 216, 60, 0.15);
 }
 
 .results-table tr:first-child:hover {
-  background: rgba(215, 242, 5, 0.25);
+  background: rgba(254, 216, 60, 0.25);
 }
 
 /* Historical race sections */
@@ -797,7 +902,7 @@ label.file input { display: none; }
 }
 
 .historical-race-section h3 {
-  color: var(--purple);
+  color: var(--blue);
   margin-bottom: 15px;
   font-size: 24px;
 }
@@ -851,7 +956,7 @@ label.file input { display: none; }
   #toolbar {
     width: 100%;
     border-right: none;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid rgba(104, 135, 182, 0.18);
   }
   .next-race { font-size: 13px; padding: 8px 10px; }
 

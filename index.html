@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>Rapid Racers 2D - Car Designer</title>
+  <title>Doodle Dash - Car Designer</title>
 
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -21,16 +21,26 @@
       <div class="brand">
         <img
           class="brand-logo"
-          src="assets/title_full.png"
-          alt="Rapid Racers 2D"
-          width="670"
-          height="142"
+          src="assets/titles/title-banner.png"
+          alt="Doodle Dash"
         />
       </div>
 
-      <div class="next-race" aria-label="Next race date">
-        <span class="next-race-label">Next race:</span>
-        <span id="nextRaceDate" class="next-race-date">—</span>
+      <div class="topbar-right">
+        <div class="next-race" aria-label="Next race date">
+          <span class="next-race-label">Next race:</span>
+          <span id="nextRaceDate" class="next-race-date">—</span>
+        </div>
+        <div class="brand-video" aria-label="Doodle Dash video">
+          <iframe
+            class="brand-video-frame"
+            src="https://www.youtube.com/embed/Rf7DhQOa-eg?controls=0&modestbranding=1&rel=0"
+            title="Doodle Dash video"
+            frameborder="0"
+            allow="autoplay; encrypted-media"
+            allowfullscreen
+          ></iframe>
+        </div>
       </div>
     </div>
 
@@ -323,16 +333,50 @@
   </div>
 
   <!-- FOOTER -->
-  <footer class="site-footer" role="contentinfo">
-    <div class="footer-inner">
-      <div class="footer-links">
-        <a href="index.html">Home</a>
-        <a href="races.html">Races</a>
-        <a href="faq.html">FAQ</a>
+  <footer class="site-footer-new" role="contentinfo">
+    <div class="footer-new-inner">
+      <div class="footer-columns">
+        <div class="footer-column">
+          <h3 class="footer-brand-title">Doodle Dash</h3>
+        </div>
+
+        <div class="footer-column">
+          <h3 class="footer-column-title">Play</h3>
+          <ul class="footer-links-list">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="races.html">Races</a></li>
+            <li><a href="youtube.html">YouTube Channel</a></li>
+            <li><a href="garage.html">Garage</a></li>
+            <li><a href="help.html">Help</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-column">
+          <h3 class="footer-column-title">Learn</h3>
+          <ul class="footer-links-list">
+            <li><a href="faq.html">FAQ</a></li>
+            <li><a href="tutorial.html">Tutorial</a></li>
+            <li><a href="blog.html">Blog</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-column">
+          <h3 class="footer-column-title">Company</h3>
+          <ul class="footer-links-list">
+            <li><a href="about.html">About</a></li>
+            <li><a href="contact.html">Contact</a></li>
+          </ul>
+
+          <h3 class="footer-column-title footer-column-title-secondary">Terms and Policies</h3>
+          <ul class="footer-links-list">
+            <li><a href="privacy.html">Privacy Policy</a></li>
+            <li><a href="terms.html">Terms of Use</a></li>
+          </ul>
+        </div>
       </div>
 
-      <div class="footer-meta">
-        © <span id="footerYear"></span> Rapid Racers 2D | <span id="versionInfo"></span>
+      <div class="footer-copyright">
+        © <span id="footerYear"></span> Doodle Dash | <span id="versionInfo"></span>
       </div>
     </div>
   </footer>

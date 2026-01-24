@@ -1,6 +1,6 @@
 /**
  * =========================================================
- * RAPID RACERS 2D — shared config + race timing UI
+ * DOODLE DASH — shared config + race timing UI
  * =========================================================
  */
 
@@ -57,7 +57,7 @@
         }
 
         // Update page title with race info
-        document.title = `${race.racename} - Rapid Racers 2D`;
+        document.title = `${race.racename} - Doodle Dash`;
 
         updateCountdown();
       } else {
@@ -92,7 +92,7 @@
       countdownEl.textContent = "Please check back later";
     }
     // Reset page title
-    document.title = "Rapid Racers 2D";
+    document.title = "Doodle Dash";
   }
 
   function updateCountdown() {

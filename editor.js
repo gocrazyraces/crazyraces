@@ -402,9 +402,10 @@ function renderBodyComposite() {
 }
 
 function renderWheelEditor() {
-  wheelCtx.save();
-  wheelCtx.clearRect(0, 0, WHEEL_W, WHEEL_H);
+  // Draw the grid pattern background
+  drawSubtleGrid(wheelCtx, WHEEL_W, WHEEL_H);
 
+  wheelCtx.save();
   wheelCtx.globalAlpha = 0.06;
   wheelCtx.fillStyle = "#3B0273";
   wheelCtx.beginPath();

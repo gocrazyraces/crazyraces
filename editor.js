@@ -1289,7 +1289,7 @@ if (ui.carKeyBtn) {
       const response = await fetch(`/api/car-lookup?carname=${encodeURIComponent(carName)}&carkey=${encodeURIComponent(normalized)}`);
       if (!response.ok) {
         const errorText = await response.text();
-        ui.carNameStatus.textContent = 'Car not found. Starting new design.';
+        ui.carNameStatus.textContent = `Lookup failed: ${errorText}`;
         currentCar = null;
         return;
       }

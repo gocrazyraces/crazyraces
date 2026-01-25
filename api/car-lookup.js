@@ -48,6 +48,7 @@ export default async function handler(req, res) {
     }
 
     const carsSheetName = await resolveCarsSheetName(sheets, spreadsheetId);
+    console.log('Car lookup using sheet:', carsSheetName);
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
       range: `${carsSheetName}!A:H`
@@ -57,10 +58,20 @@ export default async function handler(req, res) {
     const match = rows.slice(1).find(row => {
       const rowKey = normalizeCarKey(row[2]);
       const rowName = String(row[3] || '').trim().toLowerCase();
+      if (!rowKey || !rowName) return false;
       return rowKey === normalizedKey && rowName === String(carname).trim().toLowerCase();
     });
 
     if (!match) {
+      console.warn('Car lookup failed', {
+        carname,
+        carkey: normalizedKey,
+        sampleRows: rows.slice(1, 6).map(row => ({
+          carname: row[3],
+          carkey: row[2],
+          carnumber: row[1]
+        }))
+      });
       return res.status(404).json({ message: 'Car not found' });
     }
 

@@ -18,7 +18,7 @@
   async function loadRaceData() {
     try {
       // Get race info
-      const raceResponse = await fetch('/api/race-info');
+      const raceResponse = await fetch('/api/races?resource=info');
       const raceData = await raceResponse.json();
 
       if (raceData.raceInfo) {
@@ -68,7 +68,7 @@
 
   async function loadApprovedEntries(season, racenumber) {
     try {
-      const response = await fetch(`/api/race-entries?season=${season}&racenumber=${racenumber}`);
+      const response = await fetch(`/api/races?resource=entries&season=${season}&racenumber=${racenumber}`);
       const data = await response.json();
 
       if (data.entries && data.entries.length > 0) {
@@ -201,7 +201,7 @@
       // Get current season from race info, fallback to season 1
       let currentSeason = 1;
       try {
-        const raceResponse = await fetch('/api/race-info');
+        const raceResponse = await fetch('/api/races?resource=info');
         const raceData = await raceResponse.json();
         if (raceData.raceInfo && raceData.raceInfo.season) {
           currentSeason = raceData.raceInfo.season;
@@ -210,7 +210,7 @@
         console.log('Could not get current season, using default');
       }
 
-      const response = await fetch(`/api/race-results?season=${currentSeason}`);
+      const response = await fetch(`/api/races?resource=results&season=${currentSeason}`);
       const data = await response.json();
 
       if (data.results && data.results.length > 0) {

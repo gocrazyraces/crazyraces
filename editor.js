@@ -245,7 +245,7 @@ async function loadActiveRaces() {
   if (!ui.raceSelect) return;
 
   try {
-    const response = await fetch('/api/active-races');
+    const response = await fetch('/api/races?resource=active');
     const data = await response.json();
     activeRaces = Array.isArray(data.races) ? data.races : [];
   } catch (error) {
@@ -1230,7 +1230,7 @@ init();
 // ============================
 async function loadCarNameList() {
   try {
-    const response = await fetch('/api/car-names');
+    const response = await fetch('/api/cars?resource=names');
     const data = await response.json();
     carNameList = (data.names || [])
       .map(name => name.trim().toLowerCase())
@@ -1314,7 +1314,7 @@ if (ui.carKeyBtn) {
     ui.carNameStatus.classList.add('exists');
 
     try {
-      const response = await fetch(`/api/car-lookup?carname=${encodeURIComponent(carName)}&carkey=${encodeURIComponent(normalized)}`);
+      const response = await fetch(`/api/cars?resource=lookup&carname=${encodeURIComponent(carName)}&carkey=${encodeURIComponent(normalized)}`);
       if (!response.ok) {
         const errorText = await response.text();
         ui.carNameStatus.textContent = `Lookup failed: ${errorText}`;

@@ -4,7 +4,7 @@
 
   async function fetchCars() {
     try {
-      const response = await fetch('/api/admin-cars');
+      const response = await fetch('/api/admin?resource=cars');
       if (!response.ok) {
         const text = await response.text();
         throw new Error(text);
@@ -49,7 +49,7 @@
     const status = button.dataset.action;
 
     try {
-      const response = await fetch('/api/admin-car-status', {
+      const response = await fetch('/api/admin?resource=car-status', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rowIndex, status })

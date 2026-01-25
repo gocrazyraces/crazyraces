@@ -4,7 +4,7 @@
 
   async function fetchRaces() {
     try {
-      const response = await fetch('/api/admin-races');
+      const response = await fetch('/api/admin?resource=races');
       if (!response.ok) {
         const text = await response.text();
         throw new Error(text);
@@ -50,7 +50,7 @@
     const reader = new FileReader();
     reader.onload = async () => {
       try {
-        const response = await fetch('/api/admin-race-image', {
+        const response = await fetch('/api/admin?resource=race-image', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

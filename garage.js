@@ -9,7 +9,7 @@
     if (!grid) return;
 
     try {
-      const response = await fetch('/api/car-info');
+      const response = await fetch('/api/cars?resource=info');
       const data = await response.json();
 
       if (data.cars && data.cars.length > 0) {

@@ -31,7 +31,7 @@
   async function loadRaceInfo() {
     try {
       console.log('Loading race info from API...');
-      const response = await fetch('/api/race-info');
+      const response = await fetch('/api/races?resource=info');
       const data = await response.json();
       console.log('Race info API response:', data);
 
@@ -121,7 +121,7 @@
 
   // Debug: Check API response directly
   console.log('Checking race API...');
-  fetch('/api/race-info')
+  fetch('/api/races?resource=info')
     .then(r => r.json())
     .then(data => console.log('API Response:', data))
     .catch(err => console.error('API Error:', err));

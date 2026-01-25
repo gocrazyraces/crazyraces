@@ -124,18 +124,24 @@
         || entry.previewImageData
         || entry.carImagePath
         || '';
+      const fullImageSrc = entry.previewImageData || entry.carImagePath || '';
       if (thumbSrc) {
-        const link = document.createElement('a');
-        link.href = entry.previewImageData || entry.carImagePath || thumbSrc;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
         const img = document.createElement('img');
         img.src = thumbSrc;
         img.alt = entry.carName || 'Car preview';
         img.loading = 'lazy';
         img.className = 'entries-thumb';
-        link.appendChild(img);
-        imageCell.appendChild(link);
+
+        if (fullImageSrc) {
+          const link = document.createElement('a');
+          link.href = fullImageSrc;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          link.appendChild(img);
+          imageCell.appendChild(link);
+        } else {
+          imageCell.appendChild(img);
+        }
       } else {
         imageCell.textContent = '—';
       }

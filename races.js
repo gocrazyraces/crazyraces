@@ -97,13 +97,13 @@
     // Table header
     const thead = document.createElement('thead');
     const headerRow = document.createElement('tr');
-    const numberHeader = document.createElement('th');
-    numberHeader.textContent = 'Car #';
     const carHeader = document.createElement('th');
     carHeader.textContent = 'Car Name';
+    const imageHeader = document.createElement('th');
+    imageHeader.textContent = 'Car';
 
-    headerRow.appendChild(numberHeader);
     headerRow.appendChild(carHeader);
+    headerRow.appendChild(imageHeader);
     thead.appendChild(headerRow);
     table.appendChild(thead);
 
@@ -113,14 +113,29 @@
     entries.forEach(entry => {
       const row = document.createElement('tr');
 
-      const numberCell = document.createElement('td');
-      numberCell.textContent = entry.carNumber || '—';
-
       const carCell = document.createElement('td');
       carCell.textContent = entry.carName || 'Unknown Car';
 
-      row.appendChild(numberCell);
+      const imageCell = document.createElement('td');
+      const thumbSrc = entry.carThumb64Path || entry.carThumb256Path || entry.carImagePath || '';
+      if (thumbSrc) {
+        const link = document.createElement('a');
+        link.href = entry.carImagePath || thumbSrc;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        const img = document.createElement('img');
+        img.src = thumbSrc;
+        img.alt = entry.carName || 'Car preview';
+        img.loading = 'lazy';
+        img.className = 'entries-thumb';
+        link.appendChild(img);
+        imageCell.appendChild(link);
+      } else {
+        imageCell.textContent = '—';
+      }
+
       row.appendChild(carCell);
+      row.appendChild(imageCell);
       tbody.appendChild(row);
     });
 

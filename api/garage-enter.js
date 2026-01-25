@@ -79,8 +79,12 @@ module.exports = async function handler(req, res) {
     const bodyFileName = `${basePath}body.png`;
     const wheelFileName = `${basePath}wheel.png`;
     const previewFileName = `${basePath}preview.png`;
+    const thumb256FileName = `${basePath}thumb256.png`;
+    const thumb64FileName = `${basePath}thumb64.png`;
 
     const previewBuffer = await generateCompositePreview(bodyImageData, wheelImageData, wheelPositions);
+    const thumb256Buffer = await generateThumbnail(previewBuffer, 256);
+    const thumb64Buffer = await generateThumbnail(previewBuffer, 64);
 
     const jsonData = JSON.stringify({
       season,
@@ -101,7 +105,9 @@ module.exports = async function handler(req, res) {
       imagePaths: {
         body: `https://storage.googleapis.com/${bucketName}/${bodyFileName}`,
         wheel: `https://storage.googleapis.com/${bucketName}/${wheelFileName}`,
-        preview: `https://storage.googleapis.com/${bucketName}/${previewFileName}`
+        preview: `https://storage.googleapis.com/${bucketName}/${previewFileName}`,
+        thumb256: `https://storage.googleapis.com/${bucketName}/${thumb256FileName}`,
+        thumb64: `https://storage.googleapis.com/${bucketName}/${thumb64FileName}`
       }
     }, null, 2);
 
@@ -109,6 +115,8 @@ module.exports = async function handler(req, res) {
     await uploadToGCS(storage, bucketName, bodyFileName, Buffer.from(bodyImageData.split('base64,')[1], 'base64'), 'image/png');
     await uploadToGCS(storage, bucketName, wheelFileName, Buffer.from(wheelImageData.split('base64,')[1], 'base64'), 'image/png');
     await uploadToGCS(storage, bucketName, previewFileName, previewBuffer, 'image/png');
+    await uploadToGCS(storage, bucketName, thumb256FileName, thumb256Buffer, 'image/png');
+    await uploadToGCS(storage, bucketName, thumb64FileName, thumb64Buffer, 'image/png');
 
     if (existingCar) {
       await updateCarRow(sheets, carsSpreadsheetId, carsSheetName, existingCar.rowIndex, [
@@ -119,10 +127,12 @@ module.exports = async function handler(req, res) {
         carVersion,
         existingCar.carstatus || 'submitted',
         `https://storage.googleapis.com/${bucketName}/${previewFileName}`,
+        `https://storage.googleapis.com/${bucketName}/${thumb256FileName}`,
+        `https://storage.googleapis.com/${bucketName}/${thumb64FileName}`,
         `https://storage.googleapis.com/${bucketName}/${jsonFileName}`
       ]);
     } else {
-      await appendToSheet(sheets, carsSpreadsheetId, `${carsSheetName}!A:H`, [
+      await appendToSheet(sheets, carsSpreadsheetId, `${carsSheetName}!A:J`, [
         season,
         carNumber,
         carKey,
@@ -130,6 +140,8 @@ module.exports = async function handler(req, res) {
         carVersion,
         'submitted',
         `https://storage.googleapis.com/${bucketName}/${previewFileName}`,
+        `https://storage.googleapis.com/${bucketName}/${thumb256FileName}`,
+        `https://storage.googleapis.com/${bucketName}/${thumb64FileName}`,
         `https://storage.googleapis.com/${bucketName}/${jsonFileName}`
       ]);
     }
@@ -139,7 +151,9 @@ module.exports = async function handler(req, res) {
       carKey,
       carNumber,
       carJsonPath: `https://storage.googleapis.com/${bucketName}/${jsonFileName}`,
-      carImagePath: `https://storage.googleapis.com/${bucketName}/${previewFileName}`
+      carImagePath: `https://storage.googleapis.com/${bucketName}/${previewFileName}`,
+      carThumb256Path: `https://storage.googleapis.com/${bucketName}/${thumb256FileName}`,
+      carThumb64Path: `https://storage.googleapis.com/${bucketName}/${thumb64FileName}`
     });
   } catch (err) {
     console.error('Garage submission error:', err);
@@ -154,7 +168,7 @@ function generateCarKey() {
 async function getNextCarNumber(sheets, spreadsheetId, sheetName) {
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: `${sheetName}!A:H`
+    range: `${sheetName}!A:J`
   });
 
   const rows = response.data.values || [];
@@ -195,7 +209,7 @@ async function findExistingCar(sheets, spreadsheetId, sheetName, carName, carKey
 
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: `${sheetName}!A:H`
+    range: `${sheetName}!A:J`
   });
 
   const rows = response.data.values || [];
@@ -232,7 +246,7 @@ async function findExistingCar(sheets, spreadsheetId, sheetName, carName, carKey
 async function updateCarRow(sheets, spreadsheetId, sheetName, rowIndex, values) {
   await sheets.spreadsheets.values.update({
     spreadsheetId,
-    range: `${sheetName}!A${rowIndex}:H${rowIndex}`,
+    range: `${sheetName}!A${rowIndex}:J${rowIndex}`,
     valueInputOption: 'RAW',
     resource: {
       values: [values]
@@ -246,7 +260,7 @@ async function resolveCarsSheetName(sheets, spreadsheetId) {
     try {
       await sheets.spreadsheets.values.get({
         spreadsheetId,
-        range: `${name}!A1:H1`
+        range: `${name}!A1:J1`
       });
       return name;
     } catch (error) {
@@ -314,4 +328,12 @@ async function generateCompositePreview(bodyImageData, wheelImageData, wheelPosi
   }
 
   return await composite.toBuffer();
+}
+
+async function generateThumbnail(buffer, height) {
+  const sharp = (await import('sharp')).default;
+  return await sharp(buffer)
+    .resize({ height, withoutEnlargement: true })
+    .png()
+    .toBuffer();
 }

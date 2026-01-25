@@ -920,6 +920,15 @@ label.file input { display: none; }
   border-bottom: 1px solid rgba(104, 135, 182, 0.18);
 }
 
+.entries-thumb {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid rgba(104, 135, 182, 0.18);
+  background: rgba(36, 191, 249, 0.08);
+}
+
 .entries-table tr:nth-child(even) {
   background: rgba(36, 191, 249, 0.02);
 }

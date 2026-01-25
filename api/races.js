@@ -95,7 +95,7 @@ async function handleRaceEntries(req, res) {
 
   const carsResponse = await sheets.spreadsheets.values.get({
     spreadsheetId: carsSpreadsheetId,
-    range: `${carsSheetName}!A:H`,
+    range: `${carsSheetName}!A:J`,
   });
 
   const entryRows = entriesResponse.data.values || [];
@@ -109,7 +109,9 @@ async function handleRaceEntries(req, res) {
       carversion: row[4],
       carstatus: row[5],
       carimagepath: row[6],
-      carjsonpath: row[7]
+      carthumb256path: row[7],
+      carthumb64path: row[8],
+      carjsonpath: row[9]
     }])
   );
 
@@ -133,6 +135,8 @@ async function handleRaceEntries(req, res) {
         carNumber,
         carName: car?.carname || 'Unknown Car',
         carImagePath: car?.carimagepath || '',
+        carThumb256Path: car?.carthumb256path || '',
+        carThumb64Path: car?.carthumb64path || ''
       };
     })
     .filter(Boolean);
@@ -272,7 +276,7 @@ async function handleRaceAssets(req, res) {
 
   const carsResponse = await sheets.spreadsheets.values.get({
     spreadsheetId: carsSpreadsheetId,
-    range: `${carsSheetName}!A:H`,
+    range: `${carsSheetName}!A:J`,
   });
 
   const entryRows = entriesResponse.data.values || [];
@@ -286,7 +290,9 @@ async function handleRaceAssets(req, res) {
       carversion: row[4],
       carstatus: row[5],
       carimagepath: row[6],
-      carjsonpath: row[7]
+      carthumb256path: row[7],
+      carthumb64path: row[8],
+      carjsonpath: row[9]
     }])
   );
 
@@ -310,6 +316,8 @@ async function handleRaceAssets(req, res) {
         racerstatus: row[3],
         carname: car?.carname || '',
         carimagepath: car?.carimagepath || '',
+        carthumb256path: car?.carthumb256path || '',
+        carthumb64path: car?.carthumb64path || '',
         carjsonpath: car?.carjsonpath || ''
       };
     })
@@ -357,6 +365,8 @@ async function handleRaceAssets(req, res) {
 
     const filesToDownload = [
       { gcsPath: entry.carimagepath, localName: 'preview.png', isText: false },
+      { gcsPath: entry.carthumb256path, localName: 'thumb256.png', isText: false },
+      { gcsPath: entry.carthumb64path, localName: 'thumb64.png', isText: false },
       { gcsPath: carData.imagePaths.body, localName: 'body.png', isText: false },
       { gcsPath: carData.imagePaths.wheel, localName: 'wheel.png', isText: false }
     ];
@@ -430,7 +440,7 @@ async function resolveRaceSheetName(sheets, spreadsheetId) {
     try {
       await sheets.spreadsheets.values.get({
         spreadsheetId,
-        range: `${name}!A1:H1`
+        range: `${name}!A1:J1`
       });
       return name;
     } catch (error) {
@@ -464,7 +474,7 @@ async function resolveCarsSheetName(sheets, spreadsheetId) {
     try {
       await sheets.spreadsheets.values.get({
         spreadsheetId,
-        range: `${name}!A1:H1`
+        range: `${name}!A1:J1`
       });
       return name;
     } catch (error) {

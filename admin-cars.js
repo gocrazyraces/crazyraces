@@ -24,11 +24,20 @@
 
     const rows = cars.map(car => {
       const status = car.carstatus || 'submitted';
-      const thumb = car.previewImageData || car.carimagepath || '';
+      const thumb = car.thumb256ImageData
+        || car.carthumb256path
+        || car.previewImageData
+        || car.carimagepath
+        || '';
+      const previewLink = car.carimagepath || '';
       return `
         <div class="admin-card">
           <div class="admin-card-media">
-            ${thumb ? `<img src="${thumb}" alt="${car.carname || 'Car'}" loading="lazy" />` : '<div class="admin-thumb-placeholder">No image</div>'}
+            ${thumb ? `
+              <a href="${previewLink}" target="_blank" rel="noopener noreferrer">
+                <img src="${thumb}" alt="${car.carname || 'Car'}" loading="lazy" />
+              </a>
+            ` : '<div class="admin-thumb-placeholder">No image</div>'}
           </div>
           <div class="admin-card-details">
             <strong>${car.carname || 'Unnamed car'}</strong> (Season ${car.season}, #${car.carnumber})

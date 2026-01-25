@@ -47,7 +47,7 @@ async function handleAdminCars(req, res) {
   const sheetName = await resolveCarsSheetName(sheets, spreadsheetId);
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: `${sheetName}!A:H`,
+    range: `${sheetName}!A:J`,
   });
 
   const rows = response.data.values || [];
@@ -60,16 +60,22 @@ async function handleAdminCars(req, res) {
     carversion: row[4],
     carstatus: row[5],
     carimagepath: row[6],
-    carjsonpath: row[7]
+    carthumb256path: row[7],
+    carthumb64path: row[8],
+    carjsonpath: row[9]
   }));
 
   const bucket = storageClient.bucket(bucketName);
   const carsWithPreview = await Promise.all(
     cars.map(async (car) => {
       const previewImageData = await downloadImageAsDataUrl(bucket, bucketName, car.carimagepath);
+      const thumb256ImageData = await downloadImageAsDataUrl(bucket, bucketName, car.carthumb256path);
+      const thumb64ImageData = await downloadImageAsDataUrl(bucket, bucketName, car.carthumb64path);
       return {
         ...car,
-        previewImageData
+        previewImageData,
+        thumb256ImageData,
+        thumb64ImageData
       };
     })
   );
@@ -245,7 +251,7 @@ async function resolveCarsSheetName(sheets, spreadsheetId) {
     try {
       await sheets.spreadsheets.values.get({
         spreadsheetId,
-        range: `${name}!A1:H1`
+        range: `${name}!A1:J1`
       });
       return name;
     } catch (error) {

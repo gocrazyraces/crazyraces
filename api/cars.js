@@ -40,7 +40,7 @@ async function handleCarInfo(req, res) {
   const carsSheetName = await resolveCarsSheetName(sheets, spreadsheetId);
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: `${carsSheetName}!A:H`,
+    range: `${carsSheetName}!A:J`,
   });
 
   const rows = response.data.values || [];
@@ -53,7 +53,9 @@ async function handleCarInfo(req, res) {
       carversion: row[4],
       carstatus: row[5],
       carimagepath: row[6],
-      carjsonpath: row[7]
+      carthumb256path: row[7],
+      carthumb64path: row[8],
+      carjsonpath: row[9]
     }))
     .filter(car => String(car.carstatus || '').toLowerCase() === 'approved');
 
@@ -61,9 +63,13 @@ async function handleCarInfo(req, res) {
   const carsWithPreview = await Promise.all(
     cars.map(async (car) => {
       const previewImageData = await downloadImageAsDataUrl(bucket, bucketName, car.carimagepath);
+      const thumb256ImageData = await downloadImageAsDataUrl(bucket, bucketName, car.carthumb256path);
+      const thumb64ImageData = await downloadImageAsDataUrl(bucket, bucketName, car.carthumb64path);
       return {
         ...car,
-        previewImageData
+        previewImageData,
+        thumb256ImageData,
+        thumb64ImageData
       };
     })
   );
@@ -133,7 +139,7 @@ async function handleCarLookup(req, res) {
   const carsSheetName = await resolveCarsSheetName(sheets, spreadsheetId);
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: `${carsSheetName}!A:H`
+    range: `${carsSheetName}!A:J`
   });
 
   const rows = response.data.values || [];
@@ -156,7 +162,9 @@ async function handleCarLookup(req, res) {
     carversion: match[4],
     carstatus: match[5],
     carimagepath: match[6],
-    carjsonpath: match[7]
+    carthumb256path: match[7],
+    carthumb64path: match[8],
+    carjsonpath: match[9]
   };
 
   const jsonUrl = new URL(car.carjsonpath);
@@ -173,10 +181,14 @@ async function handleCarLookup(req, res) {
 
   const bodyImagePath = carData?.imagePaths?.body || car.carimagepath;
   const wheelImagePath = carData?.imagePaths?.wheel;
+  const thumb256Path = carData?.imagePaths?.thumb256 || car.carthumb256path;
+  const thumb64Path = carData?.imagePaths?.thumb64 || car.carthumb64path;
 
-  const [bodyImageData, wheelImageData] = await Promise.all([
+  const [bodyImageData, wheelImageData, thumb256ImageData, thumb64ImageData] = await Promise.all([
     downloadImageAsDataUrl(bucket, bucketName, bodyImagePath),
-    downloadImageAsDataUrl(bucket, bucketName, wheelImagePath)
+    downloadImageAsDataUrl(bucket, bucketName, wheelImagePath),
+    downloadImageAsDataUrl(bucket, bucketName, thumb256Path),
+    downloadImageAsDataUrl(bucket, bucketName, thumb64Path)
   ]);
 
   return res.status(200).json({
@@ -184,7 +196,9 @@ async function handleCarLookup(req, res) {
     carData,
     assets: {
       bodyImageData,
-      wheelImageData
+      wheelImageData,
+      thumb256ImageData,
+      thumb64ImageData
     }
   });
 }
@@ -241,7 +255,7 @@ async function resolveCarsSheetName(sheets, spreadsheetId) {
     try {
       await sheets.spreadsheets.values.get({
         spreadsheetId,
-        range: `${name}!A1:H1`
+        range: `${name}!A1:J1`
       });
       return name;
     } catch (error) {

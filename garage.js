@@ -26,17 +26,24 @@
   function renderCars(cars) {
     const cards = cars.map(car => {
       const carName = car.carname || 'Unknown Car';
-      const carVersion = car.carversion || '—';
-      const thumb = car.previewImageData || car.carimagepath || '';
+      const thumb = car.thumb256ImageData
+        || car.carthumb256path
+        || car.previewImageData
+        || car.carimagepath
+        || '';
+      const previewLink = car.carimagepath || '';
 
       return `
         <article class="garage-card">
           <div class="garage-thumb">
-            ${thumb ? `<img src="${thumb}" alt="${carName} thumbnail" loading="lazy" />` : '<div class="garage-thumb-placeholder">No image</div>'}
+            ${thumb ? `
+              <a href="${previewLink}" target="_blank" rel="noopener noreferrer">
+                <img src="${thumb}" alt="${carName} thumbnail" loading="lazy" />
+              </a>
+            ` : '<div class="garage-thumb-placeholder">No image</div>'}
           </div>
           <div class="garage-card-body">
             <h3 class="garage-card-title">${carName}</h3>
-            <p class="garage-card-subtitle">Mark: ${carVersion}</p>
           </div>
         </article>
       `;

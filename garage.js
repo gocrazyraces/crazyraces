@@ -27,7 +27,7 @@
     const cards = cars.map(car => {
       const carName = car.carname || 'Unknown Car';
       const carVersion = car.carversion || '—';
-      const thumb = car.carimagepath || '';
+      const thumb = car.previewImageData || car.carimagepath || '';
 
       return `
         <article class="garage-card">

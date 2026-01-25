@@ -9,7 +9,10 @@ module.exports = async function handler(req, res) {
     const races = await getAllRaces();
 
     const activeRaces = races
-      .filter((race) => race.racestatus === 'active')
+      .filter((race) => {
+        const status = String(race.racestatus || '').toLowerCase();
+        return status === 'active' || status === 'approved';
+      })
       .sort((a, b) => new Date(b.racedeadline) - new Date(a.racedeadline));
 
     return res.status(200).json({ races: activeRaces });

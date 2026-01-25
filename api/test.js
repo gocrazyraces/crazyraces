@@ -17,7 +17,12 @@ module.exports = async function handler(req, res) {
       const sheetNames = spreadsheetResponse.data.sheets.map(sheet => sheet.properties.title);
 
       // Test multiple ranges to find where data is
-      const ranges = ['Sheet1!A:G', 'Sheet2!A:G', 'Sheet1!A:Z', 'Sheet2!A:Z'];
+      const ranges = [
+        'rapidracers-race-info!A:H',
+        'rapidracers-cars!A:H',
+        'rapidracers-race-entries!A:D',
+        'Sheet1!A:Z'
+      ];
       const rangeResults = {};
 
       for (const range of ranges) {
@@ -59,3 +64,5 @@ module.exports = async function handler(req, res) {
     method: req.method,
     url: req.url
   });
+
+};

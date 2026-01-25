@@ -107,7 +107,7 @@ module.exports = async function handler(req, res) {
       carKey,
       carName,
       '1',
-      'stored',
+      'submitted',
       `https://storage.googleapis.com/${bucketName}/${previewFileName}`,
       `https://storage.googleapis.com/${bucketName}/${jsonFileName}`
     ]);

@@ -109,7 +109,7 @@ module.exports = async function handler(req, res) {
       season,
       race,
       carNumber,
-      'submitted'
+      'entered'
     ]);
 
     return res.status(200).json({ message: 'Submission successful' });

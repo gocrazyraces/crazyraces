@@ -82,19 +82,23 @@ export default async function handler(req, res) {
         const rowSeason = String(row[0]);
         const rowRace = String(row[1]);
         const rowStatus = String(row[3]).toLowerCase();
-        const matches = rowSeason === seasonStr && rowRace === racenumberStr && rowStatus === 'approved';
-        console.log(`Entry check: season=${rowSeason}(${rowSeason === seasonStr}), race=${rowRace}(${rowRace === racenumberStr}), status=${rowStatus}(${rowStatus === 'approved'}) → ${matches}`);
+        const matches = rowSeason === seasonStr && rowRace === racenumberStr && rowStatus === 'entered';
+        console.log(`Entry check: season=${rowSeason}(${rowSeason === seasonStr}), race=${rowRace}(${rowRace === racenumberStr}), status=${rowStatus}(${rowStatus === 'entered'}) → ${matches}`);
         return matches;
       })
       .map(row => {
         const carNumber = String(row[2]);
         const car = carsByNumber.get(carNumber);
+        if (!car || String(car.carstatus).toLowerCase() !== 'approved') {
+          return null;
+        }
         return {
           carNumber,
           carName: car?.carname || 'Unknown Car',
           carImagePath: car?.carimagepath || '',
         };
-      });
+      })
+      .filter(Boolean);
 
     const entryCount = entries.length;
     console.log(`Final approved entries: ${entryCount}`, entries);

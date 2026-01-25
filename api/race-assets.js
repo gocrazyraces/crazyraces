@@ -23,7 +23,7 @@ export default async function handler(req, res) {
     // Get race information
     const raceInfoResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
-      range: 'Sheet1!A:G',
+      range: 'rapidracers-race-info!A:H',
     });
 
     const raceRows = raceInfoResponse.data.values || [];
@@ -42,9 +42,10 @@ export default async function handler(req, res) {
       racenumber: raceData[1],
       racename: raceData[2],
       racedeadline: raceData[3],
-      racedescription: raceData[4],
-      raceimage: raceData[5],
-      racestatus: raceData[6]
+      racestart: raceData[4],
+      racedescription: raceData[5],
+      raceimage: raceData[6],
+      racestatus: raceData[7]
     };
 
     const entriesResponse = await sheets.spreadsheets.values.get({
@@ -77,11 +78,14 @@ export default async function handler(req, res) {
         const rowSeason = String(row[0]);
         const rowRace = String(row[1]);
         const rowStatus = String(row[3]).toLowerCase();
-        return rowSeason === String(season) && rowRace === String(racenumber) && rowStatus === 'approved';
+        return rowSeason === String(season) && rowRace === String(racenumber) && rowStatus === 'entered';
       })
       .map(row => {
         const carNumber = String(row[2]);
         const car = carsByNumber.get(carNumber);
+        if (!car || String(car.carstatus).toLowerCase() !== 'approved') {
+          return null;
+        }
         return {
           season: row[0],
           racenumber: row[1],
@@ -91,7 +95,8 @@ export default async function handler(req, res) {
           carimagepath: car?.carimagepath || '',
           carjsonpath: car?.carjsonpath || ''
         };
-      });
+      })
+      .filter(Boolean);
 
     if (approvedEntries.length === 0) {
       return res.status(404).json({ message: 'No approved entries found for this race' });

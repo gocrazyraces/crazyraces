@@ -1,5 +1,7 @@
 node_modules/
 .DS_Store
+.aep
+assets/titles/doodledash style.aep
 *.log
 .env
 .env.local

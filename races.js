@@ -117,10 +117,16 @@
       carCell.textContent = entry.carName || 'Unknown Car';
 
       const imageCell = document.createElement('td');
-      const thumbSrc = entry.carThumb64Path || entry.carThumb256Path || entry.carImagePath || '';
+      const thumbSrc = entry.thumb64ImageData
+        || entry.carThumb64Path
+        || entry.thumb256ImageData
+        || entry.carThumb256Path
+        || entry.previewImageData
+        || entry.carImagePath
+        || '';
       if (thumbSrc) {
         const link = document.createElement('a');
-        link.href = entry.carImagePath || thumbSrc;
+        link.href = entry.previewImageData || entry.carImagePath || thumbSrc;
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
         const img = document.createElement('img');

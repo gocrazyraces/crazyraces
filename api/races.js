@@ -73,7 +73,8 @@ async function handleRaceEntries(req, res) {
     return res.status(400).json({ message: 'Missing season or racenumber parameters' });
   }
 
-  const { sheets } = await createSheets(['https://www.googleapis.com/auth/spreadsheets']);
+  const { sheets, credentials } = await createSheets(['https://www.googleapis.com/auth/spreadsheets']);
+  const storageClient = await createStorageClient(credentials);
 
   const submissionsSpreadsheetId = process.env.GOOGLE_SHEETS_SUBMISSIONS_SPREADSHEET_ID;
   if (!submissionsSpreadsheetId) {
@@ -141,11 +142,31 @@ async function handleRaceEntries(req, res) {
     })
     .filter(Boolean);
 
+  const bucketName = process.env.GOOGLE_CLOUD_STORAGE_BUCKET;
+  if (!bucketName) {
+    throw new Error('GOOGLE_CLOUD_STORAGE_BUCKET not set');
+  }
+
+  const bucket = storageClient.bucket(bucketName);
+  const entriesWithImages = await Promise.all(
+    entries.map(async (entry) => {
+      const thumb64ImageData = await downloadImageAsDataUrl(bucket, bucketName, entry.carThumb64Path);
+      const thumb256ImageData = await downloadImageAsDataUrl(bucket, bucketName, entry.carThumb256Path);
+      const previewImageData = await downloadImageAsDataUrl(bucket, bucketName, entry.carImagePath);
+      return {
+        ...entry,
+        thumb64ImageData,
+        thumb256ImageData,
+        previewImageData
+      };
+    })
+  );
+
   return res.status(200).json({
     season,
     racenumber,
-    entries,
-    entryCount: entries.length
+    entries: entriesWithImages,
+    entryCount: entriesWithImages.length
   });
 }
 
@@ -416,6 +437,14 @@ async function createSheets(scopes) {
   return { sheets, credentials };
 }
 
+async function createStorageClient(credentials) {
+  const { Storage } = await import('@google-cloud/storage');
+  return new Storage({
+    credentials,
+    projectId: credentials.project_id
+  });
+}
+
 function getCredentials() {
   const serviceAccountKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
   if (!serviceAccountKey) {
@@ -466,6 +495,28 @@ async function resolveRaceEntriesSheetName(sheets, spreadsheetId) {
   }
 
   throw new Error('Unable to locate race entries sheet (tried rapidracers-race-entries, Sheet1, RaceEntries, race-entries)');
+}
+
+async function downloadImageAsDataUrl(bucket, bucketName, url) {
+  if (!url) return null;
+  try {
+    const filePath = parseBucketPath(bucketName, url);
+    const [contents] = await bucket.file(filePath).download();
+    const base64 = contents.toString('base64');
+    return `data:image/png;base64,${base64}`;
+  } catch (error) {
+    console.warn('Failed to download image from GCS:', url, error.message);
+    return null;
+  }
+}
+
+function parseBucketPath(bucketName, url) {
+  const parsed = new URL(url);
+  let path = parsed.pathname.startsWith('/') ? parsed.pathname.slice(1) : parsed.pathname;
+  if (path.startsWith(`${bucketName}/`)) {
+    path = path.slice(bucketName.length + 1);
+  }
+  return path;
 }
 
 async function resolveCarsSheetName(sheets, spreadsheetId) {

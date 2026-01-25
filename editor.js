@@ -41,6 +41,7 @@ const ui = {
   canvasTitle: document.getElementById("canvasTitle"),
   canvasSubtitle: document.getElementById("canvasSubtitle"),
   exportPreviewBtn: document.getElementById("exportPreviewBtn"),
+  canvasWrap: document.querySelector(".canvas-wrap"),
 
   // Body controls
   bodyPenBtn: document.getElementById("bodyPenBtn"),
@@ -457,13 +458,13 @@ function renderBodyComposite() {
     drawSubtleGrid(bodyCtx, BODY_W, BODY_H);
   } else {
     bodyCtx.clearRect(0, 0, BODY_W, BODY_H);
-    bodyCtx.fillStyle = "#f4f6fb";
+    bodyCtx.fillStyle = "#ffffff";
     bodyCtx.fillRect(0, 0, BODY_W, BODY_H);
   }
 
   bodyCtx.drawImage(bodyArtCanvas, bodyOffsetX, bodyOffsetY);
 
-  if (currentTab !== "placement") {
+  if (currentTab !== "placement" && currentTab !== "name" && currentTab !== "properties" && currentTab !== "submit") {
     return;
   }
 
@@ -478,7 +479,7 @@ function renderBodyComposite() {
 
     bodyCtx.drawImage(wheelArtCanvas, -WHEEL_W / 2, -WHEEL_H / 2, WHEEL_W, WHEEL_H);
 
-    if (i === selectedWheelIndex) {
+    if (currentTab === "placement" && i === selectedWheelIndex) {
       bodyCtx.lineWidth = 3;
       bodyCtx.strokeStyle = "#F2CB05";
       bodyCtx.strokeRect(-WHEEL_W / 2, -WHEEL_H / 2, WHEEL_W, WHEEL_H);
@@ -491,7 +492,7 @@ function renderBodyComposite() {
 function renderWheelEditor() {
   if (currentTab !== "wheel") {
     wheelCtx.clearRect(0, 0, WHEEL_W, WHEEL_H);
-    wheelCtx.fillStyle = "#f4f6fb";
+    wheelCtx.fillStyle = "#ffffff";
     wheelCtx.fillRect(0, 0, WHEEL_W, WHEEL_H);
     return;
   }
@@ -632,6 +633,11 @@ function setTab(tabName) {
   // Hide/show canvases based on tab
   ui.bodyCanvas.style.display = (tabName === "wheel") ? "none" : "block";
   ui.wheelCanvas.style.display = (tabName === "wheel") ? "block" : "none";
+  if (ui.canvasWrap) {
+    ui.canvasWrap.classList.toggle("disabled", ["name", "properties", "submit"].includes(tabName));
+  }
+
+  ui.bodyCanvas.classList.toggle("is-disabled", ["name", "properties", "submit"].includes(tabName));
 
   if (tabName === "wheel") {
     ui.canvasTitle.textContent = "Wheel canvas";
@@ -806,6 +812,7 @@ ui.wheelClearBtn.onclick = () => {
 // POINTER EVENTS — BODY CANVAS
 // ============================
 ui.bodyCanvas.onpointerdown = (e) => {
+  if (["name", "properties", "submit"].includes(currentTab)) return;
   const globalPos = getCanvasPos(ui.bodyCanvas, e);
 
   // Placement: select/drag wheels
@@ -869,6 +876,7 @@ ui.bodyCanvas.onpointerdown = (e) => {
 };
 
 ui.bodyCanvas.onpointermove = (e) => {
+  if (["name", "properties", "submit"].includes(currentTab)) return;
   const globalPos = getCanvasPos(ui.bodyCanvas, e);
 
   // Drag wheel
@@ -911,6 +919,7 @@ ui.bodyCanvas.onpointermove = (e) => {
 };
 
 ui.bodyCanvas.onpointerup = (e) => {
+  if (["name", "properties", "submit"].includes(currentTab)) return;
   if (currentTab === "placement") {
     const w = getSelectedWheel();
     if (w) w.isDragging = false;
@@ -1383,7 +1392,7 @@ async function loadCarIntoDesigner(car, carData, assets = {}) {
     : 'Your key will appear after saving to the garage.';
 
   renderAll();
-  setTab('body');
+  setTab(currentTab || 'name');
 }
 
 async function loadImageIntoCanvas(url, ctx, w, h) {

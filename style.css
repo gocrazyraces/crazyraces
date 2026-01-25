@@ -560,6 +560,11 @@ label.file input { display: none; }
   flex-wrap: wrap;
 }
 
+.canvas-wrap.disabled {
+  background: rgba(104, 135, 182, 0.15);
+  border-radius: var(--radius-sm);
+}
+
 #bodyCanvas {
   border: 2px dashed rgba(104, 135, 182, 0.25);
   border-radius: var(--radius-sm);
@@ -844,6 +849,25 @@ label.file input { display: none; }
   overflow: hidden;
   max-width: 800px;
   margin: 0 auto;
+}
+
+.admin-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(104, 135, 182, 0.18);
+}
+
+.admin-card:last-child {
+  border-bottom: none;
+}
+
+.admin-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .entries-table {

@@ -105,9 +105,10 @@ module.exports = async function handler(req, res) {
       throw new Error('GOOGLE_SHEETS_SUBMISSIONS_SPREADSHEET_ID environment variable not set');
     }
 
-    const existingEntry = await findExistingEntry(sheets, submissionsSpreadsheetId, season, race, carNumber);
+    const entriesSheetName = await resolveRaceEntriesSheetName(sheets, submissionsSpreadsheetId);
+    const existingEntry = await findExistingEntry(sheets, submissionsSpreadsheetId, entriesSheetName, season, race, carNumber);
     if (!existingEntry) {
-      await appendToSheet(sheets, submissionsSpreadsheetId, 'rapidracers-race-entries!A:D', [
+      await appendToSheet(sheets, submissionsSpreadsheetId, `${entriesSheetName}!A:D`, [
         season,
         race,
         carNumber,
@@ -141,10 +142,10 @@ function normalizeCarKey(value) {
   return digits;
 }
 
-async function findExistingEntry(sheets, spreadsheetId, season, race, carNumber) {
+async function findExistingEntry(sheets, spreadsheetId, sheetName, season, race, carNumber) {
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: 'rapidracers-race-entries!A:D'
+    range: `${sheetName}!A:D`
   });
 
   const rows = response.data.values || [];
@@ -157,4 +158,21 @@ async function findExistingEntry(sheets, spreadsheetId, season, race, carNumber)
     && String(row[1]) === raceStr
     && String(row[2]) === carStr
   );
+}
+
+async function resolveRaceEntriesSheetName(sheets, spreadsheetId) {
+  const candidateNames = ['rapidracers-race-entries', 'Sheet1', 'RaceEntries', 'race-entries'];
+  for (const name of candidateNames) {
+    try {
+      await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: `${name}!A1:D1`
+      });
+      return name;
+    } catch (error) {
+      // Try next candidate
+    }
+  }
+
+  throw new Error('Unable to locate race entries sheet (tried rapidracers-race-entries, Sheet1, RaceEntries, race-entries)');
 }

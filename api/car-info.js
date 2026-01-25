@@ -27,22 +27,25 @@ export default async function handler(req, res) {
       throw new Error('GOOGLE_SHEETS_CARS_SPREADSHEET_ID not set');
     }
 
+    const carsSheetName = await resolveCarsSheetName(sheets, spreadsheetId);
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: spreadsheetId,
-      range: 'rapidracers-cars!A:H',
+      range: `${carsSheetName}!A:H`,
     });
 
     const rows = response.data.values || [];
-    const cars = rows.slice(1).map(row => ({
-      season: row[0],
-      carnumber: row[1],
-      carkey: row[2],
-      carname: row[3],
-      carversion: row[4],
-      carstatus: row[5],
-      carimagepath: row[6],
-      carjsonpath: row[7]
-    }));
+    const cars = rows.slice(1)
+      .map(row => ({
+        season: row[0],
+        carnumber: row[1],
+        carkey: row[2],
+        carname: row[3],
+        carversion: row[4],
+        carstatus: row[5],
+        carimagepath: row[6],
+        carjsonpath: row[7]
+      }))
+      .filter(car => String(car.carstatus || '').toLowerCase() === 'approved');
 
     return res.status(200).json({
       cars,
@@ -52,4 +55,21 @@ export default async function handler(req, res) {
     console.error('Error fetching car info:', error);
     return res.status(500).json({ message: `Failed to fetch car info: ${error.message}` });
   }
+}
+
+async function resolveCarsSheetName(sheets, spreadsheetId) {
+  const candidateNames = ['rapidracers-cars', 'Sheet1', 'Cars', 'cars'];
+  for (const name of candidateNames) {
+    try {
+      await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: `${name}!A1:H1`
+      });
+      return name;
+    } catch (error) {
+      // Try next candidate
+    }
+  }
+
+  throw new Error('Unable to locate cars sheet (tried rapidracers-cars, Sheet1, Cars, cars)');
 }

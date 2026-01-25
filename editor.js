@@ -451,9 +451,21 @@ function floodFill(ctx, startX, startY, fillColor, w, h) {
 // RENDERING
 // ============================
 function renderBodyComposite() {
-  drawSubtleGrid(bodyCtx, BODY_W, BODY_H);
+  const disableGridTabs = ["name", "properties", "submit"];
+  const showGrid = !disableGridTabs.includes(currentTab);
+  if (showGrid) {
+    drawSubtleGrid(bodyCtx, BODY_W, BODY_H);
+  } else {
+    bodyCtx.clearRect(0, 0, BODY_W, BODY_H);
+    bodyCtx.fillStyle = "#f4f6fb";
+    bodyCtx.fillRect(0, 0, BODY_W, BODY_H);
+  }
 
   bodyCtx.drawImage(bodyArtCanvas, bodyOffsetX, bodyOffsetY);
+
+  if (currentTab !== "placement") {
+    return;
+  }
 
   for (let i = 0; i < placedWheels.length; i++) {
     const w = placedWheels[i];
@@ -466,7 +478,7 @@ function renderBodyComposite() {
 
     bodyCtx.drawImage(wheelArtCanvas, -WHEEL_W / 2, -WHEEL_H / 2, WHEEL_W, WHEEL_H);
 
-    if (currentTab === "placement" && i === selectedWheelIndex) {
+    if (i === selectedWheelIndex) {
       bodyCtx.lineWidth = 3;
       bodyCtx.strokeStyle = "#F2CB05";
       bodyCtx.strokeRect(-WHEEL_W / 2, -WHEEL_H / 2, WHEEL_W, WHEEL_H);
@@ -477,6 +489,13 @@ function renderBodyComposite() {
 }
 
 function renderWheelEditor() {
+  if (currentTab !== "wheel") {
+    wheelCtx.clearRect(0, 0, WHEEL_W, WHEEL_H);
+    wheelCtx.fillStyle = "#f4f6fb";
+    wheelCtx.fillRect(0, 0, WHEEL_W, WHEEL_H);
+    return;
+  }
+
   // Draw the grid pattern background
   drawSubtleGrid(wheelCtx, WHEEL_W, WHEEL_H);
 

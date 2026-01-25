@@ -47,30 +47,51 @@ export default async function handler(req, res) {
       racestatus: raceData[6]
     };
 
-    // Get approved entries
     const entriesResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: process.env.GOOGLE_SHEETS_SUBMISSIONS_SPREADSHEET_ID,
-      range: 'Sheet1!A:H', // 8 columns: season to racerjsoncarpath
+      range: 'rapidracers-race-entries!A:D',
+    });
+
+    const carsResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId: process.env.GOOGLE_SHEETS_CARS_SPREADSHEET_ID,
+      range: 'rapidracers-cars!A:H',
     });
 
     const entryRows = entriesResponse.data.values || [];
+    const carRows = carsResponse.data.values || [];
+    const carsByNumber = new Map(
+      carRows.slice(1).map(row => [String(row[1]), {
+        season: row[0],
+        carnumber: row[1],
+        carkey: row[2],
+        carname: row[3],
+        carversion: row[4],
+        carstatus: row[5],
+        carimagepath: row[6],
+        carjsonpath: row[7]
+      }])
+    );
+
     const approvedEntries = entryRows.slice(1)
       .filter(row => {
         const rowSeason = String(row[0]);
         const rowRace = String(row[1]);
-        const rowStatus = String(row[5]).toLowerCase();
+        const rowStatus = String(row[3]).toLowerCase();
         return rowSeason === String(season) && rowRace === String(racenumber) && rowStatus === 'approved';
       })
-      .map(row => ({
-        season: row[0],
-        racenumber: row[1],
-        raceremail: row[2], // Include email for folder naming
-        racerteamname: row[3],
-        racercarname: row[4],
-        racerstatus: row[5],
-        racerimagepath: row[6],     // preview.png
-        racerjsoncarpath: row[7]    // car.json
-      }));
+      .map(row => {
+        const carNumber = String(row[2]);
+        const car = carsByNumber.get(carNumber);
+        return {
+          season: row[0],
+          racenumber: row[1],
+          carnumber: carNumber,
+          racerstatus: row[3],
+          carname: car?.carname || '',
+          carimagepath: car?.carimagepath || '',
+          carjsonpath: car?.carjsonpath || ''
+        };
+      });
 
     if (approvedEntries.length === 0) {
       return res.status(404).json({ message: 'No approved entries found for this race' });
@@ -87,22 +108,22 @@ export default async function handler(req, res) {
 
     // Add each approved entry
     for (const entry of approvedEntries) {
-      const emailFolder = `${folderName}/${entry.raceremail}`;
+      const carFolder = `${folderName}/car-${entry.carnumber}`;
 
       // Create entry.json with race-entries data (excluding GCS URLs)
       const entryData = {
         season: entry.season,
         racenumber: entry.racenumber,
-        racerteamname: entry.racerteamname,
-        racercarname: entry.racercarname,
-        racerstatus: entry.racerstatus
+        carnumber: entry.carnumber,
+        carname: entry.carname,
+        entrystatus: entry.racerstatus
       };
-      zip.file(`${emailFolder}/entry.json`, JSON.stringify(entryData, null, 2));
+      zip.file(`${carFolder}/entry.json`, JSON.stringify(entryData, null, 2));
 
       // First download and parse the car.json to get image paths
       let carData = null;
       try {
-        const jsonUrl = new URL(entry.racerjsoncarpath);
+        const jsonUrl = new URL(entry.carjsonpath);
         let jsonFilePath = jsonUrl.pathname.startsWith('/') ? jsonUrl.pathname.slice(1) : jsonUrl.pathname;
         if (jsonFilePath.startsWith(`${bucketName}/`)) {
           jsonFilePath = jsonFilePath.slice(bucketName.length + 1);
@@ -113,15 +134,15 @@ export default async function handler(req, res) {
         const [jsonContents] = await jsonFileObj.download();
         const jsonText = jsonContents.toString('utf8');
         carData = JSON.parse(jsonText);
-        zip.file(`${emailFolder}/car.json`, jsonText);
+        zip.file(`${carFolder}/car.json`, jsonText);
       } catch (error) {
-        console.error(`Failed to download car.json for ${entry.raceremail}:`, error);
+        console.error(`Failed to download car.json for ${entry.carnumber}:`, error);
         continue; // Skip this entry if we can't get the JSON
       }
 
       // Now download the image files using paths from car.json
       const filesToDownload = [
-        { gcsPath: entry.racerimagepath, localName: 'preview.png', isText: false }, // Composite preview
+        { gcsPath: entry.carimagepath, localName: 'preview.png', isText: false },
         { gcsPath: carData.imagePaths.body, localName: 'body.png', isText: false },
         { gcsPath: carData.imagePaths.wheel, localName: 'wheel.png', isText: false }
       ];
@@ -142,7 +163,7 @@ export default async function handler(req, res) {
 
           // Download binary files as buffers (all images)
           const [buffer] = await fileObj.download();
-          zip.file(`${emailFolder}/${file.localName}`, buffer);
+          zip.file(`${carFolder}/${file.localName}`, buffer);
         } catch (error) {
           console.error(`Failed to download ${file.gcsPath}:`, error);
           // Continue with other files

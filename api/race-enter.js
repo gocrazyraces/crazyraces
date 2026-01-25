@@ -36,13 +36,13 @@ module.exports = async function handler(req, res) {
     }
 
     const {
-      carName,
-      carKey,
-      carJsonPath,
-      previewPath
+      carNumber,
+      carKey
     } = carData;
 
-    if (!carName || !carKey || !carJsonPath || !previewPath) {
+    const normalizedCarKey = normalizeCarKey(carKey);
+
+    if (!carNumber || !normalizedCarKey) {
       console.error('Missing required fields');
       return res.status(400).json({ message: 'Missing required fields' });
     }
@@ -105,15 +105,11 @@ module.exports = async function handler(req, res) {
       throw new Error('GOOGLE_SHEETS_SUBMISSIONS_SPREADSHEET_ID environment variable not set');
     }
 
-    await appendToSheet(sheets, submissionsSpreadsheetId, 'Sheet1!A:H', [
-      season,                                    // A: season
-      race,                                      // B: racenumber
-      '',                                        // C: raceremail
-      '',                                        // D: racerteamname
-      carName,                                   // E: racercarname
-      'submitted',                               // F: racerstatus (default to submitted)
-      previewPath,                              // G: racerimagepath (composite preview)
-      carJsonPath                               // H: racerjsoncarpath (car.json)
+    await appendToSheet(sheets, submissionsSpreadsheetId, 'rapidracers-race-entries!A:D', [
+      season,
+      race,
+      carNumber,
+      'submitted'
     ]);
 
     return res.status(200).json({ message: 'Submission successful' });
@@ -133,4 +129,11 @@ async function appendToSheet(sheets, spreadsheetId, range, values) {
       values: [values]
     }
   });
+}
+
+function normalizeCarKey(value) {
+  if (value === null || value === undefined) return null;
+  const digits = String(value).replace(/\D/g, '');
+  if (digits.length !== 8) return null;
+  return digits;
 }

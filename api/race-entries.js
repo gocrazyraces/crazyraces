@@ -45,42 +45,56 @@ export default async function handler(req, res) {
       throw new Error('GOOGLE_SHEETS_SPREADSHEET_ID not set');
     }
 
-    // Read submissions from separate submissions spreadsheet
     const submissionsSpreadsheetId = process.env.GOOGLE_SHEETS_SUBMISSIONS_SPREADSHEET_ID;
     if (!submissionsSpreadsheetId) {
       throw new Error('GOOGLE_SHEETS_SUBMISSIONS_SPREADSHEET_ID not set');
     }
 
-    const response = await sheets.spreadsheets.values.get({
+    const entriesResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: submissionsSpreadsheetId,
-      range: 'Sheet1!A:H', // All submissions in Sheet1 (8 columns)
+      range: 'rapidracers-race-entries!A:D',
     });
 
-    const rows = response.data.values || [];
-    console.log(`Race entries for season ${season}, race ${racenumber}:`, rows.length - 1, 'total entries found');
-    console.log('All entries:', rows.slice(1).map(row => ({
-      season: row[0],
-      racenumber: row[1],
-      email: row[2],
-      teamName: row[3],
-      carName: row[4],
-      status: row[5]
-    })));
+    const carsResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId: process.env.GOOGLE_SHEETS_CARS_SPREADSHEET_ID,
+      range: 'rapidracers-cars!A:H',
+    });
 
-    // Parse entries and filter for approved ones in this race
-    const entries = rows.slice(1)
+    const entryRows = entriesResponse.data.values || [];
+    const carRows = carsResponse.data.values || [];
+    const carsByNumber = new Map(
+      carRows.slice(1).map(row => [String(row[1]), {
+        season: row[0],
+        carnumber: row[1],
+        carkey: row[2],
+        carname: row[3],
+        carversion: row[4],
+        carstatus: row[5],
+        carimagepath: row[6],
+        carjsonpath: row[7]
+      }])
+    );
+
+    console.log(`Race entries for season ${season}, race ${racenumber}:`, entryRows.length - 1, 'total entries found');
+
+    const entries = entryRows.slice(1)
       .filter(row => {
-        const rowSeason = String(row[0]); // Convert to string for comparison
-        const rowRace = String(row[1]);   // Convert to string for comparison
-        const rowStatus = String(row[5]).toLowerCase(); // Case insensitive status
+        const rowSeason = String(row[0]);
+        const rowRace = String(row[1]);
+        const rowStatus = String(row[3]).toLowerCase();
         const matches = rowSeason === seasonStr && rowRace === racenumberStr && rowStatus === 'approved';
         console.log(`Entry check: season=${rowSeason}(${rowSeason === seasonStr}), race=${rowRace}(${rowRace === racenumberStr}), status=${rowStatus}(${rowStatus === 'approved'}) → ${matches}`);
         return matches;
       })
-      .map(row => ({
-        teamName: row[3],  // racerteamname
-        carName: row[4]    // racercarname
-      }));
+      .map(row => {
+        const carNumber = String(row[2]);
+        const car = carsByNumber.get(carNumber);
+        return {
+          carNumber,
+          carName: car?.carname || 'Unknown Car',
+          carImagePath: car?.carimagepath || '',
+        };
+      });
 
     const entryCount = entries.length;
     console.log(`Final approved entries: ${entryCount}`, entries);

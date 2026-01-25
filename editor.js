@@ -1138,10 +1138,8 @@ async function submitCar() {
       carData: {
         season,
         race,
-        carName,
+        carNumber: garageData.carNumber,
         carKey: garageData.carKey,
-        carJsonPath: garageData.carJsonPath,
-        previewPath: garageData.previewPath,
       }
     };
 

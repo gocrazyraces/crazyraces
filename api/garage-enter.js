@@ -65,8 +65,8 @@ module.exports = async function handler(req, res) {
     }
 
     const carKey = generateCarKey();
-    const safeCarName = String(carName).trim().replace(/[^a-z0-9_-]+/gi, '_') || 'car';
-    const basePath = `${season}/${safeCarName}/`;
+    const carNumber = await getNextCarNumber(sheets, carsSpreadsheetId);
+    const basePath = `${season}/${carNumber}/`;
 
     const jsonFileName = `${basePath}car.json`;
     const bodyFileName = `${basePath}body.png`;
@@ -78,6 +78,7 @@ module.exports = async function handler(req, res) {
     const jsonData = JSON.stringify({
       season,
       carName,
+      carNumber,
       carKey,
       props: {
         acceleration,
@@ -102,20 +103,21 @@ module.exports = async function handler(req, res) {
 
     await appendToSheet(sheets, carsSpreadsheetId, 'rapidracers-cars!A:H', [
       season,
+      carNumber,
+      carKey,
       carName,
       '1',
       'stored',
       `https://storage.googleapis.com/${bucketName}/${previewFileName}`,
-      `https://storage.googleapis.com/${bucketName}/${jsonFileName}`,
-      '',
-      carKey
+      `https://storage.googleapis.com/${bucketName}/${jsonFileName}`
     ]);
 
     return res.status(200).json({
       message: 'Garage submission successful',
       carKey,
+      carNumber,
       carJsonPath: `https://storage.googleapis.com/${bucketName}/${jsonFileName}`,
-      previewPath: `https://storage.googleapis.com/${bucketName}/${previewFileName}`
+      carImagePath: `https://storage.googleapis.com/${bucketName}/${previewFileName}`
     });
   } catch (err) {
     console.error('Garage submission error:', err);
@@ -125,6 +127,21 @@ module.exports = async function handler(req, res) {
 
 function generateCarKey() {
   return Array.from({ length: 8 }, () => Math.floor(Math.random() * 10)).join('');
+}
+
+async function getNextCarNumber(sheets, spreadsheetId) {
+  const response = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: 'rapidracers-cars!B:B'
+  });
+
+  const rows = response.data.values || [];
+  const numbers = rows.slice(1)
+    .map(row => parseInt(row[0], 10))
+    .filter(Number.isFinite);
+
+  const nextNumber = numbers.length ? Math.max(...numbers) + 1 : 1;
+  return String(nextNumber);
 }
 
 async function uploadToGCS(storage, bucketName, fileName, buffer, contentType) {

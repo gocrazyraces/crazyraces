@@ -36,7 +36,7 @@ export default async function handler(req, res) {
     // Read race results from Sheet1
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: spreadsheetId,
-      range: 'Sheet1!A:I', // All columns: season to notes (excluding email)
+      range: 'Sheet1!A:H', // season, racenumber, position, time, status, carnumber, carname, notes
     });
 
     const rows = response.data.values || [];
@@ -59,10 +59,9 @@ export default async function handler(req, res) {
         position: row[2],
         time: row[3],
         status: row[4],
-        // Skip raceremail (row[5]) - never expose emails
-        racerteamname: row[6],
-        racercarname: row[7],
-        notes: row[8]
+        carnumber: row[5],
+        carname: row[6],
+        notes: row[7]
       }))
       .sort((a, b) => {
         // Sort by racenumber, then by position

@@ -97,12 +97,12 @@
     // Table header
     const thead = document.createElement('thead');
     const headerRow = document.createElement('tr');
-    const teamHeader = document.createElement('th');
-    teamHeader.textContent = 'Team Name';
+    const numberHeader = document.createElement('th');
+    numberHeader.textContent = 'Car #';
     const carHeader = document.createElement('th');
     carHeader.textContent = 'Car Name';
 
-    headerRow.appendChild(teamHeader);
+    headerRow.appendChild(numberHeader);
     headerRow.appendChild(carHeader);
     thead.appendChild(headerRow);
     table.appendChild(thead);
@@ -113,13 +113,13 @@
     entries.forEach(entry => {
       const row = document.createElement('tr');
 
-      const teamCell = document.createElement('td');
-      teamCell.textContent = entry.teamName || 'Unknown Team';
+      const numberCell = document.createElement('td');
+      numberCell.textContent = entry.carNumber || '—';
 
       const carCell = document.createElement('td');
       carCell.textContent = entry.carName || 'Unknown Car';
 
-      row.appendChild(teamCell);
+      row.appendChild(numberCell);
       row.appendChild(carCell);
       tbody.appendChild(row);
     });
@@ -255,8 +255,8 @@
         <td>${result.position}</td>
         <td>${formatTime(result.time)}</td>
         <td>${result.status}</td>
-        <td>${result.racerteamname}</td>
-        <td>${result.racercarname}</td>
+        <td>${result.carnumber || '—'}</td>
+        <td>${result.carname || ''}</td>
         <td>${result.notes || ''}</td>
       </tr>
     `).join('');
@@ -271,7 +271,7 @@
                 <th>Position</th>
                 <th>Time</th>
                 <th>Status</th>
-                <th>Team Name</th>
+                <th>Car #</th>
                 <th>Car Name</th>
                 <th>Notes</th>
               </tr>

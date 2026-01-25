@@ -35,13 +35,13 @@ export default async function handler(req, res) {
     const rows = response.data.values || [];
     const cars = rows.slice(1).map(row => ({
       season: row[0],
-      carname: row[1],
-      carversion: row[2],
-      carstatus: row[3],
-      carthumbnailpath: row[4],
-      carjsonpath: row[5],
-      carstatsjsonpath: row[6],
-      carkey: row[7]
+      carnumber: row[1],
+      carkey: row[2],
+      carname: row[3],
+      carversion: row[4],
+      carstatus: row[5],
+      carimagepath: row[6],
+      carjsonpath: row[7]
     }));
 
     return res.status(200).json({

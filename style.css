@@ -40,6 +40,10 @@ body {
   background: var(--bg);
 }
 
+body.admin-page {
+  background: #ffffff;
+}
+
 h1, h2, h3, h4, h5, h6,
 .panel-title,
 .canvas-title,
@@ -69,6 +73,37 @@ h1, h2, h3, h4, h5, h6,
   color: #1a1a1a;
   border-bottom: 1px solid rgba(0,0,0,0.08);
   padding-top: 0.5em;
+}
+
+.admin-page .topbar {
+  background-image: none;
+  padding-top: 0.75em;
+}
+
+.admin-page .page-main {
+  background: #ffffff;
+}
+
+.admin-page .entries-container {
+  box-shadow: none;
+}
+
+.admin-page .site-footer-new {
+  background-image: none;
+  background-color: #ffffff;
+  color: #1a1a1a;
+}
+
+.admin-page .footer-columns a,
+.admin-page .footer-links-list a,
+.admin-page .footer-brand-title,
+.admin-page .footer-column-title,
+.admin-page .footer-copyright {
+  color: #1a1a1a;
+}
+
+.admin-page .footer-links-list a:hover {
+  color: var(--blue);
 }
 
 .topbar-inner {

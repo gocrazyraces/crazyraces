@@ -47,9 +47,10 @@ export default async function handler(req, res) {
       throw new Error('GOOGLE_CLOUD_STORAGE_BUCKET not set');
     }
 
+    const carsSheetName = await resolveCarsSheetName(sheets, spreadsheetId);
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: 'rapidracers-cars!A:H'
+      range: `${carsSheetName}!A:H`
     });
 
     const rows = response.data.values || [];
@@ -101,4 +102,21 @@ function normalizeCarKey(value) {
   const digits = String(value).replace(/\D/g, '');
   if (digits.length !== 8) return null;
   return digits;
+}
+
+async function resolveCarsSheetName(sheets, spreadsheetId) {
+  const candidateNames = ['rapidracers-cars', 'Sheet1', 'Cars', 'cars'];
+  for (const name of candidateNames) {
+    try {
+      await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: `${name}!A1:H1`
+      });
+      return name;
+    } catch (error) {
+      // Try next candidate
+    }
+  }
+
+  throw new Error('Unable to locate cars sheet (tried rapidracers-cars, Sheet1, Cars, cars)');
 }

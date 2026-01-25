@@ -24,9 +24,13 @@
 
     const rows = cars.map(car => {
       const status = car.carstatus || 'submitted';
+      const thumb = car.previewImageData || car.carimagepath || '';
       return `
         <div class="admin-card">
-          <div>
+          <div class="admin-card-media">
+            ${thumb ? `<img src="${thumb}" alt="${car.carname || 'Car'}" loading="lazy" />` : '<div class="admin-thumb-placeholder">No image</div>'}
+          </div>
+          <div class="admin-card-details">
             <strong>${car.carname || 'Unnamed car'}</strong> (Season ${car.season}, #${car.carnumber})
             <div>Status: <span class="pill">${status}</span></div>
           </div>

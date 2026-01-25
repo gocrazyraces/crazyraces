@@ -32,10 +32,16 @@ async function handleAdminCars(req, res) {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  const { sheets } = await createSheets(['https://www.googleapis.com/auth/spreadsheets']);
+  const { sheets, credentials } = await createSheets(['https://www.googleapis.com/auth/spreadsheets']);
+  const storageClient = await createStorageClient(credentials);
   const spreadsheetId = process.env.GOOGLE_SHEETS_CARS_SPREADSHEET_ID;
   if (!spreadsheetId) {
     throw new Error('GOOGLE_SHEETS_CARS_SPREADSHEET_ID not set');
+  }
+
+  const bucketName = process.env.GOOGLE_CLOUD_STORAGE_BUCKET;
+  if (!bucketName) {
+    throw new Error('GOOGLE_CLOUD_STORAGE_BUCKET not set');
   }
 
   const sheetName = await resolveCarsSheetName(sheets, spreadsheetId);
@@ -57,7 +63,18 @@ async function handleAdminCars(req, res) {
     carjsonpath: row[7]
   }));
 
-  return res.status(200).json({ cars });
+  const bucket = storageClient.bucket(bucketName);
+  const carsWithPreview = await Promise.all(
+    cars.map(async (car) => {
+      const previewImageData = await downloadImageAsDataUrl(bucket, bucketName, car.carimagepath);
+      return {
+        ...car,
+        previewImageData
+      };
+    })
+  );
+
+  return res.status(200).json({ cars: carsWithPreview });
 }
 
 async function handleCarStatus(req, res) {
@@ -196,6 +213,14 @@ async function createSheets(scopes) {
   return { sheets, credentials };
 }
 
+async function createStorageClient(credentials) {
+  const { Storage } = await import('@google-cloud/storage');
+  return new Storage({
+    credentials,
+    projectId: credentials.project_id
+  });
+}
+
 function getCredentials() {
   const serviceAccountKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
   if (!serviceAccountKey) {
@@ -229,6 +254,28 @@ async function resolveCarsSheetName(sheets, spreadsheetId) {
   }
 
   throw new Error('Unable to locate cars sheet (tried rapidracers-cars, Sheet1, Cars, cars)');
+}
+
+async function downloadImageAsDataUrl(bucket, bucketName, url) {
+  if (!url) return null;
+  try {
+    const filePath = parseBucketPath(bucketName, url);
+    const [contents] = await bucket.file(filePath).download();
+    const base64 = contents.toString('base64');
+    return `data:image/png;base64,${base64}`;
+  } catch (error) {
+    console.warn('Failed to download preview image:', url, error.message);
+    return null;
+  }
+}
+
+function parseBucketPath(bucketName, url) {
+  const parsed = new URL(url);
+  let path = parsed.pathname.startsWith('/') ? parsed.pathname.slice(1) : parsed.pathname;
+  if (path.startsWith(`${bucketName}/`)) {
+    path = path.slice(bucketName.length + 1);
+  }
+  return path;
 }
 
 async function resolveRaceSheetName(sheets, spreadsheetId) {

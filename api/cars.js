@@ -32,9 +32,9 @@ async function handleCarInfo(req, res) {
     throw new Error('GOOGLE_SHEETS_CARS_SPREADSHEET_ID not set');
   }
 
-  const bucketName = process.env.GOOGLE_CLOUD_STORAGE_BUCKET;
-  if (!bucketName) {
-    throw new Error('GOOGLE_CLOUD_STORAGE_BUCKET not set');
+  const publicBucket = process.env.GOOGLE_CLOUD_PUBLIC_BUCKET || process.env.GOOGLE_CLOUD_STORAGE_BUCKET;
+  if (!publicBucket) {
+    throw new Error('GOOGLE_CLOUD_PUBLIC_BUCKET (or GOOGLE_CLOUD_STORAGE_BUCKET) not set');
   }
 
   const carsSheetName = await resolveCarsSheetName(sheets, spreadsheetId);
@@ -59,12 +59,12 @@ async function handleCarInfo(req, res) {
     }))
     .filter(car => String(car.carstatus || '').toLowerCase() === 'approved');
 
-  const bucket = storageClient.bucket(bucketName);
+  const bucket = storageClient.bucket(publicBucket);
   const carsWithPreview = await Promise.all(
     cars.map(async (car) => {
-      const previewImageData = await downloadImageAsDataUrl(bucket, bucketName, car.carimagepath);
-      const thumb256ImageData = await downloadImageAsDataUrl(bucket, bucketName, car.carthumb256path);
-      const thumb64ImageData = await downloadImageAsDataUrl(bucket, bucketName, car.carthumb64path);
+      const previewImageData = await downloadImageAsDataUrl(bucket, publicBucket, car.carimagepath);
+      const thumb256ImageData = await downloadImageAsDataUrl(bucket, publicBucket, car.carthumb256path);
+      const thumb64ImageData = await downloadImageAsDataUrl(bucket, publicBucket, car.carthumb64path);
       return {
         ...car,
         previewImageData,
@@ -131,9 +131,13 @@ async function handleCarLookup(req, res) {
     throw new Error('GOOGLE_SHEETS_CARS_SPREADSHEET_ID not set');
   }
 
-  const bucketName = process.env.GOOGLE_CLOUD_STORAGE_BUCKET;
-  if (!bucketName) {
-    throw new Error('GOOGLE_CLOUD_STORAGE_BUCKET not set');
+  const publicBucket = process.env.GOOGLE_CLOUD_PUBLIC_BUCKET || process.env.GOOGLE_CLOUD_STORAGE_BUCKET;
+  const privateBucket = process.env.GOOGLE_CLOUD_PRIVATE_BUCKET || process.env.GOOGLE_CLOUD_STORAGE_BUCKET;
+  if (!publicBucket) {
+    throw new Error('GOOGLE_CLOUD_PUBLIC_BUCKET (or GOOGLE_CLOUD_STORAGE_BUCKET) not set');
+  }
+  if (!privateBucket) {
+    throw new Error('GOOGLE_CLOUD_PRIVATE_BUCKET (or GOOGLE_CLOUD_STORAGE_BUCKET) not set');
   }
 
   const carsSheetName = await resolveCarsSheetName(sheets, spreadsheetId);
@@ -169,12 +173,13 @@ async function handleCarLookup(req, res) {
 
   const jsonUrl = new URL(car.carjsonpath);
   let jsonFilePath = jsonUrl.pathname.startsWith('/') ? jsonUrl.pathname.slice(1) : jsonUrl.pathname;
-  if (jsonFilePath.startsWith(`${bucketName}/`)) {
-    jsonFilePath = jsonFilePath.slice(bucketName.length + 1);
+  if (jsonFilePath.startsWith(`${privateBucket}/`)) {
+    jsonFilePath = jsonFilePath.slice(privateBucket.length + 1);
   }
 
-  const bucket = storageClient.bucket(bucketName);
-  const jsonFileObj = bucket.file(jsonFilePath);
+  const privateStorageBucket = storageClient.bucket(privateBucket);
+  const publicStorageBucket = storageClient.bucket(publicBucket);
+  const jsonFileObj = privateStorageBucket.file(jsonFilePath);
   const [jsonContents] = await jsonFileObj.download();
   const jsonText = jsonContents.toString('utf8');
   const carData = JSON.parse(jsonText);
@@ -185,10 +190,10 @@ async function handleCarLookup(req, res) {
   const thumb64Path = carData?.imagePaths?.thumb64 || car.carthumb64path;
 
   const [bodyImageData, wheelImageData, thumb256ImageData, thumb64ImageData] = await Promise.all([
-    downloadImageAsDataUrl(bucket, bucketName, bodyImagePath),
-    downloadImageAsDataUrl(bucket, bucketName, wheelImagePath),
-    downloadImageAsDataUrl(bucket, bucketName, thumb256Path),
-    downloadImageAsDataUrl(bucket, bucketName, thumb64Path)
+    downloadImageAsDataUrl(publicStorageBucket, publicBucket, bodyImagePath),
+    downloadImageAsDataUrl(publicStorageBucket, publicBucket, wheelImagePath),
+    downloadImageAsDataUrl(publicStorageBucket, publicBucket, thumb256Path),
+    downloadImageAsDataUrl(publicStorageBucket, publicBucket, thumb64Path)
   ]);
 
   return res.status(200).json({

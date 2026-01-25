@@ -58,9 +58,13 @@ module.exports = async function handler(req, res) {
     const sheets = google.sheets({ version: 'v4', auth });
     const storage = google.storage({ version: 'v1', auth });
 
-    const bucketName = process.env.GOOGLE_CLOUD_STORAGE_BUCKET;
-    if (!bucketName) {
-      throw new Error('GOOGLE_CLOUD_STORAGE_BUCKET environment variable not set');
+    const publicBucket = process.env.GOOGLE_CLOUD_PUBLIC_BUCKET || process.env.GOOGLE_CLOUD_STORAGE_BUCKET;
+    const privateBucket = process.env.GOOGLE_CLOUD_PRIVATE_BUCKET || process.env.GOOGLE_CLOUD_STORAGE_BUCKET;
+    if (!publicBucket) {
+      throw new Error('GOOGLE_CLOUD_PUBLIC_BUCKET (or GOOGLE_CLOUD_STORAGE_BUCKET) environment variable not set');
+    }
+    if (!privateBucket) {
+      throw new Error('GOOGLE_CLOUD_PRIVATE_BUCKET (or GOOGLE_CLOUD_STORAGE_BUCKET) environment variable not set');
     }
 
     const carsSpreadsheetId = process.env.GOOGLE_SHEETS_CARS_SPREADSHEET_ID;
@@ -73,14 +77,15 @@ module.exports = async function handler(req, res) {
     const carKey = existingCar?.carkey || generateCarKey();
     const carNumber = existingCar?.carnumber || await getNextCarNumber(sheets, carsSpreadsheetId, carsSheetName);
     const carVersion = existingCar ? String(Number(existingCar.carversion || 0) + 1) : '1';
-    const basePath = `${season}/${carNumber}/`;
+    const publicBasePath = `public/garage/${season}/${carNumber}/`;
+    const privateBasePath = `private/cars/${season}/${carNumber}/`;
 
-    const jsonFileName = `${basePath}car.json`;
-    const bodyFileName = `${basePath}body.png`;
-    const wheelFileName = `${basePath}wheel.png`;
-    const previewFileName = `${basePath}preview.png`;
-    const thumb256FileName = `${basePath}thumb256.png`;
-    const thumb64FileName = `${basePath}thumb64.png`;
+    const jsonFileName = `${privateBasePath}car.json`;
+    const bodyFileName = `${publicBasePath}body.png`;
+    const wheelFileName = `${publicBasePath}wheel.png`;
+    const previewFileName = `${publicBasePath}preview.png`;
+    const thumb256FileName = `${publicBasePath}thumb256.png`;
+    const thumb64FileName = `${publicBasePath}thumb64.png`;
 
     const previewBuffer = await generateCompositePreview(bodyImageData, wheelImageData, wheelPositions);
     const thumb256Buffer = await generateThumbnail(previewBuffer, 256);
@@ -99,24 +104,24 @@ module.exports = async function handler(req, res) {
       bodyOffsetY: bodyOffsetY ?? 0,
       wheels: wheelPositions.map(wheel => ({
         ...wheel,
-        imagePath: `https://storage.googleapis.com/${bucketName}/${wheelFileName}`
+        imagePath: `https://storage.googleapis.com/${publicBucket}/${wheelFileName}`
       })),
       widgets: [],
       imagePaths: {
-        body: `https://storage.googleapis.com/${bucketName}/${bodyFileName}`,
-        wheel: `https://storage.googleapis.com/${bucketName}/${wheelFileName}`,
-        preview: `https://storage.googleapis.com/${bucketName}/${previewFileName}`,
-        thumb256: `https://storage.googleapis.com/${bucketName}/${thumb256FileName}`,
-        thumb64: `https://storage.googleapis.com/${bucketName}/${thumb64FileName}`
+        body: `https://storage.googleapis.com/${publicBucket}/${bodyFileName}`,
+        wheel: `https://storage.googleapis.com/${publicBucket}/${wheelFileName}`,
+        preview: `https://storage.googleapis.com/${publicBucket}/${previewFileName}`,
+        thumb256: `https://storage.googleapis.com/${publicBucket}/${thumb256FileName}`,
+        thumb64: `https://storage.googleapis.com/${publicBucket}/${thumb64FileName}`
       }
     }, null, 2);
 
-    await uploadToGCS(storage, bucketName, jsonFileName, Buffer.from(jsonData), 'application/json');
-    await uploadToGCS(storage, bucketName, bodyFileName, Buffer.from(bodyImageData.split('base64,')[1], 'base64'), 'image/png');
-    await uploadToGCS(storage, bucketName, wheelFileName, Buffer.from(wheelImageData.split('base64,')[1], 'base64'), 'image/png');
-    await uploadToGCS(storage, bucketName, previewFileName, previewBuffer, 'image/png');
-    await uploadToGCS(storage, bucketName, thumb256FileName, thumb256Buffer, 'image/png');
-    await uploadToGCS(storage, bucketName, thumb64FileName, thumb64Buffer, 'image/png');
+    await uploadToGCS(storage, privateBucket, jsonFileName, Buffer.from(jsonData), 'application/json');
+    await uploadToGCS(storage, publicBucket, bodyFileName, Buffer.from(bodyImageData.split('base64,')[1], 'base64'), 'image/png');
+    await uploadToGCS(storage, publicBucket, wheelFileName, Buffer.from(wheelImageData.split('base64,')[1], 'base64'), 'image/png');
+    await uploadToGCS(storage, publicBucket, previewFileName, previewBuffer, 'image/png');
+    await uploadToGCS(storage, publicBucket, thumb256FileName, thumb256Buffer, 'image/png');
+    await uploadToGCS(storage, publicBucket, thumb64FileName, thumb64Buffer, 'image/png');
 
     if (existingCar) {
       await updateCarRow(sheets, carsSpreadsheetId, carsSheetName, existingCar.rowIndex, [
@@ -126,10 +131,10 @@ module.exports = async function handler(req, res) {
         carName,
         carVersion,
         existingCar.carstatus || 'submitted',
-        `https://storage.googleapis.com/${bucketName}/${previewFileName}`,
-        `https://storage.googleapis.com/${bucketName}/${thumb256FileName}`,
-        `https://storage.googleapis.com/${bucketName}/${thumb64FileName}`,
-        `https://storage.googleapis.com/${bucketName}/${jsonFileName}`
+        `https://storage.googleapis.com/${publicBucket}/${previewFileName}`,
+        `https://storage.googleapis.com/${publicBucket}/${thumb256FileName}`,
+        `https://storage.googleapis.com/${publicBucket}/${thumb64FileName}`,
+        `https://storage.googleapis.com/${privateBucket}/${jsonFileName}`
       ]);
     } else {
       await appendToSheet(sheets, carsSpreadsheetId, `${carsSheetName}!A:J`, [
@@ -139,10 +144,10 @@ module.exports = async function handler(req, res) {
         carName,
         carVersion,
         'submitted',
-        `https://storage.googleapis.com/${bucketName}/${previewFileName}`,
-        `https://storage.googleapis.com/${bucketName}/${thumb256FileName}`,
-        `https://storage.googleapis.com/${bucketName}/${thumb64FileName}`,
-        `https://storage.googleapis.com/${bucketName}/${jsonFileName}`
+        `https://storage.googleapis.com/${publicBucket}/${previewFileName}`,
+        `https://storage.googleapis.com/${publicBucket}/${thumb256FileName}`,
+        `https://storage.googleapis.com/${publicBucket}/${thumb64FileName}`,
+        `https://storage.googleapis.com/${privateBucket}/${jsonFileName}`
       ]);
     }
 
@@ -150,10 +155,10 @@ module.exports = async function handler(req, res) {
       message: 'Garage submission successful',
       carKey,
       carNumber,
-      carJsonPath: `https://storage.googleapis.com/${bucketName}/${jsonFileName}`,
-      carImagePath: `https://storage.googleapis.com/${bucketName}/${previewFileName}`,
-      carThumb256Path: `https://storage.googleapis.com/${bucketName}/${thumb256FileName}`,
-      carThumb64Path: `https://storage.googleapis.com/${bucketName}/${thumb64FileName}`
+      carJsonPath: `https://storage.googleapis.com/${privateBucket}/${jsonFileName}`,
+      carImagePath: `https://storage.googleapis.com/${publicBucket}/${previewFileName}`,
+      carThumb256Path: `https://storage.googleapis.com/${publicBucket}/${thumb256FileName}`,
+      carThumb64Path: `https://storage.googleapis.com/${publicBucket}/${thumb64FileName}`
     });
   } catch (err) {
     console.error('Garage submission error:', err);

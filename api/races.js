@@ -142,17 +142,17 @@ async function handleRaceEntries(req, res) {
     })
     .filter(Boolean);
 
-  const bucketName = process.env.GOOGLE_CLOUD_STORAGE_BUCKET;
-  if (!bucketName) {
-    throw new Error('GOOGLE_CLOUD_STORAGE_BUCKET not set');
+  const publicBucket = process.env.GOOGLE_CLOUD_PUBLIC_BUCKET || process.env.GOOGLE_CLOUD_STORAGE_BUCKET;
+  if (!publicBucket) {
+    throw new Error('GOOGLE_CLOUD_PUBLIC_BUCKET (or GOOGLE_CLOUD_STORAGE_BUCKET) not set');
   }
 
-  const bucket = storageClient.bucket(bucketName);
+  const bucket = storageClient.bucket(publicBucket);
   const entriesWithImages = await Promise.all(
     entries.map(async (entry) => {
-      const thumb64ImageData = await downloadImageAsDataUrl(bucket, bucketName, entry.carThumb64Path);
-      const thumb256ImageData = await downloadImageAsDataUrl(bucket, bucketName, entry.carThumb256Path);
-      const previewImageData = await downloadImageAsDataUrl(bucket, bucketName, entry.carImagePath);
+      const thumb64ImageData = await downloadImageAsDataUrl(bucket, publicBucket, entry.carThumb64Path);
+      const thumb256ImageData = await downloadImageAsDataUrl(bucket, publicBucket, entry.carThumb256Path);
+      const previewImageData = await downloadImageAsDataUrl(bucket, publicBucket, entry.carImagePath);
       return {
         ...entry,
         thumb64ImageData,
@@ -239,9 +239,13 @@ async function handleRaceAssets(req, res) {
     'https://www.googleapis.com/auth/cloud-platform'
   ]);
 
-  const bucketName = process.env.GOOGLE_CLOUD_STORAGE_BUCKET;
-  if (!bucketName) {
-    throw new Error('GOOGLE_CLOUD_STORAGE_BUCKET not set');
+  const publicBucket = process.env.GOOGLE_CLOUD_PUBLIC_BUCKET || process.env.GOOGLE_CLOUD_STORAGE_BUCKET;
+  const privateBucket = process.env.GOOGLE_CLOUD_PRIVATE_BUCKET || process.env.GOOGLE_CLOUD_STORAGE_BUCKET;
+  if (!publicBucket) {
+    throw new Error('GOOGLE_CLOUD_PUBLIC_BUCKET (or GOOGLE_CLOUD_STORAGE_BUCKET) not set');
+  }
+  if (!privateBucket) {
+    throw new Error('GOOGLE_CLOUD_PRIVATE_BUCKET (or GOOGLE_CLOUD_STORAGE_BUCKET) not set');
   }
 
   const raceInfoSpreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
@@ -369,12 +373,12 @@ async function handleRaceAssets(req, res) {
     try {
       const jsonUrl = new URL(entry.carjsonpath);
       let jsonFilePath = jsonUrl.pathname.startsWith('/') ? jsonUrl.pathname.slice(1) : jsonUrl.pathname;
-      if (jsonFilePath.startsWith(`${bucketName}/`)) {
-        jsonFilePath = jsonFilePath.slice(bucketName.length + 1);
+      if (jsonFilePath.startsWith(`${privateBucket}/`)) {
+        jsonFilePath = jsonFilePath.slice(privateBucket.length + 1);
       }
 
-      const bucket = storage.bucket(bucketName);
-      const jsonFileObj = bucket.file(jsonFilePath);
+      const privateStorageBucket = storage.bucket(privateBucket);
+      const jsonFileObj = privateStorageBucket.file(jsonFilePath);
       const [jsonContents] = await jsonFileObj.download();
       const jsonText = jsonContents.toString('utf8');
       carData = JSON.parse(jsonText);
@@ -397,12 +401,12 @@ async function handleRaceAssets(req, res) {
         const url = new URL(file.gcsPath);
         let filePath = url.pathname.startsWith('/') ? url.pathname.slice(1) : url.pathname;
 
-        if (filePath.startsWith(`${bucketName}/`)) {
-          filePath = filePath.slice(bucketName.length + 1);
+        if (filePath.startsWith(`${publicBucket}/`)) {
+          filePath = filePath.slice(publicBucket.length + 1);
         }
 
-        const bucket = storage.bucket(bucketName);
-        const fileObj = bucket.file(filePath);
+        const publicStorageBucket = storage.bucket(publicBucket);
+        const fileObj = publicStorageBucket.file(filePath);
         const [buffer] = await fileObj.download();
         zip.file(`${carFolder}/${file.localName}`, buffer);
       } catch (error) {

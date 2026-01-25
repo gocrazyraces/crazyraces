@@ -39,9 +39,9 @@ async function handleAdminCars(req, res) {
     throw new Error('GOOGLE_SHEETS_CARS_SPREADSHEET_ID not set');
   }
 
-  const bucketName = process.env.GOOGLE_CLOUD_STORAGE_BUCKET;
-  if (!bucketName) {
-    throw new Error('GOOGLE_CLOUD_STORAGE_BUCKET not set');
+  const publicBucket = process.env.GOOGLE_CLOUD_PUBLIC_BUCKET || process.env.GOOGLE_CLOUD_STORAGE_BUCKET;
+  if (!publicBucket) {
+    throw new Error('GOOGLE_CLOUD_PUBLIC_BUCKET (or GOOGLE_CLOUD_STORAGE_BUCKET) not set');
   }
 
   const sheetName = await resolveCarsSheetName(sheets, spreadsheetId);
@@ -65,12 +65,12 @@ async function handleAdminCars(req, res) {
     carjsonpath: row[9]
   }));
 
-  const bucket = storageClient.bucket(bucketName);
+  const bucket = storageClient.bucket(publicBucket);
   const carsWithPreview = await Promise.all(
     cars.map(async (car) => {
-      const previewImageData = await downloadImageAsDataUrl(bucket, bucketName, car.carimagepath);
-      const thumb256ImageData = await downloadImageAsDataUrl(bucket, bucketName, car.carthumb256path);
-      const thumb64ImageData = await downloadImageAsDataUrl(bucket, bucketName, car.carthumb64path);
+      const previewImageData = await downloadImageAsDataUrl(bucket, publicBucket, car.carimagepath);
+      const thumb256ImageData = await downloadImageAsDataUrl(bucket, publicBucket, car.carthumb256path);
+      const thumb64ImageData = await downloadImageAsDataUrl(bucket, publicBucket, car.carthumb64path);
       return {
         ...car,
         previewImageData,
@@ -165,9 +165,9 @@ async function handleRaceImage(req, res) {
     throw new Error('GOOGLE_SHEETS_SPREADSHEET_ID not set');
   }
 
-  const bucketName = process.env.GOOGLE_CLOUD_STORAGE_BUCKET;
-  if (!bucketName) {
-    throw new Error('GOOGLE_CLOUD_STORAGE_BUCKET not set');
+  const publicBucket = process.env.GOOGLE_CLOUD_PUBLIC_BUCKET || process.env.GOOGLE_CLOUD_STORAGE_BUCKET;
+  if (!publicBucket) {
+    throw new Error('GOOGLE_CLOUD_PUBLIC_BUCKET (or GOOGLE_CLOUD_STORAGE_BUCKET) not set');
   }
 
   const sheetName = await resolveRaceSheetName(sheets, spreadsheetId);
@@ -186,13 +186,13 @@ async function handleRaceImage(req, res) {
   }
 
   const filename = `race-${racenumber}-${Date.now()}.png`;
-  const objectPath = `races/${season}/${racenumber}/${filename}`;
+  const objectPath = `public/races/${season}/${racenumber}/${filename}`;
   const buffer = Buffer.from(imageData.split('base64,')[1], 'base64');
 
-  const bucket = storageClient.bucket(bucketName);
+  const bucket = storageClient.bucket(publicBucket);
   await bucket.file(objectPath).save(buffer, { contentType: 'image/png' });
 
-  const imageUrl = `https://storage.googleapis.com/${bucketName}/${objectPath}`;
+  const imageUrl = `https://storage.googleapis.com/${publicBucket}/${objectPath}`;
 
   await sheets.spreadsheets.values.update({
     spreadsheetId,

@@ -153,12 +153,12 @@ function generateCarKey() {
 async function getNextCarNumber(sheets, spreadsheetId) {
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: 'rapidracers-cars!B:B'
+    range: 'rapidracers-cars!A:H'
   });
 
   const rows = response.data.values || [];
   const numbers = rows.slice(1)
-    .map(row => parseInt(row[0], 10))
+    .map(row => parseInt(row[1], 10))
     .filter(Number.isFinite);
 
   const nextNumber = numbers.length ? Math.max(...numbers) + 1 : 1;

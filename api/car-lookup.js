@@ -98,9 +98,21 @@ export default async function handler(req, res) {
     const jsonText = jsonContents.toString('utf8');
     const carData = JSON.parse(jsonText);
 
+    const bodyImagePath = carData?.imagePaths?.body || car.carimagepath;
+    const wheelImagePath = carData?.imagePaths?.wheel;
+
+    const [bodyImageData, wheelImageData] = await Promise.all([
+      downloadImageAsDataUrl(bucket, bucketName, bodyImagePath),
+      downloadImageAsDataUrl(bucket, bucketName, wheelImagePath)
+    ]);
+
     return res.status(200).json({
       car,
-      carData
+      carData,
+      assets: {
+        bodyImageData,
+        wheelImageData
+      }
     });
   } catch (error) {
     console.error('Error fetching car lookup:', error);
@@ -130,4 +142,26 @@ async function resolveCarsSheetName(sheets, spreadsheetId) {
   }
 
   throw new Error('Unable to locate cars sheet (tried rapidracers-cars, Sheet1, Cars, cars)');
+}
+
+async function downloadImageAsDataUrl(bucket, bucketName, url) {
+  if (!url) return null;
+  try {
+    const filePath = parseBucketPath(bucketName, url);
+    const [contents] = await bucket.file(filePath).download();
+    const base64 = contents.toString('base64');
+    return `data:image/png;base64,${base64}`;
+  } catch (error) {
+    console.warn('Failed to download image from GCS:', url, error.message);
+    return null;
+  }
+}
+
+function parseBucketPath(bucketName, url) {
+  const parsed = new URL(url);
+  let path = parsed.pathname.startsWith('/') ? parsed.pathname.slice(1) : parsed.pathname;
+  if (path.startsWith(`${bucketName}/`)) {
+    path = path.slice(bucketName.length + 1);
+  }
+  return path;
 }

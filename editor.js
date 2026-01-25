@@ -1295,7 +1295,7 @@ if (ui.carKeyBtn) {
       }
 
       const data = await response.json();
-      await loadCarIntoDesigner(data.car, data.carData);
+      await loadCarIntoDesigner(data.car, data.carData, data.assets);
       ui.carNameStatus.textContent = 'Loaded existing car.';
       ui.carNameStatus.classList.add('exists');
       ui.carName?.classList.remove('name-available');
@@ -1310,7 +1310,7 @@ if (ui.carKeyBtn) {
 
 loadCarNameList();
 
-async function loadCarIntoDesigner(car, carData) {
+async function loadCarIntoDesigner(car, carData, assets = {}) {
   if (!carData) return;
 
   currentCar = {
@@ -1321,8 +1321,8 @@ async function loadCarIntoDesigner(car, carData) {
   bodyOffsetX = Number(carData.bodyOffsetX) || 0;
   bodyOffsetY = Number(carData.bodyOffsetY) || 0;
 
-  const bodyUrl = carData.imagePaths?.body || car?.carimagepath;
-  const wheelUrl = carData.imagePaths?.wheel;
+  const bodyUrl = assets.bodyImageData || carData.imagePaths?.body || car?.carimagepath;
+  const wheelUrl = assets.wheelImageData || carData.imagePaths?.wheel;
 
   initUndoStacks(false);
 

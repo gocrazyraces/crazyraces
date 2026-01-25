@@ -68,9 +68,10 @@ module.exports = async function handler(req, res) {
       throw new Error('GOOGLE_SHEETS_CARS_SPREADSHEET_ID not set');
     }
 
-    const existingCar = await findExistingCar(sheets, carsSpreadsheetId, carName, existingCarKey, existingCarNumber);
+    const carsSheetName = await resolveCarsSheetName(sheets, carsSpreadsheetId);
+    const existingCar = await findExistingCar(sheets, carsSpreadsheetId, carsSheetName, carName, existingCarKey, existingCarNumber);
     const carKey = existingCar?.carkey || generateCarKey();
-    const carNumber = existingCar?.carnumber || await getNextCarNumber(sheets, carsSpreadsheetId);
+    const carNumber = existingCar?.carnumber || await getNextCarNumber(sheets, carsSpreadsheetId, carsSheetName);
     const carVersion = existingCar ? String(Number(existingCar.carversion || 0) + 1) : '1';
     const basePath = `${season}/${carNumber}/`;
 
@@ -110,7 +111,7 @@ module.exports = async function handler(req, res) {
     await uploadToGCS(storage, bucketName, previewFileName, previewBuffer, 'image/png');
 
     if (existingCar) {
-      await updateCarRow(sheets, carsSpreadsheetId, existingCar.rowIndex, [
+      await updateCarRow(sheets, carsSpreadsheetId, carsSheetName, existingCar.rowIndex, [
         season,
         carNumber,
         carKey,
@@ -121,7 +122,7 @@ module.exports = async function handler(req, res) {
         `https://storage.googleapis.com/${bucketName}/${jsonFileName}`
       ]);
     } else {
-      await appendToSheet(sheets, carsSpreadsheetId, 'rapidracers-cars!A:H', [
+      await appendToSheet(sheets, carsSpreadsheetId, `${carsSheetName}!A:H`, [
         season,
         carNumber,
         carKey,
@@ -150,10 +151,10 @@ function generateCarKey() {
   return Array.from({ length: 8 }, () => Math.floor(Math.random() * 10)).join('');
 }
 
-async function getNextCarNumber(sheets, spreadsheetId) {
+async function getNextCarNumber(sheets, spreadsheetId, sheetName) {
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: 'rapidracers-cars!A:H'
+    range: `${sheetName}!A:H`
   });
 
   const rows = response.data.values || [];
@@ -189,12 +190,12 @@ async function appendToSheet(sheets, spreadsheetId, range, values) {
   });
 }
 
-async function findExistingCar(sheets, spreadsheetId, carName, carKey, carNumber) {
+async function findExistingCar(sheets, spreadsheetId, sheetName, carName, carKey, carNumber) {
   if (!carName && !carKey && !carNumber) return null;
 
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: 'rapidracers-cars!A:H'
+    range: `${sheetName}!A:H`
   });
 
   const rows = response.data.values || [];
@@ -228,15 +229,32 @@ async function findExistingCar(sheets, spreadsheetId, carName, carKey, carNumber
   return null;
 }
 
-async function updateCarRow(sheets, spreadsheetId, rowIndex, values) {
+async function updateCarRow(sheets, spreadsheetId, sheetName, rowIndex, values) {
   await sheets.spreadsheets.values.update({
     spreadsheetId,
-    range: `rapidracers-cars!A${rowIndex}:H${rowIndex}`,
+    range: `${sheetName}!A${rowIndex}:H${rowIndex}`,
     valueInputOption: 'RAW',
     resource: {
       values: [values]
     }
   });
+}
+
+async function resolveCarsSheetName(sheets, spreadsheetId) {
+  const candidateNames = ['rapidracers-cars', 'Sheet1', 'Cars', 'cars'];
+  for (const name of candidateNames) {
+    try {
+      await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: `${name}!A1:H1`
+      });
+      return name;
+    } catch (error) {
+      // Try next candidate
+    }
+  }
+
+  throw new Error('Unable to locate cars sheet (tried rapidracers-cars, Sheet1, Cars, cars)');
 }
 
 function normalizeCarKey(value) {

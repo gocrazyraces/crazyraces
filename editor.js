@@ -143,6 +143,7 @@ let currentTool = "pen";
 let currentPenColor = ui.bodyColor.value || "#3B0273";
 let carNameList = [];
 let activeRaces = [];
+let currentCar = null;
 
 let isDrawing = false;
 let strokePoints = [];
@@ -581,9 +582,17 @@ function centerBodyArtByOffset() {
 // ============================
 // INIT UNDO STACKS
 // ============================
-function initUndoStacks() {
-  bodyArtCtx.clearRect(0, 0, BODY_W, BODY_H);
-  wheelArtCtx.clearRect(0, 0, WHEEL_W, WHEEL_H);
+function initUndoStacks(clearArt = true) {
+  bodyUndo.length = 0;
+  bodyRedo.length = 0;
+  wheelUndo.length = 0;
+  wheelRedo.length = 0;
+
+  if (clearArt) {
+    bodyArtCtx.clearRect(0, 0, BODY_W, BODY_H);
+    wheelArtCtx.clearRect(0, 0, WHEEL_W, WHEEL_H);
+  }
+
   pushBodyUndoSnapshot();
   pushWheelUndoSnapshot();
 }
@@ -1095,6 +1104,8 @@ async function submitCar() {
     carData: {
       season: season || activeRaces[0]?.season || 1,
       carName,
+      carKey: currentCar?.carKey || null,
+      carNumber: currentCar?.carNumber || null,
       acceleration: acc,
       topSpeed: spd,
       bodyImageData,
@@ -1122,6 +1133,10 @@ async function submitCar() {
     }
 
     const garageData = await garageResp.json();
+    currentCar = {
+      carKey: garageData.carKey || currentCar?.carKey || null,
+      carNumber: garageData.carNumber || currentCar?.carNumber || null,
+    };
     if (ui.carKeyDisplay) ui.carKeyDisplay.textContent = garageData.carKey || '—';
     if (ui.carKeyHint) ui.carKeyHint.textContent = garageData.carKey
       ? "Save this key to retrieve your car from the garage later."
@@ -1247,7 +1262,7 @@ if (ui.carName) {
 }
 
 if (ui.carKeyBtn) {
-  ui.carKeyBtn.addEventListener('click', () => {
+  ui.carKeyBtn.addEventListener('click', async () => {
     if (ui.carKeyBtn.disabled) return;
 
     const key = window.prompt('Enter the 8-digit car key (two groups of four digits, e.g. 1234-5678):');
@@ -1258,8 +1273,110 @@ if (ui.carKeyBtn) {
 
     if (!isValid) {
       alert('Please enter an 8-digit key in the format 1234-5678.');
+      return;
+    }
+
+    const carName = ui.carName?.value?.trim();
+    if (!carName) {
+      alert('Please enter the car name first.');
+      return;
+    }
+
+    ui.carNameStatus.textContent = 'Checking garage…';
+    ui.carNameStatus.classList.add('exists');
+
+    try {
+      const response = await fetch(`/api/car-lookup?carname=${encodeURIComponent(carName)}&carkey=${encodeURIComponent(normalized)}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        ui.carNameStatus.textContent = 'Car not found. Starting new design.';
+        currentCar = null;
+        return;
+      }
+
+      const data = await response.json();
+      await loadCarIntoDesigner(data.car, data.carData);
+      ui.carNameStatus.textContent = 'Loaded existing car.';
+      ui.carNameStatus.classList.add('exists');
+      ui.carName?.classList.remove('name-available');
+      ui.carNameTick?.classList.remove('visible');
+    } catch (error) {
+      console.error('Failed to load car:', error);
+      ui.carNameStatus.textContent = 'Failed to load car. Try again.';
+      currentCar = null;
     }
   });
 }
 
 loadCarNameList();
+
+async function loadCarIntoDesigner(car, carData) {
+  if (!carData) return;
+
+  currentCar = {
+    carKey: car?.carkey || null,
+    carNumber: car?.carnumber || null,
+  };
+
+  bodyOffsetX = Number(carData.bodyOffsetX) || 0;
+  bodyOffsetY = Number(carData.bodyOffsetY) || 0;
+
+  const bodyUrl = carData.imagePaths?.body || car?.carimagepath;
+  const wheelUrl = carData.imagePaths?.wheel;
+
+  initUndoStacks(false);
+
+  await Promise.all([
+    loadImageIntoCanvas(bodyUrl, bodyArtCtx, BODY_W, BODY_H),
+    loadImageIntoCanvas(wheelUrl, wheelArtCtx, WHEEL_W, WHEEL_H)
+  ]);
+
+  hasWheelArt = true;
+  pushBodyUndoSnapshot();
+  pushWheelUndoSnapshot();
+
+  const wheels = Array.isArray(carData.wheels) ? carData.wheels : [];
+  placedWheels.length = 0;
+  wheels.forEach((wheel) => {
+    placedWheels.push({
+      x: Number(wheel.x) || 0,
+      y: Number(wheel.y) || 0,
+      scale: Number(wheel.scale) || 1,
+      rotationDeg: Number(wheel.rotationDegrees) || 0,
+      rotationRad: ((Number(wheel.rotationDegrees) || 0) * Math.PI) / 180,
+      dragOffsetX: 0,
+      dragOffsetY: 0,
+      isDragging: false,
+    });
+  });
+
+  selectedWheelIndex = placedWheels.length ? 0 : -1;
+
+  const acc = Number(carData.props?.acceleration ?? ui.accSlider.value ?? 0);
+  const spd = Number(carData.props?.topSpeed ?? ui.speedSlider.value ?? 0);
+  ui.accSlider.value = String(acc);
+  ui.speedSlider.value = String(spd);
+  updateCreditsUI();
+
+  if (ui.carKeyDisplay) ui.carKeyDisplay.textContent = currentCar.carKey || '—';
+  if (ui.carKeyHint) ui.carKeyHint.textContent = currentCar.carKey
+    ? 'Loaded from garage. Save this key to reuse later.'
+    : 'Your key will appear after saving to the garage.';
+
+  renderAll();
+  setTab('body');
+}
+
+async function loadImageIntoCanvas(url, ctx, w, h) {
+  if (!url) return;
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      drawUploadedImageToArt(img, ctx, w, h);
+      resolve();
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+}

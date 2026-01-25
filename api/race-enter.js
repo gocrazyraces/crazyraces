@@ -105,12 +105,15 @@ module.exports = async function handler(req, res) {
       throw new Error('GOOGLE_SHEETS_SUBMISSIONS_SPREADSHEET_ID environment variable not set');
     }
 
-    await appendToSheet(sheets, submissionsSpreadsheetId, 'rapidracers-race-entries!A:D', [
-      season,
-      race,
-      carNumber,
-      'entered'
-    ]);
+    const existingEntry = await findExistingEntry(sheets, submissionsSpreadsheetId, season, race, carNumber);
+    if (!existingEntry) {
+      await appendToSheet(sheets, submissionsSpreadsheetId, 'rapidracers-race-entries!A:D', [
+        season,
+        race,
+        carNumber,
+        'entered'
+      ]);
+    }
 
     return res.status(200).json({ message: 'Submission successful' });
 
@@ -136,4 +139,22 @@ function normalizeCarKey(value) {
   const digits = String(value).replace(/\D/g, '');
   if (digits.length !== 8) return null;
   return digits;
+}
+
+async function findExistingEntry(sheets, spreadsheetId, season, race, carNumber) {
+  const response = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: 'rapidracers-race-entries!A:D'
+  });
+
+  const rows = response.data.values || [];
+  const seasonStr = String(season);
+  const raceStr = String(race);
+  const carStr = String(carNumber);
+
+  return rows.slice(1).some(row =>
+    String(row[0]) === seasonStr
+    && String(row[1]) === raceStr
+    && String(row[2]) === carStr
+  );
 }

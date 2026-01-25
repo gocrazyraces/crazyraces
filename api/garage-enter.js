@@ -13,11 +13,15 @@ module.exports = async function handler(req, res) {
     const {
       season,
       carName,
+      carKey: existingCarKey,
+      carNumber: existingCarNumber,
       acceleration,
       topSpeed,
       wheelPositions,
       bodyImageData,
-      wheelImageData
+      wheelImageData,
+      bodyOffsetX,
+      bodyOffsetY
     } = carData;
 
     if (!carName || !bodyImageData || !wheelImageData) {
@@ -64,8 +68,10 @@ module.exports = async function handler(req, res) {
       throw new Error('GOOGLE_SHEETS_CARS_SPREADSHEET_ID not set');
     }
 
-    const carKey = generateCarKey();
-    const carNumber = await getNextCarNumber(sheets, carsSpreadsheetId);
+    const existingCar = await findExistingCar(sheets, carsSpreadsheetId, carName, existingCarKey, existingCarNumber);
+    const carKey = existingCar?.carkey || generateCarKey();
+    const carNumber = existingCar?.carnumber || await getNextCarNumber(sheets, carsSpreadsheetId);
+    const carVersion = existingCar ? String(Number(existingCar.carversion || 0) + 1) : '1';
     const basePath = `${season}/${carNumber}/`;
 
     const jsonFileName = `${basePath}car.json`;
@@ -84,6 +90,8 @@ module.exports = async function handler(req, res) {
         acceleration,
         topSpeed
       },
+      bodyOffsetX: bodyOffsetX ?? 0,
+      bodyOffsetY: bodyOffsetY ?? 0,
       wheels: wheelPositions.map(wheel => ({
         ...wheel,
         imagePath: `https://storage.googleapis.com/${bucketName}/${wheelFileName}`
@@ -101,16 +109,29 @@ module.exports = async function handler(req, res) {
     await uploadToGCS(storage, bucketName, wheelFileName, Buffer.from(wheelImageData.split('base64,')[1], 'base64'), 'image/png');
     await uploadToGCS(storage, bucketName, previewFileName, previewBuffer, 'image/png');
 
-    await appendToSheet(sheets, carsSpreadsheetId, 'rapidracers-cars!A:H', [
-      season,
-      carNumber,
-      carKey,
-      carName,
-      '1',
-      'submitted',
-      `https://storage.googleapis.com/${bucketName}/${previewFileName}`,
-      `https://storage.googleapis.com/${bucketName}/${jsonFileName}`
-    ]);
+    if (existingCar) {
+      await updateCarRow(sheets, carsSpreadsheetId, existingCar.rowIndex, [
+        season,
+        carNumber,
+        carKey,
+        carName,
+        carVersion,
+        existingCar.carstatus || 'submitted',
+        `https://storage.googleapis.com/${bucketName}/${previewFileName}`,
+        `https://storage.googleapis.com/${bucketName}/${jsonFileName}`
+      ]);
+    } else {
+      await appendToSheet(sheets, carsSpreadsheetId, 'rapidracers-cars!A:H', [
+        season,
+        carNumber,
+        carKey,
+        carName,
+        carVersion,
+        'submitted',
+        `https://storage.googleapis.com/${bucketName}/${previewFileName}`,
+        `https://storage.googleapis.com/${bucketName}/${jsonFileName}`
+      ]);
+    }
 
     return res.status(200).json({
       message: 'Garage submission successful',
@@ -166,6 +187,63 @@ async function appendToSheet(sheets, spreadsheetId, range, values) {
       values: [values]
     }
   });
+}
+
+async function findExistingCar(sheets, spreadsheetId, carName, carKey, carNumber) {
+  if (!carName && !carKey && !carNumber) return null;
+
+  const response = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: 'rapidracers-cars!A:H'
+  });
+
+  const rows = response.data.values || [];
+  const normalizedKey = normalizeCarKey(carKey);
+  const normalizedName = String(carName || '').trim().toLowerCase();
+  const normalizedNumber = carNumber ? String(carNumber) : null;
+
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    const rowName = String(row[3] || '').trim().toLowerCase();
+    const rowKey = normalizeCarKey(row[2]);
+    const rowNumber = String(row[1] || '');
+
+    const nameMatches = normalizedName && rowName === normalizedName;
+    const keyMatches = normalizedKey && rowKey === normalizedKey;
+    const numberMatches = normalizedNumber && rowNumber === normalizedNumber;
+
+    if (nameMatches && (keyMatches || numberMatches)) {
+      return {
+        rowIndex: i + 1,
+        season: row[0],
+        carnumber: row[1],
+        carkey: row[2],
+        carname: row[3],
+        carversion: row[4],
+        carstatus: row[5]
+      };
+    }
+  }
+
+  return null;
+}
+
+async function updateCarRow(sheets, spreadsheetId, rowIndex, values) {
+  await sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: `rapidracers-cars!A${rowIndex}:H${rowIndex}`,
+    valueInputOption: 'RAW',
+    resource: {
+      values: [values]
+    }
+  });
+}
+
+function normalizeCarKey(value) {
+  if (value === null || value === undefined) return null;
+  const digits = String(value).replace(/\D/g, '');
+  if (digits.length !== 8) return null;
+  return digits;
 }
 
 // Generate composite preview image server-side using Sharp

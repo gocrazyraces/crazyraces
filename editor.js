@@ -1293,18 +1293,34 @@ init();
 async function loadCarNameList() {
   try {
     console.log('Loading car names from API...');
-    const response = await fetch('/api/cars?resource=names');
+
+    // Add timeout to prevent hanging
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+    const response = await fetch('/api/cars?resource=names', {
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    console.log('API response status:', response.status);
+
     if (!response.ok) {
       throw new Error(`API returned status ${response.status}`);
     }
+
     const data = await response.json();
+    console.log('API response data:', data);
+
     carNameList = (data.names || [])
       .map(name => name.trim().toLowerCase())
       .filter(Boolean);
     console.log('Loaded car names:', carNameList.length, 'names');
   } catch (error) {
     console.error('Failed to load car name list:', error);
+    console.error('Error type:', error.name, 'Error message:', error.message);
     carNameList = []; // Set to empty array even on error so UI stops showing loading state
+    console.log('Set carNameList to empty array after error');
   }
 }
 

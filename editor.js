@@ -57,6 +57,7 @@ const ui = {
 
   // Wheel controls
   wheelPenBtn: document.getElementById("wheelPenBtn"),
+  wheelFillBtn: document.getElementById("wheelFillBtn"),
   wheelMoveBtn: document.getElementById("wheelMoveBtn"),
   wheelColor: document.getElementById("wheelColor"),
   wheelThickness: document.getElementById("wheelThickness"),
@@ -707,10 +708,12 @@ function setActiveTool(tabType, tool) {
     else if (tool === 'move') ui.bodyMoveBtn.classList.add('active');
   } else if (tabType === 'wheel') {
     ui.wheelPenBtn.classList.remove('active');
+    ui.wheelFillBtn.classList.remove('active');
     ui.wheelMoveBtn.classList.remove('active');
 
     // Add active class to selected tool
     if (tool === 'pen') ui.wheelPenBtn.classList.add('active');
+    else if (tool === 'fill') ui.wheelFillBtn.classList.add('active');
     else if (tool === 'move') ui.wheelMoveBtn.classList.add('active');
   }
 }
@@ -733,6 +736,10 @@ ui.wheelPenBtn.onclick = () => {
   currentTool = "pen";
   currentPenColor = ui.wheelColor.value;
   setActiveTool('wheel', 'pen');
+};
+ui.wheelFillBtn.onclick = () => {
+  currentTool = "fill";
+  setActiveTool('wheel', 'fill');
 };
 ui.wheelMoveBtn.onclick = () => {
   currentTool = "move";
@@ -1001,13 +1008,32 @@ ui.bodyCanvas.onpointerup = (e) => {
 // ============================
 ui.wheelCanvas.onpointerdown = (e) => {
   if (currentTab !== "wheel") return;
-  if (currentTool !== "pen") return;
 
   const pos = getCanvasPos(ui.wheelCanvas, e);
-  isDrawing = true;
-  currentPenColor = ui.wheelColor.value;
-  strokePoints = [pos];
-  ui.wheelCanvas.setPointerCapture(e.pointerId);
+
+  // Fill tool
+  if (currentTool === "fill") {
+    const x = Math.floor(pos.x);
+    const y = Math.floor(pos.y);
+    if (x >= 0 && x < WHEEL_W && y >= 0 && y < WHEEL_H) {
+      const fillColor = hexToRgb(ui.wheelColor.value);
+      if (fillColor) {
+        pushWheelUndoSnapshot();
+        floodFill(wheelArtCtx, x, y, fillColor, WHEEL_W, WHEEL_H);
+        hasWheelArt = true;
+        renderAll();
+      }
+    }
+    return;
+  }
+
+  // Pen tool
+  if (currentTool === "pen") {
+    isDrawing = true;
+    currentPenColor = ui.wheelColor.value;
+    strokePoints = [pos];
+    ui.wheelCanvas.setPointerCapture(e.pointerId);
+  }
 };
 
 ui.wheelCanvas.onpointermove = (e) => {
@@ -1385,6 +1411,14 @@ if (ui.carName) {
   ui.carName.addEventListener('input', (event) => {
     console.log('Car name input event fired');
     updateCarNameStatus(event.target.value);
+  });
+
+  // Blur the input when Enter is pressed
+  ui.carName.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      ui.carName.blur();
+    }
   });
 } else {
   console.error('Car name input element not found!');

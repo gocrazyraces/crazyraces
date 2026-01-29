@@ -1150,8 +1150,22 @@ label.file input { display: none; }
   box-shadow: none;
 }
 
+.input-with-icon {
+  position: relative;
+  width: 100%;
+}
+
+.input-with-icon input {
+  width: 100%;
+  padding-right: 40px;
+}
+
 .name-tick {
   display: none;
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
   width: 22px;
   height: 22px;
   border-radius: 50%;
@@ -1161,6 +1175,7 @@ label.file input { display: none; }
   font-size: 14px;
   align-items: center;
   justify-content: center;
+  pointer-events: none;
 }
 
 .name-tick.visible {

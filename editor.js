@@ -464,16 +464,22 @@ function renderBodyComposite() {
     drawSubtleGrid(bodyCtx, BODY_W, BODY_H);
   }
 
-  // Show message on name tab
+  // Show message on name tab (unless a car has been loaded)
   if (currentTab === "name") {
-    bodyCtx.save();
-    bodyCtx.fillStyle = "#666";
-    bodyCtx.font = "20px 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-    bodyCtx.textAlign = "center";
-    bodyCtx.textBaseline = "middle";
-    bodyCtx.fillText("Enter the name of your car to start designing.", BODY_W / 2, BODY_H / 2);
-    bodyCtx.restore();
-    return;
+    // Check if a car has been loaded - if so, show it
+    const hasLoadedCar = currentCar && currentCar.carKey;
+
+    if (!hasLoadedCar) {
+      bodyCtx.save();
+      bodyCtx.fillStyle = "#666";
+      bodyCtx.font = "20px 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+      bodyCtx.textAlign = "center";
+      bodyCtx.textBaseline = "middle";
+      bodyCtx.fillText("Enter the name of your car to start designing.", BODY_W / 2, BODY_H / 2);
+      bodyCtx.restore();
+      return;
+    }
+    // If car is loaded, continue to show it below
   }
 
   bodyCtx.drawImage(bodyArtCanvas, bodyOffsetX, bodyOffsetY);
@@ -1476,8 +1482,11 @@ if (ui.carKeyBtn) {
       ui.carName?.classList.remove('name-available');
       ui.carNameTick?.classList.remove('visible');
 
-      // Switch to body tab to show the loaded car
-      setTab('body');
+      // Disable the car key button - car is now unlocked
+      if (ui.carKeyBtn) ui.carKeyBtn.disabled = true;
+
+      // Re-render to show the loaded car on the name tab
+      renderAll();
     } catch (error) {
       console.error('Failed to load car:', error);
       ui.carNameStatus.textContent = 'Failed to load car. Try again.';

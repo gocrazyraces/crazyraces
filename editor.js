@@ -674,6 +674,14 @@ function setTab(tabName) {
   }
 
   setTips(tabName);
+
+  // Set active tool button for body and wheel tabs
+  if (tabName === 'body') {
+    setActiveTool('body', currentTool);
+  } else if (tabName === 'wheel') {
+    setActiveTool('wheel', currentTool);
+  }
+
   renderAll();
 }
 
@@ -687,18 +695,50 @@ ui.tabs.name.onclick = () => setTab("name");
 // ============================
 // TOOL BUTTONS
 // ============================
+function setActiveTool(tabType, tool) {
+  // Remove active class from all tool buttons in the current tab
+  if (tabType === 'body') {
+    ui.bodyPenBtn.classList.remove('active');
+    ui.bodyFillBtn.classList.remove('active');
+    ui.bodyMoveBtn.classList.remove('active');
+
+    // Add active class to selected tool
+    if (tool === 'pen') ui.bodyPenBtn.classList.add('active');
+    else if (tool === 'fill') ui.bodyFillBtn.classList.add('active');
+    else if (tool === 'move') ui.bodyMoveBtn.classList.add('active');
+  } else if (tabType === 'wheel') {
+    ui.wheelPenBtn.classList.remove('active');
+    ui.wheelMoveBtn.classList.remove('active');
+
+    // Add active class to selected tool
+    if (tool === 'pen') ui.wheelPenBtn.classList.add('active');
+    else if (tool === 'move') ui.wheelMoveBtn.classList.add('active');
+  }
+}
+
 ui.bodyPenBtn.onclick = () => {
   currentTool = "pen";
   currentPenColor = ui.bodyColor.value;
+  setActiveTool('body', 'pen');
 };
-ui.bodyFillBtn.onclick = () => { currentTool = "fill"; };
-ui.bodyMoveBtn.onclick = () => { currentTool = "move"; };
+ui.bodyFillBtn.onclick = () => {
+  currentTool = "fill";
+  setActiveTool('body', 'fill');
+};
+ui.bodyMoveBtn.onclick = () => {
+  currentTool = "move";
+  setActiveTool('body', 'move');
+};
 
 ui.wheelPenBtn.onclick = () => {
   currentTool = "pen";
   currentPenColor = ui.wheelColor.value;
+  setActiveTool('wheel', 'pen');
 };
-ui.wheelMoveBtn.onclick = () => { currentTool = "move"; };
+ui.wheelMoveBtn.onclick = () => {
+  currentTool = "move";
+  setActiveTool('wheel', 'move');
+};
 
 ui.bodyColor.oninput = () => { if (currentTab === "body") currentPenColor = ui.bodyColor.value; };
 ui.wheelColor.oninput = () => { if (currentTab === "wheel") currentPenColor = ui.wheelColor.value; };

@@ -318,8 +318,9 @@ h1, h2, h3, h4, h5, h6,
 .tab:hover { transform: translateY(-1px); }
 
 .tab.active {
-  border-color: rgba(104, 135, 182, 0.28);
-  background: rgba(36, 191, 249, 0.08);
+  border-color: var(--orange);
+  background: rgba(254, 149, 46, 0.15);
+  box-shadow: 0 0 0 1px rgba(254, 149, 46, 0.3);
 }
 
 .step {
@@ -1197,6 +1198,19 @@ label.file input { display: none; }
   font-size: 13px;
   color: #333;
   line-height: 1.5;
+}
+
+/* Tool button active state */
+.tool-btn.active {
+  background: var(--orange) !important;
+  border-color: var(--orange) !important;
+  color: #fff !important;
+  box-shadow: 0 2px 4px rgba(254, 149, 46, 0.3) !important;
+}
+
+/* Car name input full width */
+#carName {
+  width: 100%;
 }
 
 /* Historical race sections */

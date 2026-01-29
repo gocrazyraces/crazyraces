@@ -80,7 +80,6 @@ const ui = {
   speedSlider: document.getElementById("topSpeed"),
   accVal: document.getElementById("accVal"),
   speedVal: document.getElementById("speedVal"),
-  pointsRemaining: document.getElementById("pointsRemaining"),
   creditsHelp: document.getElementById("creditsHelp"),
 
   // Submit controls
@@ -1114,7 +1113,6 @@ function updateCreditsUI() {
 
   ui.accVal.textContent = String(acc);
   ui.speedVal.textContent = String(spd);
-  ui.pointsRemaining.textContent = String(remaining);
 
   if (remaining === 0) ui.creditsHelp.textContent = "Perfect — you can submit";
   else if (remaining > 0) ui.creditsHelp.textContent = "Allocate all credits to submit";

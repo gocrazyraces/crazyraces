@@ -142,7 +142,7 @@ const wheelArtCtx = wheelArtCanvas.getContext("2d");
 let currentTab = "body";
 let currentTool = "pen";
 let currentPenColor = ui.bodyColor.value || "#0099ff";
-let carNameList = [];
+let carNameList = null; // null indicates loading, [] indicates loaded but empty
 let activeRaces = [];
 let currentCar = null;
 
@@ -1265,7 +1265,7 @@ ui.submitBtn.onclick = submitCar;
 // ============================
 // INIT
 // ============================
-function init() {
+async function init() {
   initUndoStacks();
   updateCreditsUI();
 
@@ -1277,6 +1277,11 @@ function init() {
   currentTool = "pen";
 
   setTab("name");
+
+  // Load car names before allowing user interaction
+  await loadCarNameList();
+  updateCarNameStatus('');
+
   loadActiveRaces();
   renderAll();
 }
@@ -1289,6 +1294,9 @@ async function loadCarNameList() {
   try {
     console.log('Loading car names from API...');
     const response = await fetch('/api/cars?resource=names');
+    if (!response.ok) {
+      throw new Error(`API returned status ${response.status}`);
+    }
     const data = await response.json();
     carNameList = (data.names || [])
       .map(name => name.trim().toLowerCase())
@@ -1296,7 +1304,7 @@ async function loadCarNameList() {
     console.log('Loaded car names:', carNameList.length, 'names');
   } catch (error) {
     console.error('Failed to load car name list:', error);
-    carNameList = [];
+    carNameList = []; // Set to empty array even on error so UI stops showing loading state
   }
 }
 
@@ -1304,6 +1312,16 @@ function updateCarNameStatus(value) {
   console.log('updateCarNameStatus called with:', value);
   if (!ui.carNameStatus) {
     console.error('carNameStatus element not found!');
+    return;
+  }
+
+  // Check if car names are still loading
+  if (carNameList === null) {
+    ui.carNameStatus.textContent = 'Loading car names...';
+    ui.carNameStatus.classList.remove('exists');
+    ui.carName?.classList.remove('name-available');
+    ui.carNameTick?.classList.remove('visible');
+    if (ui.carKeyBtn) ui.carKeyBtn.disabled = true;
     return;
   }
 
@@ -1404,11 +1422,6 @@ if (ui.carKeyBtn) {
     }
   });
 }
-
-loadCarNameList();
-
-// Initialize the car name status text
-updateCarNameStatus('');
 
 async function loadCarIntoDesigner(car, carData, assets = {}) {
   if (!carData) return;

@@ -468,7 +468,7 @@ function renderBodyComposite() {
   if (currentTab === "name") {
     bodyCtx.save();
     bodyCtx.fillStyle = "#666";
-    bodyCtx.font = "24px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+    bodyCtx.font = "20px 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
     bodyCtx.textAlign = "center";
     bodyCtx.textBaseline = "middle";
     bodyCtx.fillText("Enter the name of your car to start designing.", BODY_W / 2, BODY_H / 2);
@@ -494,9 +494,11 @@ function renderBodyComposite() {
     bodyCtx.drawImage(wheelArtCanvas, -WHEEL_W / 2, -WHEEL_H / 2, WHEEL_W, WHEEL_H);
 
     if (currentTab === "placement" && i === selectedWheelIndex) {
-      bodyCtx.lineWidth = 3;
-      bodyCtx.strokeStyle = "#F2CB05";
+      bodyCtx.setLineDash([5, 3]);
+      bodyCtx.lineWidth = 1;
+      bodyCtx.strokeStyle = "#000";
       bodyCtx.strokeRect(-WHEEL_W / 2, -WHEEL_H / 2, WHEEL_W, WHEEL_H);
+      bodyCtx.setLineDash([]);
     }
 
     bodyCtx.restore();
@@ -560,6 +562,12 @@ function refreshWheelUI() {
   ui.wheelCountLabel.textContent = `Wheels: ${placedWheels.length}`;
 
   const w = getSelectedWheel();
+  const hasSelection = w !== null;
+
+  // Enable/disable buttons based on selection
+  ui.duplicateWheelBtn.disabled = !hasSelection;
+  ui.deleteWheelBtn.disabled = !hasSelection;
+
   if (!w) {
     ui.selectedWheelLabel.textContent = "No wheel selected";
     ui.wheelScale.value = "1";
@@ -1452,7 +1460,11 @@ if (ui.carKeyBtn) {
       const response = await fetch(`/api/cars?resource=lookup&carname=${encodeURIComponent(carName)}&carkey=${encodeURIComponent(normalized)}`);
       if (!response.ok) {
         const errorText = await response.text();
-        ui.carNameStatus.textContent = `Lookup failed: ${errorText}`;
+        const errorMsg = errorText.toLowerCase().includes('not found')
+          ? 'Wrong car key! Please check and try again.'
+          : `Lookup failed: ${errorText}`;
+        ui.carNameStatus.textContent = errorMsg;
+        ui.carNameStatus.classList.add('exists');
         currentCar = null;
         return;
       }
@@ -1460,12 +1472,16 @@ if (ui.carKeyBtn) {
       const data = await response.json();
       await loadCarIntoDesigner(data.car, data.carData, data.assets);
       ui.carNameStatus.textContent = 'Loaded existing car.';
-      ui.carNameStatus.classList.add('exists');
+      ui.carNameStatus.classList.remove('exists');
       ui.carName?.classList.remove('name-available');
-      ui.carNameTick?.classList.add('visible');
+      ui.carNameTick?.classList.remove('visible');
+
+      // Switch to body tab to show the loaded car
+      setTab('body');
     } catch (error) {
       console.error('Failed to load car:', error);
       ui.carNameStatus.textContent = 'Failed to load car. Try again.';
+      ui.carNameStatus.classList.add('exists');
       currentCar = null;
     }
   });

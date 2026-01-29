@@ -176,7 +176,7 @@ let selectedWheelIndex = -1;
 // ============================
 const TAB_TIPS = {
   name:
-    "Enter a name for your new car or search for it in the garage.",
+    "Enter the name of your car. If it already exists in the garage, you can enter a car key.",
   body:
     "Draw or upload your car body. Use Move to drag the whole body around. PNG transparency works best.",
   wheel:
@@ -651,9 +651,12 @@ function setTab(tabName) {
   } else if (tabName === "properties") {
     ui.canvasTitle.textContent = "Car designer";
     ui.canvasSubtitle.textContent = "Adjust performance credits";
+  } else if (tabName === "name") {
+    ui.canvasTitle.textContent = "Car designer";
+    ui.canvasSubtitle.textContent = "";
   } else {
     ui.canvasTitle.textContent = "Car designer";
-    ui.canvasSubtitle.textContent = "Final checks before submission";
+    ui.canvasSubtitle.textContent = "Car designer";
   }
 
   setTips(tabName);
@@ -1263,7 +1266,7 @@ function updateCarNameStatus(value) {
 
   const exists = carNameList.includes(trimmed);
   if (exists) {
-    ui.carNameStatus.textContent = 'Car name exists.';
+    ui.carNameStatus.textContent = 'Car exists, enter key to edit';
     ui.carNameStatus.classList.add('exists');
     ui.carName?.classList.remove('name-available');
     ui.carNameTick?.classList.remove('visible');
@@ -1272,7 +1275,7 @@ function updateCarNameStatus(value) {
       ui.carKeyBtn.textContent = 'Enter car key';
     }
   } else {
-    ui.carNameStatus.textContent = '';
+    ui.carNameStatus.textContent = 'Car is new';
     ui.carNameStatus.classList.remove('exists');
     ui.carName?.classList.add('name-available');
     ui.carNameTick?.classList.add('visible');
@@ -1327,7 +1330,7 @@ if (ui.carKeyBtn) {
       ui.carNameStatus.textContent = 'Loaded existing car.';
       ui.carNameStatus.classList.add('exists');
       ui.carName?.classList.remove('name-available');
-      ui.carNameTick?.classList.remove('visible');
+      ui.carNameTick?.classList.add('visible');
     } catch (error) {
       console.error('Failed to load car:', error);
       ui.carNameStatus.textContent = 'Failed to load car. Try again.';

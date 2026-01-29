@@ -141,7 +141,7 @@ const wheelArtCtx = wheelArtCanvas.getContext("2d");
 // ============================
 let currentTab = "body";
 let currentTool = "pen";
-let currentPenColor = ui.bodyColor.value || "#3B0273";
+let currentPenColor = ui.bodyColor.value || "#0099ff";
 let carNameList = [];
 let activeRaces = [];
 let currentCar = null;
@@ -454,12 +454,26 @@ function floodFill(ctx, startX, startY, fillColor, w, h) {
 function renderBodyComposite() {
   const disableGridTabs = ["name", "properties", "submit"];
   const showGrid = !disableGridTabs.includes(currentTab);
+
+  // Fill with grey background color
+  bodyCtx.clearRect(0, 0, BODY_W, BODY_H);
+  bodyCtx.fillStyle = "#f5f5f5";
+  bodyCtx.fillRect(0, 0, BODY_W, BODY_H);
+
   if (showGrid) {
     drawSubtleGrid(bodyCtx, BODY_W, BODY_H);
-  } else {
-    bodyCtx.clearRect(0, 0, BODY_W, BODY_H);
-    bodyCtx.fillStyle = "#ffffff";
-    bodyCtx.fillRect(0, 0, BODY_W, BODY_H);
+  }
+
+  // Show message on name tab
+  if (currentTab === "name") {
+    bodyCtx.save();
+    bodyCtx.fillStyle = "#666";
+    bodyCtx.font = "24px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+    bodyCtx.textAlign = "center";
+    bodyCtx.textBaseline = "middle";
+    bodyCtx.fillText("Enter the name of your car to start designing.", BODY_W / 2, BODY_H / 2);
+    bodyCtx.restore();
+    return;
   }
 
   bodyCtx.drawImage(bodyArtCanvas, bodyOffsetX, bodyOffsetY);
@@ -653,7 +667,7 @@ function setTab(tabName) {
     ui.canvasSubtitle.textContent = "Adjust performance credits";
   } else if (tabName === "name") {
     ui.canvasTitle.textContent = "Car designer";
-    ui.canvasSubtitle.textContent = "";
+    ui.canvasSubtitle.textContent = "Enter the name of your car to start designing";
   } else {
     ui.canvasTitle.textContent = "Car designer";
     ui.canvasSubtitle.textContent = "Car designer";
@@ -1275,7 +1289,7 @@ function updateCarNameStatus(value) {
       ui.carKeyBtn.textContent = 'Enter car key';
     }
   } else {
-    ui.carNameStatus.textContent = 'Car is new';
+    ui.carNameStatus.textContent = 'Great, that name is new.';
     ui.carNameStatus.classList.remove('exists');
     ui.carName?.classList.add('name-available');
     ui.carNameTick?.classList.add('visible');

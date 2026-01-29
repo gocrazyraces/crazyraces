@@ -87,7 +87,7 @@
           <span class="step">3</span> Wheel
         </button>
         <button id="placementTab" class="tab" role="tab" aria-selected="false">
-          <span class="step">4</span> Wheels
+          <span class="step">4</span> Placement
         </button>
         <button id="propertiesTab" class="tab" role="tab" aria-selected="false">
           <span class="step">5</span> Performance
@@ -101,20 +101,22 @@
            NAME CONTROLS
            ======================= -->
       <section id="nameControls" class="tab-content active" role="tabpanel">
-        <h2 class="panel-title">Car name</h2>
+        <h2 class="panel-title">Your car's name</h2>
         <p class="panel-subtitle">
-          Enter a name for your new car or search for it in the garage.
+          Enter the name of your car. If it already exists in the garage, you can enter a car key.
         </p>
 
         <div class="control-group">
           <label class="field">
             <span>Car name</span>
-            <input type="text" id="carName" placeholder="e.g., Biscuit Rocket" />
+            <div class="input-with-icon">
+              <input type="text" id="carName" placeholder="e.g., Biscuit Rocket" />
+              <span id="carNameTick" class="name-tick" aria-hidden="true">✓</span>
+            </div>
           </label>
           <p id="carNameStatus" class="name-status" aria-live="polite"></p>
           <div class="name-action-row">
             <button id="carKeyBtn" class="btn" type="button" disabled>Enter car key</button>
-            <span id="carNameTick" class="name-tick" aria-hidden="true">✓</span>
           </div>
         </div>
       </section>
@@ -132,20 +134,20 @@
 
         <div class="control-group">
           <div class="row">
-            <button id="bodyPenBtn" class="btn primary">Draw</button>
-            <button id="bodyFillBtn" class="btn">Fill</button>
-            <button id="bodyMoveBtn" class="btn">Move</button>
+            <button id="bodyPenBtn" class="btn primary">✏️ Draw</button>
+            <button id="bodyFillBtn" class="btn">🎨 Fill</button>
+            <button id="bodyMoveBtn" class="btn">↔️ Move</button>
           </div>
 
           <div class="row-tight">
             <label class="field compact">
-              <span>Pen colour</span>
-              <input type="color" id="bodyColor" value="#3B0273" />
+              <span>Colour</span>
+              <input type="color" id="bodyColor" value="#0099ff" />
             </label>
 
             <label class="field compact">
               <span>Thickness</span>
-              <input type="range" id="bodyThickness" min="1" max="20" step="1" value="4" />
+              <input type="range" id="bodyThickness" min="1" max="20" step="1" value="10" />
             </label>
           </div>
 
@@ -184,19 +186,19 @@
 
         <div class="control-group">
           <div class="row">
-            <button id="wheelPenBtn" class="btn primary">Draw</button>
-            <button id="wheelMoveBtn" class="btn">Move</button>
+            <button id="wheelPenBtn" class="btn primary">✏️ Draw</button>
+            <button id="wheelMoveBtn" class="btn">↔️ Move</button>
           </div>
 
           <div class="row-tight">
             <label class="field compact">
-              <span>Pen colour</span>
-              <input type="color" id="wheelColor" value="#3B0273" />
+              <span>Colour</span>
+              <input type="color" id="wheelColor" value="#0099ff" />
             </label>
 
             <label class="field compact">
               <span>Thickness</span>
-              <input type="range" id="wheelThickness" min="1" max="20" step="1" value="4" />
+              <input type="range" id="wheelThickness" min="1" max="20" step="1" value="10" />
             </label>
           </div>
 
@@ -279,12 +281,7 @@
             <input type="range" id="topSpeed" min="0" max="100" step="1" value="50" />
           </label>
 
-          <div class="pill-row">
-            <span class="pill emphasis">
-              Remaining: <strong id="pointsRemaining">0</strong>
-            </span>
-            <span class="pill" id="creditsHelp">Must be 0 to submit</span>
-          </div>
+          <p id="creditsHelp" class="credits-status" aria-live="polite">Must be 0 to submit</p>
         </div>
       </section>
 
@@ -294,13 +291,13 @@
       <section id="submitControls" class="tab-content" role="tabpanel">
         <h2 class="panel-title">Enter</h2>
         <p class="panel-subtitle">
-          We’ll send your artwork + wheel layout + performance credits to the server.
+          Check the details and click the button below!
         </p>
 
         <div class="control-group">
           <label class="field">
             <span>Car name</span>
-            <div id="submitCarName" class="readonly-field" aria-live="polite">—</div>
+            <div id="submitCarName" class="submit-car-name" aria-live="polite">—</div>
           </label>
 
           <label class="field">
@@ -319,6 +316,8 @@
           </div>
 
           <p id="submitStatus" class="submit-status" aria-live="polite"></p>
+
+          <p class="car-key-warning"><strong>Always remember to write down your car key! You cannot recover it if lost</strong></p>
         </div>
 
       </section>

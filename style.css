@@ -597,7 +597,6 @@ label.file input { display: none; }
 
 .canvas-wrap.disabled {
   background: rgba(104, 135, 182, 0.15);
-  border-radius: var(--radius-sm);
 }
 
 #bodyCanvas {
@@ -1139,6 +1138,11 @@ label.file input { display: none; }
   gap: 10px;
 }
 
+.name-action-row .btn {
+  flex: 1;
+  width: 100%;
+}
+
 .name-action-row .btn[disabled] {
   opacity: 0.5;
   cursor: not-allowed;
@@ -1165,6 +1169,34 @@ label.file input { display: none; }
 .name-available {
   border-color: rgba(28, 143, 61, 0.6) !important;
   box-shadow: 0 0 0 3px rgba(28, 143, 61, 0.2);
+}
+
+/* Credits status */
+.credits-status {
+  margin: 12px 0 0;
+  font-size: 13px;
+  font-weight: 900;
+  color: rgba(10, 10, 10, 0.6);
+}
+
+/* Submit car name (no box styling) */
+.submit-car-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+  font-family: var(--ui-font);
+  padding: 4px 0;
+}
+
+/* Car key warning */
+.car-key-warning {
+  margin-top: 16px;
+  padding: 12px;
+  background: rgba(255, 152, 0, 0.1);
+  border-left: 3px solid #ff9800;
+  font-size: 13px;
+  color: #333;
+  line-height: 1.5;
 }
 
 /* Historical race sections */

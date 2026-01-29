@@ -1287,11 +1287,13 @@ init();
 // ============================
 async function loadCarNameList() {
   try {
+    console.log('Loading car names from API...');
     const response = await fetch('/api/cars?resource=names');
     const data = await response.json();
     carNameList = (data.names || [])
       .map(name => name.trim().toLowerCase())
       .filter(Boolean);
+    console.log('Loaded car names:', carNameList.length, 'names');
   } catch (error) {
     console.error('Failed to load car name list:', error);
     carNameList = [];
@@ -1299,7 +1301,11 @@ async function loadCarNameList() {
 }
 
 function updateCarNameStatus(value) {
-  if (!ui.carNameStatus) return;
+  console.log('updateCarNameStatus called with:', value);
+  if (!ui.carNameStatus) {
+    console.error('carNameStatus element not found!');
+    return;
+  }
 
   const trimmedValue = value.trim();
   const trimmed = trimmedValue.toLowerCase();
@@ -1307,6 +1313,7 @@ function updateCarNameStatus(value) {
     ui.submitCarName.textContent = trimmedValue || '—';
   }
   if (!trimmed) {
+    console.log('Empty name, showing default message');
     ui.carNameStatus.textContent = 'Type a name for your car';
     ui.carNameStatus.classList.remove('exists');
     ui.carName?.classList.remove('name-available');
@@ -1319,6 +1326,7 @@ function updateCarNameStatus(value) {
   }
 
   const exists = carNameList.includes(trimmed);
+  console.log('Checking if name exists:', trimmed, 'exists:', exists, 'carNameList length:', carNameList.length);
   if (exists) {
     ui.carNameStatus.textContent = 'Car exists, enter key to edit';
     ui.carNameStatus.classList.add('exists');
@@ -1341,9 +1349,13 @@ function updateCarNameStatus(value) {
 }
 
 if (ui.carName) {
+  console.log('Attaching input event listener to car name field');
   ui.carName.addEventListener('input', (event) => {
+    console.log('Car name input event fired');
     updateCarNameStatus(event.target.value);
   });
+} else {
+  console.error('Car name input element not found!');
 }
 
 if (ui.carKeyBtn) {

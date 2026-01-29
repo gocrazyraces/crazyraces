@@ -1307,7 +1307,7 @@ function updateCarNameStatus(value) {
     ui.submitCarName.textContent = trimmedValue || '—';
   }
   if (!trimmed) {
-    ui.carNameStatus.textContent = '';
+    ui.carNameStatus.textContent = 'Type a name for your car';
     ui.carNameStatus.classList.remove('exists');
     ui.carName?.classList.remove('name-available');
     ui.carNameTick?.classList.remove('visible');
@@ -1394,6 +1394,9 @@ if (ui.carKeyBtn) {
 }
 
 loadCarNameList();
+
+// Initialize the car name status text
+updateCarNameStatus('');
 
 async function loadCarIntoDesigner(car, carData, assets = {}) {
   if (!carData) return;

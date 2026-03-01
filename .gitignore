@@ -8,3 +8,5 @@ assets/titles/doodledash style.aep
 .env.production
 .vscode/
 .idea/
+
+.claude/
